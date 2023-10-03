@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using UnityEngine;
@@ -10,9 +10,11 @@ using UnityEngine.UI;
 
 public class Server : MonoBehaviour
 {
-    private bool _stillInRoom = false;
+    private bool _connected = false;
     private TcpListener _listener;
     [SerializeField] private InputField _inputField;
+    private Socket _serverSocket;
+    private Socket _clientSocket;
 
     [SerializeField] private GameObject _panel1;
     [SerializeField] private GameObject _panel2;
@@ -20,24 +22,55 @@ public class Server : MonoBehaviour
     {
         _panel1.SetActive(false);
         _panel2.SetActive(true);
-        _stillInRoom = true;
+        _connected = true;
 
         StartCoroutine(ServerHandler());
     }
 
     public void CloseRoom()
     {
-        _stillInRoom = false;
+        _connected = false;
     }
     private IEnumerator ServerHandler()
     {
-        string serverIP = "10.0.103.37";
-        int serverPort = 888;
+        string serverIP = "10.0.53.19";
+        int serverPort = 8888;
+
+        _serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+        IPEndPoint ipep = new(IPAddress.Any, serverPort);
+
+        _serverSocket.Bind(ipep);
+
+        _serverSocket.Listen(10);
+
+        while (_connected)
+        {
+            try
+            {
+                _clientSocket = _serverSocket.Accept();
+
+                ParameterizedThreadStart receiveMethod = new(ReciveMessage);
+
+                Thread thread = new(receiveMethod);
+
+                thread.Start(_clientSocket);
+            }
+            catch (Exception ex)
+            {
+                Debug.Log(ex.Message);
+            }
+        }
+
+        _serverSocket.Close();
+        Debug.Log("Server closed");
+
+        yield break;
 
         Debug.Log("Creating Listener");
 
         _listener = new TcpListener(IPAddress.Parse(serverIP), serverPort);
-        
+
         Debug.Log("Listener Created");
 
         try
@@ -61,7 +94,7 @@ public class Server : MonoBehaviour
         // Buffer to save information
         byte[] buffer = new byte[1024];
         int bytesRead;
-        
+
         /*
         while (_stillInRoom)
         {
@@ -94,5 +127,25 @@ public class Server : MonoBehaviour
 
 
         yield return null;
+    }
+
+    private void ReciveMessage(object client)
+    {
+        Socket myClient = client as Socket;
+
+        byte[] buffer = new byte[1024];
+        int bytesRead;
+
+        while (_connected)
+        {
+            bytesRead = myClient.Receive(buffer);
+
+            string receivedMessage = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+
+            Debug.Log("Message recived: " + receivedMessage);
+        }
+
+        myClient.Close();
+        Debug.Log("Client Closed");
     }
 }
