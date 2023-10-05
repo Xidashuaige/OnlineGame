@@ -3,12 +3,17 @@ using System.Collections;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using TMPro;
 using UnityEngine;
 
 public class Client : MonoBehaviour
 {
+    [SerializeField] private TMP_InputField _inputField;
     [SerializeField] private GameObject _panel1;
     [SerializeField] private GameObject _panel2;
+
+    // Socket parameters
+    private bool _connected = false;
     private Socket _clientSocket;
 
     public void JoinRoom()

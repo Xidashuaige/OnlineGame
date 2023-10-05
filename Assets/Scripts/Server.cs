@@ -2,22 +2,22 @@
 using System.Collections;
 using System.Net;
 using System.Net.Sockets;
-using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class Server : MonoBehaviour
 {
-    private bool _connected = false;
-    private TcpListener _listener;
-    [SerializeField] private InputField _inputField;
-    private Socket _serverSocket;
-    private Socket _clientSocket;
-
+    [SerializeField] private TMP_InputField _inputField;
     [SerializeField] private GameObject _panel1;
     [SerializeField] private GameObject _panel2;
+
+    // Socket parameters
+    private bool _connected = false;
+    private TcpListener _listener;
+    private Socket _serverSocket;
+    private Socket _clientSocket;
     public void CreateRoom()
     {
         _panel1.SetActive(false);
@@ -33,7 +33,6 @@ public class Server : MonoBehaviour
     }
     private IEnumerator ServerHandler()
     {
-        string serverIP = "10.0.53.19";
         int serverPort = 8888;
 
         _serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -42,7 +41,7 @@ public class Server : MonoBehaviour
 
         _serverSocket.Bind(ipep);
 
-        _serverSocket.Listen(10);
+        _serverSocket.Listen(5);
 
         while (_connected)
         {
@@ -67,6 +66,7 @@ public class Server : MonoBehaviour
 
         yield break;
 
+        /*
         Debug.Log("Creating Listener");
 
         _listener = new TcpListener(IPAddress.Parse(serverIP), serverPort);
@@ -95,7 +95,7 @@ public class Server : MonoBehaviour
         byte[] buffer = new byte[1024];
         int bytesRead;
 
-        /*
+        
         while (_stillInRoom)
         {
             try
@@ -120,13 +120,14 @@ public class Server : MonoBehaviour
         // Close client
         client.Close();
         Console.WriteLine("Client broke");
-        */
+       
 
         _listener.Stop();
         Debug.Log("Listener Closed");
-
-
+       
         yield return null;
+
+        */
     }
 
     private void ReciveMessage(object client)
