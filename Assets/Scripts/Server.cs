@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -10,18 +10,24 @@ using UnityEngine;
 public class Server : MonoBehaviour
 {
     [SerializeField] private TMP_InputField _inputField;
-    [SerializeField] private GameObject _panel1;
-    [SerializeField] private GameObject _panel2;
+    [SerializeField] private GameObject _startPanel;
+    [SerializeField] private GameObject _serverPanel;
 
     // Socket parameters
     private bool _connected = false;
     private Socket _serverSocket;
-    private Socket _clientSocket;
+
+    private List<Socket> _clientsSocket;
+
+    private void Start()
+    {
+        _clientsSocket = new List<Socket>();
+    }
 
     public void CreateRoomTCP()
     {
-        _panel1.SetActive(false);
-        _panel2.SetActive(true);
+        _startPanel.SetActive(false);
+        _serverPanel.SetActive(true);
         _connected = true;
 
         Thread thread = new(ServerHandler);
@@ -29,22 +35,31 @@ public class Server : MonoBehaviour
         thread.Start();
     }
 
+    private void OnApplicationQuit()
+    {
+        CloseRoom();
+    }
+
     public void CloseRoom()
     {
         _connected = false;
 
-        _panel1.SetActive(true);
-        _panel2.SetActive(false);
+        _startPanel.SetActive(true);
+        _serverPanel.SetActive(false);
 
         try
         {
-            _clientSocket?.Close();
-            Debug.Log("Client Closed");
+            for (int i = 0; i < _clientsSocket.Count; i++)
+            {
+                _clientsSocket[i]?.Shutdown(SocketShutdown.Both);
+                _clientsSocket[i]?.Close();        
+            }
 
+            Debug.Log("Clients Closed");
         }
         catch (Exception ex)
         {
-            Debug.Log(ex.Message);
+            Debug.LogWarning(ex.Message);
         }
 
         try
@@ -54,7 +69,7 @@ public class Server : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.Log(ex.Message);
+            Debug.LogWarning(ex.Message);
         }
     }
 
@@ -75,30 +90,36 @@ public class Server : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.Log(ex.Message);
+            Debug.LogWarning((ex.Message));
         }
 
         while (_connected)
         {
             try
             {
-                _clientSocket = _serverSocket.Accept();
+                Socket clientSocket = _serverSocket.Accept();
 
-                Thread thread = new(ReciveMessage);
+                _clientsSocket.Add(clientSocket);
 
-                thread.Start();
+                ParameterizedThreadStart receiveMethod = new(ReciveMessage);
+
+                Thread thread = new(receiveMethod);
+
+                thread.Start(clientSocket);
 
                 Debug.Log("Some client connected!");
             }
             catch (Exception ex)
             {
-                Debug.Log(ex.Message);
+                Debug.LogWarning((ex.Message));
             }
         }
     }
 
-    private void ReciveMessage()
+    private void ReciveMessage(object clientObj)
     {
+        Socket client = clientObj as Socket;
+
         byte[] buffer = new byte[1024];
         int bytesRead;
 
@@ -106,13 +127,17 @@ public class Server : MonoBehaviour
         {
             try
             {
-                bytesRead = _clientSocket.Receive(buffer);
+                bytesRead = client.Receive(buffer);
 
                 string receivedMessage = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
                 if (bytesRead == 0)
                 {
-                    _clientSocket.Close();
+                    Debug.Log("Someone leave the rooom");
+
+                    client.Shutdown(SocketShutdown.Both);
+                    client.Close();
+                    _clientsSocket.Remove(client);
                     return;
                 }
 
@@ -121,11 +146,13 @@ public class Server : MonoBehaviour
             }
             catch (Exception ex)
             {
-                Debug.Log(ex.Message);
+                Debug.LogWarning(ex.Message);
+
+                client.Shutdown(SocketShutdown.Both);
+                client.Close();
+                _clientsSocket.Remove(client);
+                return;
             }
         }
-
-        _clientSocket.Close();
-        Debug.Log("Client Closed");
     }
 }

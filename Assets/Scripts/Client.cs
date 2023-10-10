@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using TMPro;
+using UnityEditor.PackageManager;
 using UnityEngine;
 
 public class Client : MonoBehaviour
@@ -43,21 +44,13 @@ public class Client : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.LogException(ex);
+            Debug.LogWarning(ex);
         }
     }
 
     private void OnApplicationQuit()
     {
-        try
-        {
-            _clientSocket.Shutdown(SocketShutdown.Both);
-            _clientSocket.Close();
-        }
-        catch (Exception ex)
-        {
-            Debug.LogException(ex);
-        }
+        LeaveTheRoom();
     }
 
     public void SendMessageToServer()
@@ -69,17 +62,18 @@ public class Client : MonoBehaviour
         try
         {
             _clientSocket.Send(data, data.Length, SocketFlags.None);
-            Debug.Log("Send to Server");
+
+            Debug.Log("Send message to Server");
         }
         catch (Exception ex)
         {
-            Debug.Log(ex.Message);
+            Debug.LogWarning(ex.Message);
         }
     }
 
     private void ClientHandler()
     {
-        string serverIP = "10.0.103.32";
+        string serverIP = "10.0.53.27";
         int serverPort = 8888;
 
         _clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -93,14 +87,42 @@ public class Client : MonoBehaviour
         try
         {
             _clientSocket.Connect(ipep);
-            Debug.Log("Connected to Server");
 
-            _clientSocket.Send(data, data.Length, SocketFlags.None);
-            Debug.Log("Send to Server");
+            Thread thread = new Thread(ReciveMessage);
+
+            thread.Start();
+
+            Debug.Log("Connected to Server");
         }
         catch (Exception ex)
         {
-            Debug.Log(ex.Message);
+            Debug.LogWarning(ex.Message);
+        }
+    }
+
+    private void ReciveMessage()
+    {
+        byte[] buffer = new byte[1024];
+        int bytesRead;
+
+        while (_connected)
+        {
+            try
+            {
+                bytesRead = _clientSocket.Receive(buffer);
+
+                string receivedMessage = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+
+                Debug.Log("Message recived num: " + bytesRead);
+                Debug.Log("Message recived: " + receivedMessage);
+
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning(ex.Message);
+
+                LeaveTheRoom();
+            }
         }
     }
 }
