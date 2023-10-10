@@ -1,16 +1,20 @@
 using System;
-using System.Collections;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 
 public class Client : MonoBehaviour
 {
-    [SerializeField] private TMP_InputField _inputField;
-    [SerializeField] private GameObject _panel1;
-    [SerializeField] private GameObject _panel2;
+    [SerializeField] private TMP_InputField _nameInput;
+    [SerializeField] private TMP_InputField _ipInput;
+    [SerializeField] private TMP_InputField _messageInput;
+
+    [SerializeField] private GameObject _startPanel;
+    [SerializeField] private GameObject _clientPanel;
+
 
     // Socket parameters
     private bool _connected = false;
@@ -18,13 +22,64 @@ public class Client : MonoBehaviour
 
     public void JoinRoom()
     {
-        _panel1.SetActive(false);
-        _panel2.SetActive(true);   
+        _startPanel.SetActive(false);
+        _clientPanel.SetActive(true);
+
+        Thread thread = new(ClientHandler);
+
+        thread.Start();
     }
 
-    private IEnumerator ClientHandler()
+    public void LeaveTheRoom()
     {
-        string serverIP = "10.0.53.19";
+        _startPanel.SetActive(true);
+        _clientPanel.SetActive(false);
+        _connected = false;
+
+        try
+        {
+            _clientSocket.Shutdown(SocketShutdown.Both);
+            _clientSocket.Close();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogException(ex);
+        }
+    }
+
+    private void OnApplicationQuit()
+    {
+        try
+        {
+            _clientSocket.Shutdown(SocketShutdown.Both);
+            _clientSocket.Close();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogException(ex);
+        }
+    }
+
+    public void SendMessageToServer()
+    {
+        string messageToSend = "Hello, Server!";
+
+        byte[] data = Encoding.ASCII.GetBytes(messageToSend);
+
+        try
+        {
+            _clientSocket.Send(data, data.Length, SocketFlags.None);
+            Debug.Log("Send to Server");
+        }
+        catch (Exception ex)
+        {
+            Debug.Log(ex.Message);
+        }
+    }
+
+    private void ClientHandler()
+    {
+        string serverIP = "10.0.103.32";
         int serverPort = 8888;
 
         _clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -41,16 +96,11 @@ public class Client : MonoBehaviour
             Debug.Log("Connected to Server");
 
             _clientSocket.Send(data, data.Length, SocketFlags.None);
-            Debug.Log("Send to Server"); 
+            Debug.Log("Send to Server");
         }
         catch (Exception ex)
         {
             Debug.Log(ex.Message);
         }
-
-        // Close client socket
-        _clientSocket.Close();
-
-        yield return null;
     }
 }
