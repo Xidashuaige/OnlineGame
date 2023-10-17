@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -7,11 +7,14 @@ using System.Threading;
 using TMPro;
 using UnityEngine;
 
-public class Server : MonoBehaviour
+public class TCP_Server : MonoBehaviour
 {
     [SerializeField] private TMP_InputField _inputField;
+    [SerializeField] private TMP_Text _messageBox;
     [SerializeField] private GameObject _startPanel;
     [SerializeField] private GameObject _serverPanel;
+
+    private readonly StringBuilder _tempText = new();
 
     // Socket parameters
     private bool _connected = false;
@@ -24,6 +27,17 @@ public class Server : MonoBehaviour
         _clientsSocket = new List<Socket>();
     }
 
+    private void Update()
+    {
+        if (_tempText.Length > 0)
+        {
+            _messageBox.text += _tempText.ToString();
+
+            lock (this)
+                _tempText.Remove(0, _tempText.Length);
+        }
+    }
+
     public void CreateRoomTCP()
     {
         _startPanel.SetActive(false);
@@ -33,11 +47,6 @@ public class Server : MonoBehaviour
         Thread thread = new(ServerHandler);
 
         thread.Start();
-    }
-
-    private void OnApplicationQuit()
-    {
-        CloseRoom();
     }
 
     public void CloseRoom()
@@ -52,7 +61,7 @@ public class Server : MonoBehaviour
             for (int i = 0; i < _clientsSocket.Count; i++)
             {
                 _clientsSocket[i]?.Shutdown(SocketShutdown.Both);
-                _clientsSocket[i]?.Close();        
+                _clientsSocket[i]?.Close();
             }
 
             Debug.Log("Clients Closed");
@@ -143,6 +152,9 @@ public class Server : MonoBehaviour
 
                 Debug.Log("Message recived num: " + bytesRead);
                 Debug.Log("Message recived: " + receivedMessage);
+
+                lock (this)
+                    _tempText.Append("\n" + receivedMessage);
             }
             catch (Exception ex)
             {
@@ -154,5 +166,10 @@ public class Server : MonoBehaviour
                 return;
             }
         }
+    }
+
+    private void OnApplicationQuit()
+    {
+        CloseRoom();
     }
 }

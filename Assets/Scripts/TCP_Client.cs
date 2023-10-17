@@ -4,24 +4,37 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using TMPro;
-using UnityEditor.PackageManager;
 using UnityEngine;
 
-public class Client : MonoBehaviour
+
+public class TCP_Client : MonoBehaviour
 {
     [SerializeField] private TMP_InputField _nameInput;
     [SerializeField] private TMP_InputField _ipInput;
     [SerializeField] private TMP_InputField _messageInput;
+    [SerializeField] private TMP_Text _messageBox;
 
     [SerializeField] private GameObject _startPanel;
     [SerializeField] private GameObject _clientPanel;
 
+    private readonly StringBuilder _tempText = new();
 
     // Socket parameters
     private bool _connected = false;
     private Socket _clientSocket;
 
-    public void JoinRoom()
+    private void Update()
+    {
+        if (_tempText.Length > 0)
+        {
+            _messageBox.text += _tempText.ToString();
+
+            lock (this)
+                _tempText.Remove(0, _tempText.Length);
+        }
+    }
+
+    public void JoinRoomTCP()
     {
         _startPanel.SetActive(false);
         _clientPanel.SetActive(true);
@@ -55,13 +68,18 @@ public class Client : MonoBehaviour
 
     public void SendMessageToServer()
     {
-        string messageToSend = "Hello, Server!";
+        string messageToSend = _nameInput.text + ": " + _messageInput.text;
 
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
 
         try
         {
             _clientSocket.Send(data, data.Length, SocketFlags.None);
+
+            _messageInput.text = "";
+
+            lock (this)
+                _tempText.Append("\n" + messageToSend);
 
             Debug.Log("Send message to Server");
         }
@@ -73,7 +91,7 @@ public class Client : MonoBehaviour
 
     private void ClientHandler()
     {
-        string serverIP = "10.0.53.27";
+        string serverIP = _ipInput.text;
         int serverPort = 8888;
 
         _clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -116,6 +134,8 @@ public class Client : MonoBehaviour
                 Debug.Log("Message recived num: " + bytesRead);
                 Debug.Log("Message recived: " + receivedMessage);
 
+                lock (this)
+                    _tempText.Append("\n" + receivedMessage);
             }
             catch (Exception ex)
             {
