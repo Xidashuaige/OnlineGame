@@ -6,14 +6,17 @@ using System.Threading;
 using TMPro;
 using UnityEngine;
 
-
 public class TCP_Client : MonoBehaviour
 {
+    [Header("Strat Panel parameters")]
     [SerializeField] private TMP_InputField _nameInput;
     [SerializeField] private TMP_InputField _ipInput;
+
+    [Space, Header("UPD Client Panel parameters")]
     [SerializeField] private TMP_InputField _messageInput;
     [SerializeField] private TMP_Text _messageBox;
 
+    [Space, Header("Global parameters")]
     [SerializeField] private GameObject _startPanel;
     [SerializeField] private GameObject _clientPanel;
 
@@ -52,8 +55,8 @@ public class TCP_Client : MonoBehaviour
 
         try
         {
-            _clientSocket.Shutdown(SocketShutdown.Both);
-            _clientSocket.Close();
+            _clientSocket?.Shutdown(SocketShutdown.Both);
+            _clientSocket?.Close();
         }
         catch (Exception ex)
         {
@@ -106,7 +109,7 @@ public class TCP_Client : MonoBehaviour
         {
             _clientSocket.Connect(ipep);
 
-            Thread thread = new Thread(ReciveMessage);
+            Thread thread = new(ReciveMessage);
 
             thread.Start();
 

@@ -9,8 +9,13 @@ using UnityEngine;
 
 public class TCP_Server : MonoBehaviour
 {
-    [SerializeField] private TMP_InputField _inputField;
+    [Header("Strat Panel parameters")]
+    [SerializeField] private TMP_InputField _nameInput;
+
+    [Space, Header("UPD Client Panel parameters")]
     [SerializeField] private TMP_Text _messageBox;
+
+    [Space, Header("Global parameters")]
     [SerializeField] private GameObject _startPanel;
     [SerializeField] private GameObject _serverPanel;
 
@@ -19,12 +24,11 @@ public class TCP_Server : MonoBehaviour
     // Socket parameters
     private bool _connected = false;
     private Socket _serverSocket;
-
     private List<Socket> _clientsSocket;
 
     private void Start()
     {
-        _clientsSocket = new List<Socket>();
+        _clientsSocket = new();
     }
 
     private void Update()
@@ -36,6 +40,11 @@ public class TCP_Server : MonoBehaviour
             lock (this)
                 _tempText.Remove(0, _tempText.Length);
         }
+    }
+
+    private void OnApplicationQuit()
+    {
+        CloseRoom();
     }
 
     public void CreateRoomTCP()
@@ -88,11 +97,9 @@ public class TCP_Server : MonoBehaviour
 
         _serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-        IPEndPoint ipep = new(IPAddress.Any, serverPort);
-
         try
         {
-            _serverSocket.Bind(ipep);
+            _serverSocket.Bind(new IPEndPoint(IPAddress.Any, serverPort));
 
             _serverSocket.Listen(5);
             Debug.Log("Room created!");
@@ -110,7 +117,7 @@ public class TCP_Server : MonoBehaviour
 
                 _clientsSocket.Add(clientSocket);
 
-                ParameterizedThreadStart receiveMethod = new(ReciveMessage);
+                ParameterizedThreadStart receiveMethod = new(ReceiveMessage);
 
                 Thread thread = new(receiveMethod);
 
@@ -125,7 +132,7 @@ public class TCP_Server : MonoBehaviour
         }
     }
 
-    private void ReciveMessage(object clientObj)
+    private void ReceiveMessage(object clientObj)
     {
         Socket client = clientObj as Socket;
 
@@ -138,8 +145,6 @@ public class TCP_Server : MonoBehaviour
             {
                 bytesRead = client.Receive(buffer);
 
-                string receivedMessage = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-
                 if (bytesRead == 0)
                 {
                     Debug.Log("Someone leave the rooom");
@@ -149,6 +154,8 @@ public class TCP_Server : MonoBehaviour
                     _clientsSocket.Remove(client);
                     return;
                 }
+
+                string receivedMessage = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
                 Debug.Log("Message recived num: " + bytesRead);
                 Debug.Log("Message recived: " + receivedMessage);
@@ -166,10 +173,5 @@ public class TCP_Server : MonoBehaviour
                 return;
             }
         }
-    }
-
-    private void OnApplicationQuit()
-    {
-        CloseRoom();
     }
 }
