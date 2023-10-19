@@ -62,6 +62,9 @@ public class TCP_Client : MonoBehaviour
         {
             Debug.LogWarning(ex);
         }
+
+        DebugManager.AddLog("Leave the room");
+        Debug.Log("Leave the room");
     }
 
     private void OnApplicationQuit()

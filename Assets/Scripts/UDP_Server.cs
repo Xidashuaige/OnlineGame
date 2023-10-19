@@ -58,6 +58,22 @@ public class UDP_Server : MonoBehaviour
         thread.Start();
     }
 
+    public void SendMessageToClients()
+    {
+        try
+        {
+            foreach (var endPoint in _clienEndPoints)
+            {
+                byte[] data = Encoding.ASCII.GetBytes("Test Text");
+                _serverSocket.SendTo(data, endPoint);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning(ex.Message);
+        }
+    }
+
     public void CloseRoom()
     {
         _connected = false;
@@ -74,9 +90,9 @@ public class UDP_Server : MonoBehaviour
                 _serverSocket.SendTo(data, endPoint);
             }
 
-            _clienEndPoints.Clear();
+            _clienEndPoints?.Clear();
 
-            _serverSocket.Close();
+            _serverSocket?.Close();
             DebugManager.AddLog("Server closed");
             Debug.Log("Server closed");        
         }

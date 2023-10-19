@@ -70,6 +70,9 @@ public class UDP_Client : MonoBehaviour
             Debug.LogWarning(ex.Message);
         }
 
+        DebugManager.AddLog("Leave the room");
+        Debug.Log("Leave the room");
+
         _socket = null;
     }
 
@@ -127,6 +130,9 @@ public class UDP_Client : MonoBehaviour
             Debug.LogWarning(ex.Message);
         }
 
+        DebugManager.AddLog("Joined to the room");
+        Debug.Log("Joined to the room");
+
         // Start to listen messages
         ReciveMessage();
     }
@@ -156,7 +162,7 @@ public class UDP_Client : MonoBehaviour
                 Debug.Log("Message recived: " + receivedMessage);
 
                 lock (this)
-                    _tempText.Append("\n" + receivedMessage);
+                    _tempText?.Append("\n" + receivedMessage);
             }
             catch (Exception ex)
             {

@@ -593,7 +593,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 652.4725, y: -43.115}
+  m_AnchoredPosition: {x: 294.7475, y: -43.115}
   m_SizeDelta: {x: 97.82, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &78663216
@@ -1926,7 +1926,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 652.4725, y: -43.115}
+  m_AnchoredPosition: {x: 299.29, y: -43.115}
   m_SizeDelta: {x: 97.82, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &336266837
@@ -1973,9 +1973,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 880644428}
-        m_TargetAssemblyTypeName: Client, Assembly-CSharp
-        m_MethodName: 
+      - m_Target: {fileID: 880644434}
+        m_TargetAssemblyTypeName: UDP_Server, Assembly-CSharp
+        m_MethodName: SendMessageToClients
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2692,8 +2692,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 86.23}
+  m_AnchoredPosition: {x: 179.43, y: 0}
+  m_SizeDelta: {x: -358.86, y: 86.23}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &537778200
 MonoBehaviour:
@@ -3700,8 +3700,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 292.4725, y: -43.115}
-  m_SizeDelta: {x: 547.71, y: 30}
+  m_AnchoredPosition: {x: 118.72, y: -43.115}
+  m_SizeDelta: {x: 211.56, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &792993630
 MonoBehaviour:
@@ -7731,8 +7731,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 292.4725, y: -43.115}
-  m_SizeDelta: {x: 547.71, y: 30}
+  m_AnchoredPosition: {x: 114.177505, y: -43.115}
+  m_SizeDelta: {x: 193.39, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1458991249
 MonoBehaviour:
@@ -8250,8 +8250,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 86.23}
+  m_AnchoredPosition: {x: 179.43, y: 0}
+  m_SizeDelta: {x: -358.86, y: 86.23}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &1550272928
 MonoBehaviour:
