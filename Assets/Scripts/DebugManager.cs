@@ -17,7 +17,7 @@ public class DebugManager : MonoBehaviour
 
     private void Update()
     {
-        if (_tempText.Length > 0)
+        if (_tempText?.Length > 0)
         {
             _debugMessage.text += _tempText.ToString();
             _tempText.Clear();
@@ -28,8 +28,9 @@ public class DebugManager : MonoBehaviour
     {
         log += "\n";
 
-        lock (_tempText)
-            _tempText.Append(log);
+        if (_tempText != null)
+            lock (_tempText)
+                _tempText.Append(log);
     }
 
     public void CommandApply()

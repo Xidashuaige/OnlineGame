@@ -12,14 +12,17 @@ public class TCP_Server : MonoBehaviour
     [Header("Strat Panel parameters")]
     [SerializeField] private TMP_InputField _nameInput;
 
-    [Space, Header("UPD Client Panel parameters")]
+    [Space, Header("TCP Server Panel parameters")]
+    [SerializeField] private TMP_InputField _messageInput;
     [SerializeField] private TMP_Text _messageBox;
+    [SerializeField] private TMP_Text _ipAdress;
 
     [Space, Header("Global parameters")]
     [SerializeField] private GameObject _startPanel;
     [SerializeField] private GameObject _serverPanel;
 
     private readonly StringBuilder _tempText = new();
+    private bool _requestCloseRoom = false;
 
     // Socket parameters
     private bool _connected = false;
@@ -40,6 +43,9 @@ public class TCP_Server : MonoBehaviour
             lock (this)
                 _tempText.Clear();
         }
+
+        if (_requestCloseRoom)
+            CloseRoom();
     }
 
     private void OnApplicationQuit()
@@ -47,11 +53,65 @@ public class TCP_Server : MonoBehaviour
         CloseRoom();
     }
 
+    public void SendMessageToClients()
+    {
+        if (_messageInput.text == "")
+            return;
+
+        string messageToSend = _nameInput.text + ": " + _messageInput.text;
+
+        byte[] data = Encoding.ASCII.GetBytes(messageToSend);
+
+        try
+        {
+            for (int i = 0; i < _clientsSocket.Count; i++)
+            {
+                _clientsSocket[i].Send(data);
+            }
+
+            lock (this)
+                _tempText.Append(messageToSend + "\n");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning(ex.Message);
+        }
+
+        _messageInput.text = "";
+    }
+
+    private void ReSendMessageToClients(string message)
+    {
+        lock (this)
+            _tempText.Append(message + "\n");
+
+        try
+        {
+            for (int i = 0; i < _clientsSocket.Count; i++)
+            {
+                _clientsSocket[i].Send(Encoding.ASCII.GetBytes(message));
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning(ex.Message);
+            DebugManager.AddLog(ex.Message);
+        }
+    }
+
     public void CreateRoomTCP()
     {
+        if (_nameInput.text == "")
+        {
+            DebugManager.AddLog("Enter name please");
+            return;
+        }
+
         _startPanel.SetActive(false);
         _serverPanel.SetActive(true);
         _connected = true;
+        
+        GetIPAdress();
 
         Thread thread = new(ServerHandler);
 
@@ -64,6 +124,8 @@ public class TCP_Server : MonoBehaviour
 
         _startPanel.SetActive(true);
         _serverPanel.SetActive(false);
+        _requestCloseRoom = false;
+        _messageBox.text = "";
 
         try
         {
@@ -72,18 +134,9 @@ public class TCP_Server : MonoBehaviour
                 _clientsSocket[i]?.Shutdown(SocketShutdown.Both);
                 _clientsSocket[i]?.Close();
             }
-
-
             DebugManager.AddLog("Clients Closed");
             Debug.Log("Clients Closed");
-        }
-        catch (Exception ex)
-        {
-            Debug.LogWarning(ex.Message);
-        }
 
-        try
-        {
             _serverSocket.Close();
             DebugManager.AddLog("Server closed");
             Debug.Log("Server closed");
@@ -91,6 +144,7 @@ public class TCP_Server : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogWarning(ex.Message);
+            DebugManager.AddLog(ex.Message);
         }
     }
 
@@ -100,6 +154,7 @@ public class TCP_Server : MonoBehaviour
 
         _serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
+        // Connect socket
         try
         {
             _serverSocket.Bind(new IPEndPoint(IPAddress.Any, serverPort));
@@ -110,7 +165,10 @@ public class TCP_Server : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.LogWarning((ex.Message));
+            Debug.LogWarning(ex.Message);
+            DebugManager.AddLog(ex.Message);
+            _requestCloseRoom = true;
+            return;
         }
 
         while (_connected)
@@ -132,7 +190,10 @@ public class TCP_Server : MonoBehaviour
             }
             catch (Exception ex)
             {
-                Debug.LogWarning((ex.Message));
+                Debug.LogWarning(ex.Message);
+                DebugManager.AddLog(ex.Message);
+                _requestCloseRoom = true;
+                return;
             }
         }
     }
@@ -163,23 +224,38 @@ public class TCP_Server : MonoBehaviour
 
                 string receivedMessage = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
-                DebugManager.AddLog("Message recived num: " + bytesRead);
-                Debug.Log("Message recived num: " + bytesRead);
-                DebugManager.AddLog("Message recived: " + receivedMessage);
-                Debug.Log("Message recived: " + receivedMessage);
+                DebugManager.AddLog("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
+                Debug.Log("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
 
-                lock (this)
-                    _tempText.Append("\n" + receivedMessage);
+                ReSendMessageToClients(receivedMessage);
             }
             catch (Exception ex)
             {
                 Debug.LogWarning(ex.Message);
 
-                client.Shutdown(SocketShutdown.Both);
-                client.Close();
                 _clientsSocket.Remove(client);
                 return;
             }
         }
+    }
+
+    private void GetIPAdress()
+    {
+        IPHostEntry ipEntry = Dns.GetHostEntry(Dns.GetHostName());
+
+        foreach (IPAddress ip in ipEntry.AddressList)
+        {
+            if (ip.AddressFamily == AddressFamily.InterNetwork)
+            {
+                _ipAdress.text = ip.ToString();
+                return;
+            }
+        }
+    }
+
+    public void CopyIPAdress()
+    {
+        GUIUtility.systemCopyBuffer = _ipAdress.text;
+        DebugManager.AddLog("IP Adress Copied");
     }
 }

@@ -12,7 +12,7 @@ public class TCP_Client : MonoBehaviour
     [SerializeField] private TMP_InputField _nameInput;
     [SerializeField] private TMP_InputField _ipInput;
 
-    [Space, Header("UPD Client Panel parameters")]
+    [Space, Header("TCP Client Panel parameters")]
     [SerializeField] private TMP_InputField _messageInput;
     [SerializeField] private TMP_Text _messageBox;
 
@@ -21,10 +21,12 @@ public class TCP_Client : MonoBehaviour
     [SerializeField] private GameObject _clientPanel;
 
     private readonly StringBuilder _tempText = new();
+    private bool _requestLeaveRoom = false;
+
 
     // Socket parameters
     private bool _connected = false;
-    private Socket _clientSocket;
+    private Socket _socket;
 
     private void Update()
     {
@@ -35,12 +37,22 @@ public class TCP_Client : MonoBehaviour
             lock (this)
                 _tempText.Clear();
         }
+
+        if (_requestLeaveRoom)
+            LeaveTheRoom();
     }
 
     public void JoinRoomTCP()
     {
+        if (_nameInput.text == "")
+        {
+            DebugManager.AddLog("Enter name please");
+            return;
+        }
+
         _startPanel.SetActive(false);
         _clientPanel.SetActive(true);
+        _connected = true;
 
         Thread thread = new(ClientHandler);
 
@@ -52,15 +64,18 @@ public class TCP_Client : MonoBehaviour
         _startPanel.SetActive(true);
         _clientPanel.SetActive(false);
         _connected = false;
+        _requestLeaveRoom = false;
+        _messageBox.text = "";
 
         try
         {
-            _clientSocket?.Shutdown(SocketShutdown.Both);
-            _clientSocket?.Close();
+            _socket?.Shutdown(SocketShutdown.Both);
+            _socket?.Close();
         }
         catch (Exception ex)
         {
             Debug.LogWarning(ex);
+            //DebugManager.AddLog(ex.Message);
         }
 
         DebugManager.AddLog("Leave the room");
@@ -74,26 +89,27 @@ public class TCP_Client : MonoBehaviour
 
     public void SendMessageToServer()
     {
+        if (_messageInput.text == "")
+            return;
+
         string messageToSend = _nameInput.text + ": " + _messageInput.text;
 
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
 
         try
         {
-            _clientSocket.Send(data, data.Length, SocketFlags.None);
-
-            _messageInput.text = "";
-
-            lock (this)
-                _tempText.Append("\n" + messageToSend);
+            _socket.Send(data);
 
             DebugManager.AddLog("Send message to Server");
             Debug.Log("Send message to Server");
         }
         catch (Exception ex)
         {
+            DebugManager.AddLog("Send message to Server has failed");
             Debug.LogWarning(ex.Message);
         }
+
+        _messageInput.text = "";
     }
 
     private void ClientHandler()
@@ -101,19 +117,19 @@ public class TCP_Client : MonoBehaviour
         string serverIP = _ipInput.text;
         int serverPort = 8888;
 
-        _clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
-        IPEndPoint ipep = new(IPAddress.Parse(serverIP), serverPort);
-
-        string messageToSend = "Hello, Server!";
-
-        byte[] data = Encoding.ASCII.GetBytes(messageToSend);
-
         try
         {
-            _clientSocket.Connect(ipep);
+            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-            Thread thread = new(ReciveMessage);
+            IPEndPoint ipep = new(IPAddress.Parse(serverIP), serverPort);
+
+            string messageToSend = "Hello, Server!";
+
+            byte[] data = Encoding.ASCII.GetBytes(messageToSend);
+
+            _socket.Connect(ipep);
+
+            Thread thread = new(ReceiveMessage);
 
             thread.Start();
 
@@ -123,26 +139,38 @@ public class TCP_Client : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogWarning(ex.Message);
+            DebugManager.AddLog(ex.Message);
+
+            _requestLeaveRoom = true;
         }
     }
 
-    private void ReciveMessage()
+    private void ReceiveMessage()
     {
         byte[] buffer = new byte[1024];
         int bytesRead;
+
+        DebugManager.AddLog("Start receive message");
+        Debug.Log("Start receive message");
 
         while (_connected)
         {
             try
             {
-                bytesRead = _clientSocket.Receive(buffer);
+                bytesRead = _socket.Receive(buffer);
+
+                if (bytesRead == 0)
+                {
+                    DebugManager.AddLog("Server has been disconnect");
+                    Debug.Log("Server has been disconnect");
+                    _requestLeaveRoom = true;
+                    return;
+                }
 
                 string receivedMessage = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
-                DebugManager.AddLog("Message recived num: " + bytesRead); 
-                Debug.Log("Message recived num: " + bytesRead);
-                DebugManager.AddLog("Message recived: " + receivedMessage); 
-                Debug.Log("Message recived: " + receivedMessage);
+                DebugManager.AddLog("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
+                Debug.Log("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
 
                 lock (this)
                     _tempText.Append("\n" + receivedMessage);
@@ -150,8 +178,9 @@ public class TCP_Client : MonoBehaviour
             catch (Exception ex)
             {
                 Debug.LogWarning(ex.Message);
-
-                LeaveTheRoom();
+                DebugManager.AddLog(ex.Message);
+                _requestLeaveRoom = true;
+                return;
             }
         }
     }

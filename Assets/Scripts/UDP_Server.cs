@@ -12,14 +12,17 @@ public class UDP_Server : MonoBehaviour
     [Header("Strat Panel parameters")]
     [SerializeField] private TMP_InputField _nameInput;
 
-    [Space, Header("UPD Client Panel parameters")]
+    [Space, Header("UPD Server Panel parameters")]
+    [SerializeField] private TMP_InputField _messageInput;
     [SerializeField] private TMP_Text _messageBox;
+    [SerializeField] private TMP_Text _ipAdress;
 
     [Space, Header("Global parameters")]
     [SerializeField] private GameObject _startPanel;
     [SerializeField] private GameObject _serverPanel;
 
     private readonly StringBuilder _tempText = new();
+    private bool _requestCloseRoom = false;
 
     // Socket parameters
     private bool _connected = false;
@@ -40,6 +43,9 @@ public class UDP_Server : MonoBehaviour
             lock (this)
                 _tempText.Clear();
         }
+
+        if (_requestCloseRoom)
+            CloseRoom();
     }
 
     private void OnApplicationQuit()
@@ -49,9 +55,17 @@ public class UDP_Server : MonoBehaviour
 
     public void CreateRoomUDP()
     {
+        if (_nameInput.text == "")
+        {
+            DebugManager.AddLog("Enter name please");
+            return;
+        }
+
         _startPanel.SetActive(false);
         _serverPanel.SetActive(true);
         _connected = true;
+
+        GetIPAdress();
 
         Thread thread = new(ServerHandler);
 
@@ -60,17 +74,46 @@ public class UDP_Server : MonoBehaviour
 
     public void SendMessageToClients()
     {
+        if (_messageInput.text == "")
+            return;
+
+        string messageToSend = _nameInput.text + ": " + _messageInput.text;
+
+        byte[] data = Encoding.ASCII.GetBytes(messageToSend);
+
         try
         {
             foreach (var endPoint in _clienEndPoints)
             {
-                byte[] data = Encoding.ASCII.GetBytes("Test Text");
                 _serverSocket.SendTo(data, endPoint);
+            }
+
+            lock (this)
+                _tempText.Append(messageToSend + "\n");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning(ex.Message);
+            DebugManager.AddLog(ex.Message);
+        }
+    }
+
+    private void ReSendMessageToClients(string message)
+    {
+        lock (this)
+            _tempText.Append(message + "\n");
+
+        try
+        {
+            for (int i = 0; i < _clienEndPoints.Count; i++)
+            {
+                _serverSocket.SendTo(Encoding.ASCII.GetBytes(message), _clienEndPoints[i]);
             }
         }
         catch (Exception ex)
         {
             Debug.LogWarning(ex.Message);
+            DebugManager.AddLog(ex.Message);
         }
     }
 
@@ -80,6 +123,7 @@ public class UDP_Server : MonoBehaviour
 
         _startPanel.SetActive(true);
         _serverPanel.SetActive(false);
+        _requestCloseRoom = false;
         _messageBox.text = "";
 
         try
@@ -94,11 +138,12 @@ public class UDP_Server : MonoBehaviour
 
             _serverSocket?.Close();
             DebugManager.AddLog("Server closed");
-            Debug.Log("Server closed");        
+            Debug.Log("Server closed");
         }
         catch (Exception ex)
         {
             Debug.LogWarning(ex.Message);
+            DebugManager.AddLog(ex.Message);
         }
     }
 
@@ -116,7 +161,10 @@ public class UDP_Server : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.LogWarning((ex.Message));
+            Debug.LogWarning(ex.Message);
+            DebugManager.AddLog(ex.Message);
+            _requestCloseRoom = true;
+            return;
         }
 
         // Start to listen messages
@@ -143,44 +191,60 @@ public class UDP_Server : MonoBehaviour
                 if (receivedMessage == "JOINUDPROOM")
                 {
                     IPEndPoint clientIpEndpoint = clientEndpoint as IPEndPoint;
+
                     if (!_clienEndPoints.Contains(clientIpEndpoint))
                         _clienEndPoints.Add(clientIpEndpoint);
 
                     DebugManager.AddLog("Some one join the room: " + clientEndpoint);
                     Debug.Log("Some one join the room: " + clientEndpoint);
-
                     continue;
                 }
-                else if (receivedMessage == "LEAVEUDPROOM")
+
+                if (receivedMessage == "LEAVEUDPROOM")
                 {
                     IPEndPoint clientIpEndpoint = clientEndpoint as IPEndPoint;
+
                     if (_clienEndPoints.Contains(clientIpEndpoint))
                         _clienEndPoints.Remove(clientIpEndpoint);
 
                     DebugManager.AddLog("Some one leave the room: " + clientEndpoint);
                     Debug.Log("Some one leave the room: " + clientEndpoint);
-
                     continue;
                 }
 
-                DebugManager.AddLog("Message recived from: " + clientEndpoint);
-                Debug.Log("Message recived from: " + clientEndpoint);
-                DebugManager.AddLog("Message recived num: " + bytesRead);
-                Debug.Log("Message recived num: " + bytesRead);
-                DebugManager.AddLog("Message recived: " + receivedMessage);
-                Debug.Log("Message recived: " + receivedMessage);
+                DebugManager.AddLog("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
+                Debug.Log("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
 
-                lock (this)
-                    _tempText.Append("\n" + receivedMessage);
+                ReSendMessageToClients(receivedMessage);
             }
             catch (Exception ex)
             {
                 Debug.LogWarning(ex.Message);
+                DebugManager.AddLog(ex.Message);
 
-                _serverSocket.Close();
-
+                _requestCloseRoom = true;
                 return;
             }
         }
+    }
+
+    private void GetIPAdress()
+    {
+        IPHostEntry ipEntry = Dns.GetHostEntry(Dns.GetHostName());
+
+        foreach (IPAddress ip in ipEntry.AddressList)
+        {
+            if (ip.AddressFamily == AddressFamily.InterNetwork)
+            {
+                _ipAdress.text = ip.ToString();
+                return;
+            }
+        }
+    }
+
+    public void CopyIPAdress()
+    {
+        GUIUtility.systemCopyBuffer = _ipAdress.text;
+        DebugManager.AddLog("IP Adress Copied");
     }
 }

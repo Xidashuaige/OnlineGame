@@ -21,6 +21,7 @@ public class UDP_Client : MonoBehaviour
     [SerializeField] private GameObject _clientPanel;
 
     private readonly StringBuilder _tempText = new();
+    private bool _requestLeaveTheRoom = false;
 
     // Socket parameters
     private bool _connected = false;
@@ -38,12 +39,22 @@ public class UDP_Client : MonoBehaviour
             lock (this)
                 _tempText.Clear();
         }
+
+        if (_requestLeaveTheRoom)
+            LeaveTheRoom();
     }
 
     public void JoinRoomUDP()
     {
+        if (_nameInput.text == "")
+        {
+            DebugManager.AddLog("Enter name please");
+            return;
+        }
+
         _startPanel.SetActive(false);
         _clientPanel.SetActive(true);
+        _connected = true;
 
         Thread thread = new(ClientHandler);
 
@@ -55,6 +66,7 @@ public class UDP_Client : MonoBehaviour
         _startPanel.SetActive(true);
         _clientPanel.SetActive(false);
         _connected = false;
+        _requestLeaveTheRoom = false;
         _messageBox.text = "";
 
         try
@@ -83,6 +95,9 @@ public class UDP_Client : MonoBehaviour
 
     public void SendMessageToServer()
     {
+        if (_messageInput.text == "")
+            return;
+
         string messageToSend = _nameInput.text + ": " + _messageInput.text;
 
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
@@ -92,20 +107,17 @@ public class UDP_Client : MonoBehaviour
             // Send data to server
             _socket.SendTo(data, 0, data.Length, SocketFlags.None, _serverEndPoint);
 
-            // Reset InputBox
-            _messageInput.text = "";
-
-            // Add text to temporary text
-            lock (this)
-                _tempText.Append("\n" + messageToSend);
-
             DebugManager.AddLog("Send message to Server");
             Debug.Log("Send message to Server");
         }
         catch (Exception ex)
         {
             Debug.LogWarning(ex.Message);
+            DebugManager.AddLog(ex.Message);
         }
+
+        // Reset InputBox
+        _messageInput.text = "";
     }
 
     private void ClientHandler()
@@ -113,12 +125,12 @@ public class UDP_Client : MonoBehaviour
         string serverIP = _ipInput.text;
         int serverPort = 8888;
 
-        _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-
-        _serverEndPoint = new(IPAddress.Parse(serverIP), serverPort);
-
         try
         {
+            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
+            _serverEndPoint = new(IPAddress.Parse(serverIP), serverPort);
+
             string messageToSend = "JOINUDPROOM";
             byte[] data = Encoding.ASCII.GetBytes(messageToSend);
 
@@ -128,10 +140,16 @@ public class UDP_Client : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogWarning(ex.Message);
+            DebugManager.AddLog(ex.Message);
+
+            _requestLeaveTheRoom = true;
+            return;
         }
 
         DebugManager.AddLog("Joined to the room");
         Debug.Log("Joined to the room");
+
+        _connected = true;
 
         // Start to listen messages
         ReciveMessage();
@@ -141,6 +159,9 @@ public class UDP_Client : MonoBehaviour
     {
         byte[] buffer = new byte[1024];
         int bytesRead;
+
+        DebugManager.AddLog("Start receive message");
+        Debug.Log("Start receive message");
 
         while (_connected)
         {
@@ -152,14 +173,12 @@ public class UDP_Client : MonoBehaviour
 
                 if (receivedMessage == "SERVERCLOSED")
                 {
-                    LeaveTheRoom();
+                    _requestLeaveTheRoom = true;
                     return;
                 }
 
-                DebugManager.AddLog("Message recived num: " + bytesRead);
-                Debug.Log("Message recived num: " + bytesRead);
-                DebugManager.AddLog("Message recived: " + receivedMessage);
-                Debug.Log("Message recived: " + receivedMessage);
+                DebugManager.AddLog("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
+                Debug.Log("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
 
                 lock (this)
                     _tempText?.Append("\n" + receivedMessage);
@@ -167,8 +186,9 @@ public class UDP_Client : MonoBehaviour
             catch (Exception ex)
             {
                 Debug.LogWarning(ex.Message);
+                DebugManager.AddLog(ex.Message);
 
-                LeaveTheRoom();
+                _requestLeaveTheRoom = true;
             }
         }
     }
