@@ -38,7 +38,7 @@ public class TCP_Server : MonoBehaviour
             _messageBox.text += _tempText.ToString();
 
             lock (this)
-                _tempText.Remove(0, _tempText.Length);
+                _tempText.Clear();
         }
     }
 
@@ -73,6 +73,8 @@ public class TCP_Server : MonoBehaviour
                 _clientsSocket[i]?.Close();
             }
 
+
+            DebugManager.AddLog("Clients Closed");
             Debug.Log("Clients Closed");
         }
         catch (Exception ex)
@@ -83,6 +85,7 @@ public class TCP_Server : MonoBehaviour
         try
         {
             _serverSocket.Close();
+            DebugManager.AddLog("Server closed");
             Debug.Log("Server closed");
         }
         catch (Exception ex)
@@ -102,6 +105,7 @@ public class TCP_Server : MonoBehaviour
             _serverSocket.Bind(new IPEndPoint(IPAddress.Any, serverPort));
 
             _serverSocket.Listen(5);
+            DebugManager.AddLog("Room created");
             Debug.Log("Room created!");
         }
         catch (Exception ex)
@@ -123,6 +127,7 @@ public class TCP_Server : MonoBehaviour
 
                 thread.Start(clientSocket);
 
+                DebugManager.AddLog("Some client connected!");
                 Debug.Log("Some client connected!");
             }
             catch (Exception ex)
@@ -147,6 +152,7 @@ public class TCP_Server : MonoBehaviour
 
                 if (bytesRead == 0)
                 {
+                    DebugManager.AddLog("Someone leave the rooom");
                     Debug.Log("Someone leave the rooom");
 
                     client.Shutdown(SocketShutdown.Both);
@@ -157,7 +163,9 @@ public class TCP_Server : MonoBehaviour
 
                 string receivedMessage = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
+                DebugManager.AddLog("Message recived num: " + bytesRead);
                 Debug.Log("Message recived num: " + bytesRead);
+                DebugManager.AddLog("Message recived: " + receivedMessage);
                 Debug.Log("Message recived: " + receivedMessage);
 
                 lock (this)

@@ -36,7 +36,7 @@ public class UDP_Client : MonoBehaviour
 
             // Reset temporary text
             lock (this)
-                _tempText.Remove(0, _tempText.Length);
+                _tempText.Clear();
         }
     }
 
@@ -96,6 +96,7 @@ public class UDP_Client : MonoBehaviour
             lock (this)
                 _tempText.Append("\n" + messageToSend);
 
+            DebugManager.AddLog("Send message to Server");
             Debug.Log("Send message to Server");
         }
         catch (Exception ex)
@@ -149,7 +150,9 @@ public class UDP_Client : MonoBehaviour
                     return;
                 }
 
+                DebugManager.AddLog("Message recived num: " + bytesRead);
                 Debug.Log("Message recived num: " + bytesRead);
+                DebugManager.AddLog("Message recived: " + receivedMessage);
                 Debug.Log("Message recived: " + receivedMessage);
 
                 lock (this)

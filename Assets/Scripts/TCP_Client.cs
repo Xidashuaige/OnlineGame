@@ -33,7 +33,7 @@ public class TCP_Client : MonoBehaviour
             _messageBox.text += _tempText.ToString();
 
             lock (this)
-                _tempText.Remove(0, _tempText.Length);
+                _tempText.Clear();
         }
     }
 
@@ -84,6 +84,7 @@ public class TCP_Client : MonoBehaviour
             lock (this)
                 _tempText.Append("\n" + messageToSend);
 
+            DebugManager.AddLog("Send message to Server");
             Debug.Log("Send message to Server");
         }
         catch (Exception ex)
@@ -113,6 +114,7 @@ public class TCP_Client : MonoBehaviour
 
             thread.Start();
 
+            DebugManager.AddLog("Connected to Server");
             Debug.Log("Connected to Server");
         }
         catch (Exception ex)
@@ -134,7 +136,9 @@ public class TCP_Client : MonoBehaviour
 
                 string receivedMessage = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
+                DebugManager.AddLog("Message recived num: " + bytesRead); 
                 Debug.Log("Message recived num: " + bytesRead);
+                DebugManager.AddLog("Message recived: " + receivedMessage); 
                 Debug.Log("Message recived: " + receivedMessage);
 
                 lock (this)

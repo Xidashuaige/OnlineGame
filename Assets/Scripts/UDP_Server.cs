@@ -38,7 +38,7 @@ public class UDP_Server : MonoBehaviour
             _messageBox.text += _tempText.ToString();
 
             lock (this)
-                _tempText.Remove(0, _tempText.Length);
+                _tempText.Clear();
         }
     }
 
@@ -77,7 +77,8 @@ public class UDP_Server : MonoBehaviour
             _clienEndPoints.Clear();
 
             _serverSocket.Close();
-            Debug.Log("Server closed");
+            DebugManager.AddLog("Server closed");
+            Debug.Log("Server closed");        
         }
         catch (Exception ex)
         {
@@ -94,6 +95,7 @@ public class UDP_Server : MonoBehaviour
         try
         {
             _serverSocket.Bind(new IPEndPoint(IPAddress.Any, serverPort));
+            DebugManager.AddLog("Room created");
             Debug.Log("Room created!");
         }
         catch (Exception ex)
@@ -128,6 +130,7 @@ public class UDP_Server : MonoBehaviour
                     if (!_clienEndPoints.Contains(clientIpEndpoint))
                         _clienEndPoints.Add(clientIpEndpoint);
 
+                    DebugManager.AddLog("Some one join the room: " + clientEndpoint);
                     Debug.Log("Some one join the room: " + clientEndpoint);
 
                     continue;
@@ -138,13 +141,17 @@ public class UDP_Server : MonoBehaviour
                     if (_clienEndPoints.Contains(clientIpEndpoint))
                         _clienEndPoints.Remove(clientIpEndpoint);
 
+                    DebugManager.AddLog("Some one leave the room: " + clientEndpoint);
                     Debug.Log("Some one leave the room: " + clientEndpoint);
 
                     continue;
                 }
 
+                DebugManager.AddLog("Message recived from: " + clientEndpoint);
                 Debug.Log("Message recived from: " + clientEndpoint);
+                DebugManager.AddLog("Message recived num: " + bytesRead);
                 Debug.Log("Message recived num: " + bytesRead);
+                DebugManager.AddLog("Message recived: " + receivedMessage);
                 Debug.Log("Message recived: " + receivedMessage);
 
                 lock (this)
