@@ -96,6 +96,8 @@ public class UDP_Server : MonoBehaviour
             Debug.LogWarning(ex.Message);
             DebugManager.AddLog(ex.Message);
         }
+
+        _messageInput.text = "";
     }
 
     private void ReSendMessageToClients(string message)
