@@ -1,9 +1,7 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-[Serializable]
-public struct Player
+public class Player : NetWorkMessage
 {
     public int id;
     public Vector2 position;
