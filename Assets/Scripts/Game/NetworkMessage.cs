@@ -1,15 +1,13 @@
-using System;
 using System.Net;
-using System.Xml.Linq;
 
-public enum NetWorkMessageType
+public enum NetworkMessageType
 {
     JoinServer,
     LeaveServer,
     JoinRoom,
     LeaveRoom,
     CreateRoom,
-    PrepareInTheRoom,
+    ReadyInTheRoom,
     StartGame,
     KickOutRoom,
     Null
@@ -17,21 +15,27 @@ public enum NetWorkMessageType
 
 public class NetworkMessage
 {
-    protected NetworkMessage(NetWorkMessageType type)
+    protected NetworkMessage(NetworkMessageType type)
     {
         this.type = type;
     }
 
     // 4 server & client
-    public NetWorkMessageType type = NetWorkMessageType.Null;
+    public NetworkMessageType type = NetworkMessageType.Null;
 
     // 4 client
     public bool succesful = false;
 }
 
+
+// -----------------------------------------------
+// -----------------------------------------------
+// ------------REQUEST IN THE SERVER--------------
+// -----------------------------------------------
+// -----------------------------------------------
 public class JoinServer : NetworkMessage
 {
-    public JoinServer(IPEndPoint userIp, string userName) : base(NetWorkMessageType.JoinServer)
+    public JoinServer(IPEndPoint userIp, string userName) : base(NetworkMessageType.JoinServer)
     {
         ip = userIp;
         name = userName;
@@ -47,7 +51,7 @@ public class JoinServer : NetworkMessage
 
 public class LeaveServer : NetworkMessage
 {
-    public LeaveServer(uint userId) : base(NetWorkMessageType.LeaveServer)
+    public LeaveServer(uint userId) : base(NetworkMessageType.LeaveServer)
     {
         id = userId;
     }
@@ -58,7 +62,7 @@ public class LeaveServer : NetworkMessage
 
 public class JoinRoom : NetworkMessage
 {
-    public JoinRoom(uint userId, uint roomId) : base(NetWorkMessageType.JoinRoom)
+    public JoinRoom(uint userId, uint roomId) : base(NetworkMessageType.JoinRoom)
     {
         this.userId = userId;
         this.roomId = roomId;
@@ -72,9 +76,16 @@ public class JoinRoom : NetworkMessage
     // room data, players in the room
 }
 
+
+// -----------------------------------------------
+// -----------------------------------------------
+// ------------REQUEST IN THE ROOM----------------
+// -----------------------------------------------
+// -----------------------------------------------
+
 public class LeaveRoom : NetworkMessage
 {
-    public LeaveRoom(uint userId) : base(NetWorkMessageType.LeaveRoom)
+    public LeaveRoom(uint userId) : base(NetworkMessageType.LeaveRoom)
     {
         id = userId;
     }
@@ -83,3 +94,47 @@ public class LeaveRoom : NetworkMessage
     public uint id;
 }
 
+public class ReadyInTheRoom : NetworkMessage
+{
+    public ReadyInTheRoom(uint userId) : base(NetworkMessageType.ReadyInTheRoom)
+    {
+        id = userId;
+    }
+
+    // 4 server
+    public uint id;
+}
+
+// Just for Room Master
+public class StartGame : NetworkMessage
+{
+    public StartGame(uint userId) : base(NetworkMessageType.StartGame)
+    {
+        id = userId;
+    }
+
+    // 4 server
+    public uint id;
+}
+
+// Just for Room Master
+public class KickOutRoom : NetworkMessage
+{
+    public KickOutRoom(uint userId, uint targetUserId):base(NetworkMessageType.KickOutRoom)
+    {
+        id = userId;
+        this.targetUserId  = targetUserId;
+    }
+
+    // 4 server
+    public uint id;
+   
+    // 4 server & client
+    public uint targetUserId;
+}
+
+// -----------------------------------------------
+// -----------------------------------------------
+// ------------REQUEST IN THE GAME----------------
+// -----------------------------------------------
+// -----------------------------------------------
