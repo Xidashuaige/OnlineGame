@@ -14,7 +14,7 @@ public class Client : MonoBehaviour
 
     private Socket _socket;
 
-    private User _user;
+    //private User _user;
 
     private bool _connecting;
 
@@ -41,7 +41,7 @@ public class Client : MonoBehaviour
 
                 string receivedMessage = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
-                NetWorkMessage netWorkMessage = JsonUtility.FromJson<NetWorkMessage>(receivedMessage);
+                NetworkMessage netWorkMessage = JsonUtility.FromJson<NetworkMessage>(receivedMessage);
 
                 HandleMessage(netWorkMessage);
 
@@ -56,19 +56,15 @@ public class Client : MonoBehaviour
         }
     }
 
-    private void HandleMessage(NetWorkMessage netWorkMessage)
+    private void HandleMessage(NetworkMessage netWorkMessage)
     {
-        switch (netWorkMessage.flag)
+        switch (netWorkMessage.type)
         {
-            case NetWorkMessageFlag.Test1:
-                break;
 
-            case NetWorkMessageFlag.Test2:
-                break;
         }
     }
 
-    public void SendToServer(NetWorkMessage message)
+    public void SendToServer(NetworkMessage message)
     {
         byte[] data = Encoding.ASCII.GetBytes(JsonUtility.ToJson(message));
 

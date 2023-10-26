@@ -6,27 +6,6 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 
-
-public enum NetWorkMessageFlag
-{
-    Test1,
-    Test2,
-    JoinRoom,
-    JoinRoomCallBack,
-    LeaveRoom,
-}
-
-public class JoinRoom : NetWorkMessage
-{
-    public User user;
-}
-
-[Serializable]
-public class NetWorkMessage
-{
-    public NetWorkMessageFlag flag;
-}
-
 public class Server : MonoBehaviour
 {
     [Space, Header("Global parameters")]
@@ -55,6 +34,7 @@ public class Server : MonoBehaviour
     {
         
     }
+
     public void CreateServer()
     {
         Thread thread = new(StartServer);
@@ -97,7 +77,7 @@ public class Server : MonoBehaviour
 
                 string receivedMessage = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
-                HandleMessage(JsonUtility.FromJson<NetWorkMessage>(receivedMessage));
+                HandleMessage(JsonUtility.FromJson<NetworkMessage>(receivedMessage));
 
                 DebugManager.AddLog("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
                 Debug.Log("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
@@ -111,7 +91,7 @@ public class Server : MonoBehaviour
         }
     }
 
-    private void HandleMessage(NetWorkMessage message)
+    private void HandleMessage(NetworkMessage message)
     {
         /*
         switch (message.flag)
@@ -149,9 +129,9 @@ public class Server : MonoBehaviour
         _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
     }
 
-    private void OnConncted(User user)
+    private void OnConncted()
     {
-        user.Id = _idGen++;
+
     }
 
     public void SendToClients(string messageToSend)
