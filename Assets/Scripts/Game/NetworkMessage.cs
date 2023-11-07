@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Xml.Linq;
 using UnityEditor.VersionControl;
 using UnityEngine;
 
@@ -13,6 +14,7 @@ public enum NetworkMessageType
     ReadyInTheRoom,
     StartGame,
     KickOutRoom,
+    Heartbeat,
     Null
 }
 
@@ -33,8 +35,19 @@ public class NetworkMessage
 
     // 4 client
     public bool succesful = false;
+
+    public EndPoint endPoint = null;
 }
 
+public class HearthBeat : NetworkMessage
+{
+    public HearthBeat(uint userid) : base(NetworkMessageType.Heartbeat)
+    {
+        id = userid;
+    }
+
+    public uint id;
+}
 
 // -----------------------------------------------
 // -----------------------------------------------
@@ -50,8 +63,6 @@ public class JoinServer : NetworkMessage
 
     // 4 server
     public string name;
-
-
 
     // 4 client
     public uint id;
@@ -104,7 +115,6 @@ public class JoinRoom : NetworkMessage
 // ------------REQUEST IN THE ROOM----------------
 // -----------------------------------------------
 // -----------------------------------------------
-
 public class LeaveRoom : NetworkMessage
 {
     public LeaveRoom(uint userId) : base(NetworkMessageType.LeaveRoom)

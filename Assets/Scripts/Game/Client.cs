@@ -14,11 +14,8 @@ public class Client : MonoBehaviour
     [SerializeField] private TMP_InputField _nameInput;
 
     // Clients paramaters
-    public IPEndPoint EndPoint { get; }
 
     private IPEndPoint _serverEndPoint;
-
-    private IPEndPoint _endPoint;
 
     private Socket _socket;
 
@@ -76,7 +73,7 @@ public class Client : MonoBehaviour
 
                 NetworkMessage netWorkMessage = JsonUtility.FromJson<NetworkMessage>(receivedMessage);
 
-                if(!netWorkMessage.succesful)
+                if (!netWorkMessage.succesful || bytesRead <= 0)
                 {
                     lock (_lock)
                         _connecting = false;

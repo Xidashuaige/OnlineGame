@@ -6,8 +6,15 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 
-struct ClientForServer
+public struct ClientForServer
 {
+    public ClientForServer(string name, uint id, IPEndPoint endPoint)
+    {
+        this.name = name;
+        this.id = id;
+        this.endPoint = endPoint;
+    }
+
     public string name;
     public uint id;
     public IPEndPoint endPoint;
@@ -25,12 +32,13 @@ public class Server : MonoBehaviour
     private RoomManager _roomManager;
     private List<ClientForServer> _clients;
     private uint _idGen = 0;
-    private Dictionary<NetworkMessageType,Action<NetworkMessage>> _actionHandlers;
+    private Dictionary<NetworkMessageType, Action<NetworkMessage>> _actionHandlers;
 
     // Socket parameters
-    private bool _connected = false;
+    private bool _connecting = false;
     private Socket _socket;
     private const int _serverPort = 8888;
+    private EndPoint _tempClientEndpoint;
 
 
     // Start is called before the first frame update
@@ -42,11 +50,14 @@ public class Server : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 
     public void CreateServer()
     {
+        if (_connecting)
+            return;
+
         Thread thread = new(StartServer);
 
         thread.Start();
@@ -54,7 +65,13 @@ public class Server : MonoBehaviour
 
     private void StartServer()
     {
-        _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        if (_socket == null)
+        {
+            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
+            _tempClientEndpoint = new IPEndPoint(IPAddress.Any, 0);
+        }
+
 
         try
         {
@@ -78,20 +95,23 @@ public class Server : MonoBehaviour
         byte[] buffer = new byte[1024];
         int bytesRead;
 
-        while (_connected)
+        while (_connecting)
         {
             try
             {
-                EndPoint clientEndpoint = new IPEndPoint(IPAddress.Any, 0);
-
-                bytesRead = _socket.ReceiveFrom(buffer, ref clientEndpoint);
+                bytesRead = _socket.ReceiveFrom(buffer, ref _tempClientEndpoint);
 
                 if (bytesRead == 0)
                     continue;
 
                 string receivedMessage = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
-                HandleMessage(JsonUtility.FromJson<NetworkMessage>(receivedMessage));
+                NetworkMessage message = JsonUtility.FromJson<NetworkMessage>(receivedMessage);
+
+                if (message.type == NetworkMessageType.JoinServer)
+                    message.endPoint = _tempClientEndpoint;
+
+                ThreadPool.QueueUserWorkItem(new WaitCallback(HandleMessage), message);
 
                 DebugManager.AddLog("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
                 Debug.Log("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
@@ -105,15 +125,24 @@ public class Server : MonoBehaviour
         }
     }
 
-    public void SendMessageToClients(string messageToSend)
+    public void SendMessageToClients(NetworkMessage message)
     {
-        byte[] data = Encoding.ASCII.GetBytes(messageToSend);
+        byte[] data = message.GetBytes();
 
         foreach (var client in _clients)
         {
             // Send data to server, this function may not block the code
             _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, client.endPoint, new AsyncCallback(SendCallback), null);
         }
+    }
+
+    public void SendMessageToClient(ClientForServer client, NetworkMessage message)
+    {
+        byte[] data = message.GetBytes();
+
+        // Send data to server, this function may not block the code
+        _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, client.endPoint, new AsyncCallback(SendCallback), null);
+
     }
 
     // After message sent
@@ -134,17 +163,38 @@ public class Server : MonoBehaviour
 
     // -----------------------------------------------
     // -----------------------------------------------
+    // ---------------------TOOL----------------------
+    // -----------------------------------------------
+    // -----------------------------------------------
+    private uint GetNextID()
+    {
+        return _idGen++;
+    }
+
+
+    // -----------------------------------------------
+    // -----------------------------------------------
     // ------------HANDLE PLAYER MESSAGES-------------
     // -----------------------------------------------
     // -----------------------------------------------
-    private void HandleMessage(NetworkMessage message)
+    private void HandleMessage(object messageObj)
     {
+        NetworkMessage message = messageObj as NetworkMessage;
+
+        message.succesful = true;
+
         _actionHandlers[message.type].Invoke(message);
     }
 
     private void HandleJoinServerMessage(JoinServer message)
     {
+        ClientForServer client = new(message.name, GetNextID(), (IPEndPoint)_tempClientEndpoint);
 
+        _clients.Add(client);
+
+        message.id = client.id;
+
+        SendMessageToClient(client, message);
     }
 
     private void HandleLeaveServerMessage(LeaveServer message)
