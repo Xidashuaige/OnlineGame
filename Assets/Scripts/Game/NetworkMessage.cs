@@ -1,4 +1,7 @@
 using System.Net;
+using System.Text;
+using UnityEditor.VersionControl;
+using UnityEngine;
 
 public enum NetworkMessageType
 {
@@ -20,6 +23,11 @@ public class NetworkMessage
         this.type = type;
     }
 
+    public byte[] GetBytes()
+    {
+        return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
+    }
+
     // 4 server & client
     public NetworkMessageType type = NetworkMessageType.Null;
 
@@ -35,15 +43,15 @@ public class NetworkMessage
 // -----------------------------------------------
 public class JoinServer : NetworkMessage
 {
-    public JoinServer(IPEndPoint userIp, string userName) : base(NetworkMessageType.JoinServer)
+    public JoinServer(string userName) : base(NetworkMessageType.JoinServer)
     {
-        ip = userIp;
         name = userName;
     }
 
     // 4 server
-    public IPEndPoint ip;
     public string name;
+
+
 
     // 4 client
     public uint id;
@@ -58,6 +66,20 @@ public class LeaveServer : NetworkMessage
 
     // 4 server
     public uint id;
+}
+
+public class CreateRoom: NetworkMessage
+{
+    public CreateRoom(uint userId) : base(NetworkMessageType.CreateRoom)
+    {
+        this.userId = userId;
+    }
+
+    // 4 server
+    public uint userId;
+
+    // 4 client
+    public uint roomId;
 }
 
 public class JoinRoom : NetworkMessage

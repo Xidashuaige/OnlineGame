@@ -6,22 +6,32 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 
+struct ClientForServer
+{
+    public string name;
+    public uint id;
+    public IPEndPoint endPoint;
+}
+
 public class Server : MonoBehaviour
 {
+    // Unity Objects
     [Space, Header("Global parameters")]
     [SerializeField] private GameObject _startPanel;
     [SerializeField] private GameObject _roomPanel;
     [SerializeField] private GameObject _gamePanel;
 
-    private List<Client> _clients;
+    // Server parameters
     private RoomManager _roomManager;
+    private List<ClientForServer> _clients;
+    private uint _idGen = 0;
+    private Dictionary<NetworkMessageType,Action<NetworkMessage>> _actionHandlers;
 
     // Socket parameters
     private bool _connected = false;
     private Socket _socket;
     private const int _serverPort = 8888;
 
-    private uint _idGen = 0;
 
     // Start is called before the first frame update
     void Start()
@@ -44,6 +54,8 @@ public class Server : MonoBehaviour
 
     private void StartServer()
     {
+        _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
         try
         {
             _socket.Bind(new IPEndPoint(IPAddress.Any, _serverPort));
@@ -57,10 +69,11 @@ public class Server : MonoBehaviour
             return;
         }
 
-        ReceiveMessage();
+        // Start to listen messages
+        ListenMessages();
     }
 
-    private void ReceiveMessage()
+    private void ListenMessages()
     {
         byte[] buffer = new byte[1024];
         int bytesRead;
@@ -70,6 +83,7 @@ public class Server : MonoBehaviour
             try
             {
                 EndPoint clientEndpoint = new IPEndPoint(IPAddress.Any, 0);
+
                 bytesRead = _socket.ReceiveFrom(buffer, ref clientEndpoint);
 
                 if (bytesRead == 0)
@@ -91,60 +105,18 @@ public class Server : MonoBehaviour
         }
     }
 
-    private void HandleMessage(NetworkMessage message)
-    {
-        /*
-        switch (message.flag)
-        {
-            case NetWorkMessageFlag.JoinRoom:
-                JoinRoom joinRoom = message as JoinRoom;
-
-                Client client = new Client();
-                client.users
-
-                if (!_clienEndPoints.Contains(clientIpEndpoint))
-                    _clienEndPoints.Add(clientIpEndpoint);
-
-                //DebugManager.AddLog("Some one join the room: " + clientEndpoint);
-                //Debug.Log("Some one join the room: " + clientEndpoint);
-
-                break;
-            case NetWorkMessageFlag.LeaveRoom:
-
-                IPEndPoint clientIpEndpoint = clientEndpoint as IPEndPoint;
-
-                if (_clienEndPoints.Contains(clientIpEndpoint))
-                    _clienEndPoints.Remove(clientIpEndpoint);
-
-                DebugManager.AddLog("Some one leave the room: " + clientEndpoint);
-                Debug.Log("Some one leave the room: " + clientEndpoint);
-
-                break;
-        }
-        */
-    }
-
-    private void ListenForClients()
-    {
-        _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-    }
-
-    private void OnConncted()
-    {
-
-    }
-
-    public void SendToClients(string messageToSend)
+    public void SendMessageToClients(string messageToSend)
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
 
         foreach (var client in _clients)
         {
-            // Send data to server
-            _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, client.EndPoint, new AsyncCallback(SendCallback), null);
+            // Send data to server, this function may not block the code
+            _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, client.endPoint, new AsyncCallback(SendCallback), null);
         }
     }
 
+    // After message sent
     private void SendCallback(IAsyncResult ar)
     {
         try
@@ -157,5 +129,56 @@ public class Server : MonoBehaviour
         {
             Console.WriteLine(e.ToString());
         }
+    }
+
+
+    // -----------------------------------------------
+    // -----------------------------------------------
+    // ------------HANDLE PLAYER MESSAGES-------------
+    // -----------------------------------------------
+    // -----------------------------------------------
+    private void HandleMessage(NetworkMessage message)
+    {
+        _actionHandlers[message.type].Invoke(message);
+    }
+
+    private void HandleJoinServerMessage(JoinServer message)
+    {
+
+    }
+
+    private void HandleLeaveServerMessage(LeaveServer message)
+    {
+
+    }
+
+    private void HandleCreateRoomMessage(CreateRoom message)
+    {
+
+    }
+
+    private void HandleJoinRoomMessage(JoinRoom message)
+    {
+
+    }
+
+    private void HandleLeaveRoomMessage(LeaveRoom message)
+    {
+
+    }
+
+    private void HandleReadyInTheRoomMessage(ReadyInTheRoom message)
+    {
+
+    }
+
+    private void HandleStartGameMessage(StartGame message)
+    {
+
+    }
+
+    private void HandleKickOutRoomMessage(KickOutRoom message)
+    {
+
     }
 }
