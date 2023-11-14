@@ -4,7 +4,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public struct ClientForServer
 {
@@ -24,33 +26,73 @@ public class Server : MonoBehaviour
 {
     // Unity Objects
     [Space, Header("Global parameters")]
-    [SerializeField] private GameObject _startPanel;
-    [SerializeField] private GameObject _roomPanel;
-    [SerializeField] private GameObject _gamePanel;
+    [SerializeField] private PanelManager _panelManager;
+    [SerializeField] private Button _startServerBtn;
+    [SerializeField] private TMP_Text _ipAdress;
 
     // Server parameters
     private RoomManager _roomManager;
-    private List<ClientForServer> _clients;
+    private List<ClientForServer> _clients = new();
     private uint _idGen = 0;
-    private Dictionary<NetworkMessageType, Action<NetworkMessage>> _actionHandlers;
+    private Dictionary<NetworkMessageType, Action<NetworkMessage>> _actionHandlers = new();
+    [SerializeField] private Client _myClient;
 
     // Socket parameters
     private bool _connecting = false;
     private Socket _socket;
     private const int _serverPort = 8888;
     private EndPoint _tempClientEndpoint;
+    private object _lock = new object();
+
+    // Requests
+    private bool _triggerStartServer = false;
 
 
     // Start is called before the first frame update
     void Start()
     {
-        _clients = new();
+        // Init Handle events actions
+        _actionHandlers[NetworkMessageType.Heartbeat] = HandleHeartBeatMessage;
+        _actionHandlers[NetworkMessageType.StartGame] = HandleStartGameMessage;
+        _actionHandlers[NetworkMessageType.ReadyInTheRoom] = HandleReadyInTheRoomMessage;
+        _actionHandlers[NetworkMessageType.KickOutRoom] = HandleKickOutRoomMessage;
+        _actionHandlers[NetworkMessageType.CreateRoom] = HandleCreateRoomMessage;
+        _actionHandlers[NetworkMessageType.JoinRoom] = HandleJoinRoomMessage;
+        _actionHandlers[NetworkMessageType.JoinServer] = HandleJoinServerMessage;
+        _actionHandlers[NetworkMessageType.LeaveRoom] = HandleLeaveRoomMessage;
+        _actionHandlers[NetworkMessageType.LeaveServer] = HandleLeaveServerMessage;
+    }
+
+    private void OnApplicationQuit()
+    {
+        _connecting = false;
+
+        _socket?.Dispose();
+        _socket = null;
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (_triggerStartServer)
+        {
+            _ipAdress.text = GetIPAdress();
 
+            // Change btn state
+            var text = _startServerBtn.GetComponentInChildren<TMP_Text>();
+
+            _startServerBtn.onClick.RemoveAllListeners();
+
+            _startServerBtn.onClick.AddListener(_myClient.RequestCloseServer);
+
+            if (text != null)
+                text.text = "Close Server";
+
+            // Change my client to server host
+            _myClient.host = true;
+
+            _triggerStartServer = false;
+        }
     }
 
     public void CreateServer()
@@ -63,6 +105,23 @@ public class Server : MonoBehaviour
         thread.Start();
     }
 
+    public void CloseServer(CloseServer message)
+    {
+        SendMessageToClients(message);
+
+        _startServerBtn.onClick.RemoveAllListeners();
+
+        _startServerBtn.onClick.AddListener(CreateServer);
+
+        var text = _startServerBtn.GetComponentInChildren<TMP_Text>();
+
+        if (text != null)
+            text.text = "Start Server";
+
+        lock (_lock)
+            _connecting = false;
+    }
+
     private void StartServer()
     {
         if (_socket == null)
@@ -72,12 +131,12 @@ public class Server : MonoBehaviour
             _tempClientEndpoint = new IPEndPoint(IPAddress.Any, 0);
         }
 
-
         try
         {
             _socket.Bind(new IPEndPoint(IPAddress.Any, _serverPort));
-            DebugManager.AddLog("Room created");
-            Debug.Log("Room created!");
+
+            DebugManager.AddLog("Server Start!");
+            Debug.Log("Server Start!");
         }
         catch (Exception ex)
         {
@@ -85,6 +144,12 @@ public class Server : MonoBehaviour
             DebugManager.AddLog(ex.Message);
             return;
         }
+
+
+        // When start server successful
+        _triggerStartServer = true;
+
+        _connecting = true;
 
         // Start to listen messages
         ListenMessages();
@@ -113,8 +178,8 @@ public class Server : MonoBehaviour
 
                 ThreadPool.QueueUserWorkItem(new WaitCallback(HandleMessage), message);
 
-                DebugManager.AddLog("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
-                Debug.Log("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
+                DebugManager.AddLog("Message recived from client: " + receivedMessage + "\t" + "message length: " + bytesRead);
+                Debug.Log("Message recived from client: " + receivedMessage + "\t" + "message length: " + bytesRead);
             }
             catch (Exception ex)
             {
@@ -127,6 +192,8 @@ public class Server : MonoBehaviour
 
     public void SendMessageToClients(NetworkMessage message)
     {
+        Debug.Log("SendMessage type: " + message.type);
+
         byte[] data = message.GetBytes();
 
         foreach (var client in _clients)
@@ -138,11 +205,12 @@ public class Server : MonoBehaviour
 
     public void SendMessageToClient(ClientForServer client, NetworkMessage message)
     {
+        Debug.Log("SendMessages type: " + message.type + "\t client ip: " + client.endPoint.AddressFamily);
+
         byte[] data = message.GetBytes();
 
         // Send data to server, this function may not block the code
         _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, client.endPoint, new AsyncCallback(SendCallback), null);
-
     }
 
     // After message sent
@@ -160,10 +228,9 @@ public class Server : MonoBehaviour
         }
     }
 
-
     // -----------------------------------------------
     // -----------------------------------------------
-    // ---------------------TOOL----------------------
+    // ---------------------UTIL----------------------
     // -----------------------------------------------
     // -----------------------------------------------
     private uint GetNextID()
@@ -171,6 +238,25 @@ public class Server : MonoBehaviour
         return _idGen++;
     }
 
+    public string GetIPAdress()
+    {
+        IPHostEntry ipEntry = Dns.GetHostEntry(Dns.GetHostName());
+
+        foreach (IPAddress ip in ipEntry.AddressList)
+        {
+            if (ip.AddressFamily == AddressFamily.InterNetwork)
+                return ip.ToString();
+        }
+
+        return "0.0.0.0";
+    }
+
+    public void CopyIPAdress()
+    {
+        GUIUtility.systemCopyBuffer = _ipAdress.text;
+        Debug.Log("IP Adress Copied");
+        DebugManager.AddLog("IP Adress Copied");
+    }
 
     // -----------------------------------------------
     // -----------------------------------------------
@@ -179,16 +265,27 @@ public class Server : MonoBehaviour
     // -----------------------------------------------
     private void HandleMessage(object messageObj)
     {
-        NetworkMessage message = messageObj as NetworkMessage;
+        Debug.Log("Handle message in server");
+
+        var message = messageObj as NetworkMessage;
 
         message.succesful = true;
 
         _actionHandlers[message.type].Invoke(message);
     }
 
-    private void HandleJoinServerMessage(JoinServer message)
+    private void HandleHeartBeatMessage(NetworkMessage data)
     {
-        ClientForServer client = new(message.name, GetNextID(), (IPEndPoint)_tempClientEndpoint);
+        var message = data as HearthBeat;
+    }
+
+    private void HandleJoinServerMessage(NetworkMessage data)
+    {
+        Debug.Log("Server sent Start to clients");
+
+        var message = data as JoinServer;
+
+        ClientForServer client = new(message.name, GetNextID(), (IPEndPoint)message.endPoint);
 
         _clients.Add(client);
 
@@ -197,38 +294,46 @@ public class Server : MonoBehaviour
         SendMessageToClient(client, message);
     }
 
-    private void HandleLeaveServerMessage(LeaveServer message)
+    private void HandleLeaveServerMessage(NetworkMessage data)
     {
-
+        var message = data as LeaveServer;
     }
 
-    private void HandleCreateRoomMessage(CreateRoom message)
+    private void HandleCreateRoomMessage(NetworkMessage data)
     {
-
+        var message = data as CreateRoom;
     }
 
-    private void HandleJoinRoomMessage(JoinRoom message)
+    private void HandleJoinRoomMessage(NetworkMessage data)
     {
-
+        var message = data as JoinRoom;
     }
 
-    private void HandleLeaveRoomMessage(LeaveRoom message)
+    private void HandleLeaveRoomMessage(NetworkMessage data)
     {
-
+        var message = data as LeaveRoom;
     }
 
-    private void HandleReadyInTheRoomMessage(ReadyInTheRoom message)
+    private void HandleReadyInTheRoomMessage(NetworkMessage data)
     {
-
+        var message = data as ReadyInTheRoom;
     }
 
-    private void HandleStartGameMessage(StartGame message)
+    private void HandleStartGameMessage(NetworkMessage data)
     {
-
+        var message = data as StartGame;
     }
 
-    private void HandleKickOutRoomMessage(KickOutRoom message)
+    private void HandleKickOutRoomMessage(NetworkMessage data)
     {
+        var message = data as KickOutRoom;
+    }
 
+    private void HandleCloseServer(NetworkMessage data)
+    {
+        var message = data as CloseServer;
+
+        if (message.userId == _myClient.ID)
+            CloseServer(message);
     }
 }

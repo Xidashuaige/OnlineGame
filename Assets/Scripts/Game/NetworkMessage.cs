@@ -15,6 +15,7 @@ public enum NetworkMessageType
     StartGame,
     KickOutRoom,
     Heartbeat,
+    CloseServer,
     Null
 }
 
@@ -107,6 +108,17 @@ public class JoinRoom : NetworkMessage
 
     // 4 cient
     // room data, players in the room
+}
+
+public class CloseServer : NetworkMessage
+{
+    public CloseServer(uint userId) : base(NetworkMessageType.CloseServer)
+    {
+        this.userId = userId;
+    }
+
+    // 4 server
+    public uint userId;
 }
 
 

@@ -7,11 +7,13 @@ public class PlayerController : MonoBehaviour
     private PlayerMovement _movement;
 
     public bool Owner { get => _owner; set => _owner = value; }
-    private bool _owner;
+    [SerializeField] private bool _owner = false;
 
-    // Start is called before the first frame update
-    void Start()
+    private void OnEnable()
     {
+        if (_movement != null)
+            return;
+
         _movement = GetComponent<PlayerMovement>();
 
         if (Owner)
