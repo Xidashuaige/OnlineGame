@@ -1,7 +1,7 @@
+using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Text;
-using System.Xml.Linq;
-using UnityEditor.VersionControl;
 using UnityEngine;
 
 public enum NetworkMessageType
@@ -19,6 +19,39 @@ public enum NetworkMessageType
     Null
 }
 
+[Serializable]
+public class NetworkPackage
+{
+    public NetworkPackage(NetworkMessageType type, byte[] data)
+    {
+        this.type = type;
+        this.data = data;
+    }
+
+    public byte[] GetBytes()
+    {
+        return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
+    }
+
+    public NetworkMessage GetData()
+    {
+        switch (type)
+        {
+            case NetworkMessageType.Heartbeat:
+                return HearthBeat.GetData(data);
+        }
+
+        return null;
+    }
+
+    public NetworkMessageType type;
+
+    public byte[] data;
+
+    //static Dictionary<NetworkMessageType, >
+}
+
+[Serializable]
 public class NetworkMessage
 {
     protected NetworkMessage(NetworkMessageType type)
@@ -26,7 +59,7 @@ public class NetworkMessage
         this.type = type;
     }
 
-    public byte[] GetBytes()
+    virtual public byte[] GetBytes()
     {
         return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
     }
@@ -40,11 +73,22 @@ public class NetworkMessage
     public EndPoint endPoint = null;
 }
 
+[Serializable]
 public class HearthBeat : NetworkMessage
 {
     public HearthBeat(uint userid) : base(NetworkMessageType.Heartbeat)
     {
         id = userid;
+    }
+
+    public override byte[] GetBytes()
+    {
+        return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
+    }
+
+    static public HearthBeat GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<HearthBeat>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
 
     public uint id;
@@ -55,11 +99,18 @@ public class HearthBeat : NetworkMessage
 // ------------REQUEST IN THE SERVER--------------
 // -----------------------------------------------
 // -----------------------------------------------
+
+[Serializable]
 public class JoinServer : NetworkMessage
 {
     public JoinServer(string userName) : base(NetworkMessageType.JoinServer)
     {
         name = userName;
+    }
+
+    public override byte[] GetBytes()
+    {
+        return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
     }
 
     // 4 server
@@ -69,6 +120,7 @@ public class JoinServer : NetworkMessage
     public uint id;
 }
 
+[Serializable]
 public class LeaveServer : NetworkMessage
 {
     public LeaveServer(uint userId) : base(NetworkMessageType.LeaveServer)
@@ -76,15 +128,25 @@ public class LeaveServer : NetworkMessage
         id = userId;
     }
 
+    public override byte[] GetBytes()
+    {
+        return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
+    }
+
     // 4 server
     public uint id;
 }
 
-public class CreateRoom: NetworkMessage
+[Serializable]
+public class CreateRoom : NetworkMessage
 {
     public CreateRoom(uint userId) : base(NetworkMessageType.CreateRoom)
     {
         this.userId = userId;
+    }
+    public override byte[] GetBytes()
+    {
+        return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
     }
 
     // 4 server
@@ -94,12 +156,18 @@ public class CreateRoom: NetworkMessage
     public uint roomId;
 }
 
+[Serializable]
 public class JoinRoom : NetworkMessage
 {
     public JoinRoom(uint userId, uint roomId) : base(NetworkMessageType.JoinRoom)
     {
         this.userId = userId;
         this.roomId = roomId;
+    }
+
+    public override byte[] GetBytes()
+    {
+        return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
     }
 
     // 4 server
@@ -110,6 +178,7 @@ public class JoinRoom : NetworkMessage
     // room data, players in the room
 }
 
+[Serializable]
 public class CloseServer : NetworkMessage
 {
     public CloseServer(uint userId) : base(NetworkMessageType.CloseServer)
@@ -127,6 +196,8 @@ public class CloseServer : NetworkMessage
 // ------------REQUEST IN THE ROOM----------------
 // -----------------------------------------------
 // -----------------------------------------------
+
+[Serializable]
 public class LeaveRoom : NetworkMessage
 {
     public LeaveRoom(uint userId) : base(NetworkMessageType.LeaveRoom)
@@ -138,6 +209,7 @@ public class LeaveRoom : NetworkMessage
     public uint id;
 }
 
+[Serializable]
 public class ReadyInTheRoom : NetworkMessage
 {
     public ReadyInTheRoom(uint userId) : base(NetworkMessageType.ReadyInTheRoom)
@@ -150,6 +222,7 @@ public class ReadyInTheRoom : NetworkMessage
 }
 
 // Just for Room Master
+[Serializable]
 public class StartGame : NetworkMessage
 {
     public StartGame(uint userId) : base(NetworkMessageType.StartGame)
@@ -162,17 +235,18 @@ public class StartGame : NetworkMessage
 }
 
 // Just for Room Master
+[Serializable]
 public class KickOutRoom : NetworkMessage
 {
-    public KickOutRoom(uint userId, uint targetUserId):base(NetworkMessageType.KickOutRoom)
+    public KickOutRoom(uint userId, uint targetUserId) : base(NetworkMessageType.KickOutRoom)
     {
         id = userId;
-        this.targetUserId  = targetUserId;
+        this.targetUserId = targetUserId;
     }
 
     // 4 server
     public uint id;
-   
+
     // 4 server & client
     public uint targetUserId;
 }
