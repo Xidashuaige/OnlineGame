@@ -24,7 +24,7 @@ public class NetworkPackage
 {
     public NetworkPackage(NetworkMessageType type, byte[] data)
     {
-        this._type = type;
+        _type = type;
         this.data = data;
     }
 
@@ -38,20 +38,86 @@ public class NetworkPackage
         return _getDataActions[_type].Invoke(data);
     }
 
-    public static NetworkMessage GetData(byte[] data)
+    public static NetworkMessage GetDataFromBytes(byte[] data)
     {
         var networkPackage = JsonUtility.FromJson<NetworkPackage>(Encoding.ASCII.GetString(data, 0, data.Length));
 
         return networkPackage.GetData();
     }
 
-    // Factory func
+    #region Factory Pattern
+
+    public static NetworkPackage CreateJoinServerRequest(uint _userId)
+    {
+        HearthBeat message = new(_userId);
+
+        return new(NetworkMessageType.Heartbeat, message.GetBytes());
+    }
+
     public static NetworkPackage CreateJoinServerRequest(string _userName)
     {
-        JoinServer joinServer = new(_userName);
+        JoinServer message = new(_userName);
 
-        return new(NetworkMessageType.JoinServer, joinServer.GetBytes());
+        return new(NetworkMessageType.JoinServer, message.GetBytes());
     }
+
+    public static NetworkPackage CreateLeaveServerRequest(uint _userId)
+    {
+        LeaveServer message = new(_userId);
+
+        return new(NetworkMessageType.LeaveServer, message.GetBytes());
+    }
+
+    public static NetworkPackage CreateCreateRoomRequest(uint _userId)
+    {
+        CreateRoom message = new(_userId);
+
+        return new(NetworkMessageType.CreateRoom, message.GetBytes());
+    }
+
+    public static NetworkPackage CreateJoinRoomRequest(uint _userId, uint _roomId)
+    {
+        JoinRoom message = new(_userId, _roomId);
+
+        return new(NetworkMessageType.JoinRoom, message.GetBytes());
+    }
+
+    public static NetworkPackage CreateCloseServerRequest(uint _userId)
+    {
+        CloseServer message = new(_userId);
+
+        return new(NetworkMessageType.CloseServer, message.GetBytes());
+    }
+
+    public static NetworkPackage CreateLeaveRoomRequest(uint _userId)
+    {
+        LeaveRoom message = new(_userId);
+
+        return new(NetworkMessageType.LeaveRoom, message.GetBytes());
+    }
+
+    public static NetworkPackage CreateReadyInTheRoomRequest(uint _userId)
+    {
+        ReadyInTheRoom message = new(_userId);
+
+        return new(NetworkMessageType.ReadyInTheRoom, message.GetBytes());
+    }
+
+    public static NetworkPackage CreateStartGameRequest(uint _userId)
+    {
+        StartGame message = new(_userId);
+
+        return new(NetworkMessageType.StartGame, message.GetBytes());
+    }
+
+    public static NetworkPackage CreateKickOutRoomRequest(uint _userId, uint _targetId)
+    {
+        KickOutRoom message = new(_userId, _targetId);
+
+        return new(NetworkMessageType.KickOutRoom, message.GetBytes());
+    }
+
+    #endregion
 
     public NetworkMessageType Type { get => _type; }
 
@@ -65,7 +131,14 @@ public class NetworkPackage
     {
         { NetworkMessageType.Heartbeat, HearthBeat.GetData },
         { NetworkMessageType.JoinServer, JoinServer.GetData },
-        { NetworkMessageType.JoinRoom, JoinRoom.GetData }
+        { NetworkMessageType.LeaveServer, LeaveServer.GetData },
+        { NetworkMessageType.CreateRoom, CreateRoom.GetData },
+        { NetworkMessageType.JoinRoom, JoinRoom.GetData },
+        { NetworkMessageType.CloseServer, CloseServer.GetData },
+        { NetworkMessageType.LeaveRoom, LeaveRoom.GetData },
+        { NetworkMessageType.ReadyInTheRoom, ReadyInTheRoom.GetData },
+        { NetworkMessageType.StartGame, StartGame.GetData },
+        { NetworkMessageType.KickOutRoom, KickOutRoom.GetData },
     };
 }
 
@@ -126,11 +199,6 @@ public class JoinServer : NetworkMessage
         name = userName;
     }
 
-    public override byte[] GetBytes()
-    {
-        return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
-    }
-
     static public JoinServer GetData(byte[] data)
     {
         return JsonUtility.FromJson<JoinServer>(Encoding.ASCII.GetString(data, 0, data.Length));
@@ -151,11 +219,6 @@ public class LeaveServer : NetworkMessage
         id = userId;
     }
 
-    public override byte[] GetBytes()
-    {
-        return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
-    }
-
     static public LeaveServer GetData(byte[] data)
     {
         return JsonUtility.FromJson<LeaveServer>(Encoding.ASCII.GetString(data, 0, data.Length));
@@ -171,10 +234,6 @@ public class CreateRoom : NetworkMessage
     public CreateRoom(uint userId) : base(NetworkMessageType.CreateRoom)
     {
         this.userId = userId;
-    }
-    public override byte[] GetBytes()
-    {
-        return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
     }
 
     static public CreateRoom GetData(byte[] data)
@@ -196,11 +255,6 @@ public class JoinRoom : NetworkMessage
     {
         this.userId = userId;
         this.roomId = roomId;
-    }
-
-    public override byte[] GetBytes()
-    {
-        return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
     }
 
     static public JoinRoom GetData(byte[] data)
@@ -265,6 +319,11 @@ public class ReadyInTheRoom : NetworkMessage
         id = userId;
     }
 
+    static public ReadyInTheRoom GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<ReadyInTheRoom>(Encoding.ASCII.GetString(data, 0, data.Length));
+    }
+
     // 4 server
     public uint id;
 }
@@ -276,6 +335,11 @@ public class StartGame : NetworkMessage
     public StartGame(uint userId) : base(NetworkMessageType.StartGame)
     {
         id = userId;
+    }
+
+    static public StartGame GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<StartGame>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
 
     // 4 server
@@ -290,6 +354,11 @@ public class KickOutRoom : NetworkMessage
     {
         id = userId;
         this.targetUserId = targetUserId;
+    }
+
+    static public KickOutRoom GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<KickOutRoom>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
 
     // 4 server

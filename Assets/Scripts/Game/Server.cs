@@ -2,15 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public struct ClientForServer
+public struct ClientInServer
 {
-    public ClientForServer(string name, uint id, IPEndPoint endPoint)
+    public ClientInServer(string name, uint id, IPEndPoint endPoint)
     {
         this.name = name;
         this.id = id;
@@ -32,7 +31,7 @@ public class Server : MonoBehaviour
 
     // Server parameters
     private RoomManager _roomManager;
-    private List<ClientForServer> _clients = new();
+    private List<ClientInServer> _clients = new();
     private uint _idGen = 0;
     private Dictionary<NetworkMessageType, Action<NetworkMessage>> _actionHandlers = new();
     [SerializeField] private Client _myClient;
@@ -41,8 +40,7 @@ public class Server : MonoBehaviour
     private bool _connecting = false;
     private Socket _socket;
     private const int _serverPort = 8888;
-    private EndPoint _tempClientEndpoint;
-    private object _lock = new object();
+    private readonly object _lock = new();
 
     // Requests
     private bool _triggerStartServer = false;
@@ -128,23 +126,20 @@ public class Server : MonoBehaviour
         {
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
-            _tempClientEndpoint = new IPEndPoint(IPAddress.Any, 0);
-        }
+            try
+            {
+                _socket.Bind(new IPEndPoint(IPAddress.Any, _serverPort));
 
-        try
-        {
-            _socket.Bind(new IPEndPoint(IPAddress.Any, _serverPort));
-
-            DebugManager.AddLog("Server Start!");
-            Debug.Log("Server Start!");
+                DebugManager.AddLog("Server Start!");
+                Debug.Log("Server Start!");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning(ex.Message);
+                DebugManager.AddLog(ex.Message);
+                return;
+            }
         }
-        catch (Exception ex)
-        {
-            Debug.LogWarning(ex.Message);
-            DebugManager.AddLog(ex.Message);
-            return;
-        }
-
 
         // When start server successful
         _triggerStartServer = true;
@@ -160,19 +155,21 @@ public class Server : MonoBehaviour
         byte[] buffer = new byte[1024];
         int bytesRead;
 
+        EndPoint _lastEndPoint = new IPEndPoint(IPAddress.Any, 0);
+
         while (_connecting)
         {
             try
             {
-                bytesRead = _socket.ReceiveFrom(buffer, ref _tempClientEndpoint);
+                bytesRead = _socket.ReceiveFrom(buffer, ref _lastEndPoint);
 
                 if (bytesRead == 0)
                     continue;
 
-                NetworkMessage message = NetworkPackage.GetData(buffer);
+                NetworkMessage message = NetworkPackage.GetDataFromBytes(buffer);
 
                 if (message.type == NetworkMessageType.JoinServer)
-                    message.endPoint = _tempClientEndpoint;
+                    message.endPoint = _lastEndPoint;
 
                 ThreadPool.QueueUserWorkItem(new WaitCallback(HandleMessage), message);
 
@@ -183,6 +180,8 @@ public class Server : MonoBehaviour
             {
                 Debug.LogWarning(ex.Message);
                 DebugManager.AddLog(ex.Message);
+                buffer = null;
+                _connecting = false;
                 return;
             }
         }
@@ -190,7 +189,7 @@ public class Server : MonoBehaviour
 
     public void SendMessageToClients(NetworkMessage message)
     {
-        Debug.Log("SendMessage type: " + message.type);
+        Debug.Log("Send message : " + message.type);
 
         byte[] data = message.GetBytes();
 
@@ -201,11 +200,13 @@ public class Server : MonoBehaviour
         }
     }
 
-    public void SendMessageToClient(ClientForServer client, NetworkMessage message)
+    public void SendMessageToClient(ClientInServer client, NetworkMessage message)
     {
-        Debug.Log("SendMessages type: " + message.type + "\t client ip: " + client.endPoint.AddressFamily);
+        Debug.Log("Send messages : " + message.type + " to client : " + client.name);
 
-        byte[] data = message.GetBytes();
+        NetworkPackage package = new(message.type, message.GetBytes());
+
+        byte[] data = package.GetBytes();
 
         // Send data to server, this function may not block the code
         _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, client.endPoint, new AsyncCallback(SendCallback), null);
@@ -222,7 +223,8 @@ public class Server : MonoBehaviour
         }
         catch (Exception e)
         {
-            Console.WriteLine(e.ToString());
+            Debug.Log(e);
+            DebugManager.AddLog(e.ToString());
         }
     }
 
@@ -263,8 +265,6 @@ public class Server : MonoBehaviour
     // -----------------------------------------------
     private void HandleMessage(object messageObj)
     {
-        Debug.Log("Handle message in server");
-
         var message = messageObj as NetworkMessage;
 
         message.succesful = true;
@@ -279,11 +279,9 @@ public class Server : MonoBehaviour
 
     private void HandleJoinServerMessage(NetworkMessage data)
     {
-        Debug.Log("Server sent Start to clients");
-
         var message = data as JoinServer;
 
-        ClientForServer client = new(message.name, GetNextID(), (IPEndPoint)message.endPoint);
+        ClientInServer client = new(message.name, GetNextID(), message.endPoint as IPEndPoint);
 
         _clients.Add(client);
 

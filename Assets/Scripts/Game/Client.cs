@@ -124,15 +124,15 @@ public class Client : MonoBehaviour
 
         _connecting = true;
 
-        // Start to listen messages from server
-        Thread thread = new(ListenMessages);
-
-        thread.Start();
-
         // Try to connect to server
         var messagePackage = NetworkPackage.CreateJoinServerRequest(_nameInput.text);
 
         SendMessageToServer(messagePackage);
+
+        // Start to listen messages from server
+        Thread thread = new(ListenMessages);
+
+        thread.Start();
     }
 
     public void RequestCloseServer()
@@ -176,11 +176,9 @@ public class Client : MonoBehaviour
             {
                 bytesRead = _socket.Receive(buffer);
 
-                string receivedMessage = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+                NetworkMessage message = NetworkPackage.GetDataFromBytes(buffer);
 
-                NetworkMessage netWorkMessage = JsonUtility.FromJson<NetworkMessage>(receivedMessage);
-
-                if (!netWorkMessage.succesful || bytesRead <= 0)
+                if (bytesRead <= 0)
                 {
                     lock (_lock)
                         _connecting = false;
@@ -188,13 +186,13 @@ public class Client : MonoBehaviour
                     Debug.LogWarning("Message Receive with erro, disconnect from server");
                     DebugManager.AddLog("Message Receive with erro, disconnect from server");
 
-                    break;
+                    return;
                 }
 
-                HandleMessage(netWorkMessage);
+                HandleMessage(message);
 
-                DebugManager.AddLog("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
-                Debug.Log("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
+                DebugManager.AddLog("Message recived: " + message + "\t" + "message length: " + bytesRead);
+                Debug.Log("Message recived: " + message + "\t" + "message length: " + bytesRead);
             }
             catch (Exception ex)
             {
@@ -233,7 +231,6 @@ public class Client : MonoBehaviour
             _actionSuccessful[(NetworkMessageType)ar.AsyncState]?.Invoke(false);
         }
     }
-
 
     // -----------------------------------------------
     // -----------------------------------------------
