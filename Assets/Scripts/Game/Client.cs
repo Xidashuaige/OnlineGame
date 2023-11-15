@@ -124,22 +124,22 @@ public class Client : MonoBehaviour
 
         _connecting = true;
 
-        // Try to connect to server
-        JoinServer message = new(_nameInput.text);
-
         // Start to listen messages from server
         Thread thread = new(ListenMessages);
 
         thread.Start();
 
-        SendMessageToServer(message);
+        // Try to connect to server
+        var messagePackage = NetworkPackage.CreateJoinServerRequest(_nameInput.text);
+
+        SendMessageToServer(messagePackage);
     }
 
     public void RequestCloseServer()
     {
         CloseServer message = new(ID);
 
-        SendMessageToServer(message);
+        //SendMessageToServer(message);
     }
 
     // Utils
@@ -207,12 +207,12 @@ public class Client : MonoBehaviour
         }
     }
 
-    public void SendMessageToServer(NetworkMessage message)
+    public void SendMessageToServer(NetworkPackage messagePackage)
     {
-        byte[] data = message.GetBytes();
+        byte[] data = messagePackage.GetBytes();
 
         // Send data to server
-        _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, _serverEndPoint, new AsyncCallback(SendCallback), message.type);
+        _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, _serverEndPoint, new AsyncCallback(SendCallback), messagePackage.Type);
     }
     // After message sent
     private void SendCallback(IAsyncResult ar)

@@ -169,17 +169,15 @@ public class Server : MonoBehaviour
                 if (bytesRead == 0)
                     continue;
 
-                string receivedMessage = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-
-                NetworkMessage message = JsonUtility.FromJson<NetworkMessage>(receivedMessage);
+                NetworkMessage message = NetworkPackage.GetData(buffer);
 
                 if (message.type == NetworkMessageType.JoinServer)
                     message.endPoint = _tempClientEndpoint;
 
                 ThreadPool.QueueUserWorkItem(new WaitCallback(HandleMessage), message);
 
-                DebugManager.AddLog("Message recived from client: " + receivedMessage + "\t" + "message length: " + bytesRead);
-                Debug.Log("Message recived from client: " + receivedMessage + "\t" + "message length: " + bytesRead);
+                DebugManager.AddLog("Message recived from client: " + message + "\t" + "message length: " + bytesRead);
+                Debug.Log("Message recived from client: " + message + "\t" + "message length: " + bytesRead);
             }
             catch (Exception ex)
             {

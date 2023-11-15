@@ -24,7 +24,7 @@ public class NetworkPackage
 {
     public NetworkPackage(NetworkMessageType type, byte[] data)
     {
-        this.type = type;
+        this._type = type;
         this.data = data;
     }
 
@@ -35,20 +35,38 @@ public class NetworkPackage
 
     public NetworkMessage GetData()
     {
-        switch (type)
-        {
-            case NetworkMessageType.Heartbeat:
-                return HearthBeat.GetData(data);
-        }
-
-        return null;
+        return _getDataActions[_type].Invoke(data);
     }
 
-    public NetworkMessageType type;
+    public static NetworkMessage GetData(byte[] data)
+    {
+        var networkPackage = JsonUtility.FromJson<NetworkPackage>(Encoding.ASCII.GetString(data, 0, data.Length));
+
+        return networkPackage.GetData();
+    }
+
+    // Factory func
+    public static NetworkPackage CreateJoinServerRequest(string _userName)
+    {
+        JoinServer joinServer = new(_userName);
+
+        return new(NetworkMessageType.JoinServer, joinServer.GetBytes());
+    }
+
+    public NetworkMessageType Type { get => _type; }
+
+    private readonly NetworkMessageType _type;
 
     public byte[] data;
 
-    //static Dictionary<NetworkMessageType, >
+    private delegate NetworkMessage GetDataAction(byte[] data);
+
+    static private Dictionary<NetworkMessageType, GetDataAction> _getDataActions = new()
+    {
+        { NetworkMessageType.Heartbeat, HearthBeat.GetData },
+        { NetworkMessageType.JoinServer, JoinServer.GetData },
+        { NetworkMessageType.JoinRoom, JoinRoom.GetData }
+    };
 }
 
 [Serializable]
@@ -113,6 +131,11 @@ public class JoinServer : NetworkMessage
         return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
     }
 
+    static public JoinServer GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<JoinServer>(Encoding.ASCII.GetString(data, 0, data.Length));
+    }
+
     // 4 server
     public string name;
 
@@ -133,6 +156,11 @@ public class LeaveServer : NetworkMessage
         return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
     }
 
+    static public LeaveServer GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<LeaveServer>(Encoding.ASCII.GetString(data, 0, data.Length));
+    }
+
     // 4 server
     public uint id;
 }
@@ -147,6 +175,11 @@ public class CreateRoom : NetworkMessage
     public override byte[] GetBytes()
     {
         return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
+    }
+
+    static public CreateRoom GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<CreateRoom>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
 
     // 4 server
@@ -170,6 +203,11 @@ public class JoinRoom : NetworkMessage
         return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
     }
 
+    static public JoinRoom GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<JoinRoom>(Encoding.ASCII.GetString(data, 0, data.Length));
+    }
+
     // 4 server
     public uint userId;
     public uint roomId;
@@ -184,6 +222,11 @@ public class CloseServer : NetworkMessage
     public CloseServer(uint userId) : base(NetworkMessageType.CloseServer)
     {
         this.userId = userId;
+    }
+
+    static public CloseServer GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<CloseServer>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
 
     // 4 server
@@ -203,6 +246,11 @@ public class LeaveRoom : NetworkMessage
     public LeaveRoom(uint userId) : base(NetworkMessageType.LeaveRoom)
     {
         id = userId;
+    }
+
+    static public LeaveRoom GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<LeaveRoom>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
 
     // 4 server
