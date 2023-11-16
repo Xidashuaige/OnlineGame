@@ -44,7 +44,9 @@ public class PanelManager : MonoBehaviour
     {
         _currentPanel.SetActive(false);
 
-        _panels[(int)panel].SetActive(true);
+        _currentPanel = _panels[(int)panel];
+
+        _currentPanel.SetActive(true);
     }
 
     private void OnIpUpdate(string newIp)

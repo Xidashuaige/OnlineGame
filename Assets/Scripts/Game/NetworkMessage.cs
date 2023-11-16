@@ -34,10 +34,6 @@ public class NetworkPackage
 
         NetworkPackage networkPackage = JsonUtility.FromJson<NetworkPackage>(test);
 
-        //var buffer = Encoding.ASCII.GetBytes(test);
-
-        //NetworkMessage message = NetworkPackage.GetDataFromBytes(buffer, buffer.Length);
-
         return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
     }
 
