@@ -24,19 +24,26 @@ public class NetworkPackage
 {
     public NetworkPackage(NetworkMessageType type, byte[] data)
     {
-        _type = type;
-        _typeNum = (int)_type;
+        this.type = type;
         this.data = data;
     }
 
     public byte[] GetBytes()
     {
+        string test = JsonUtility.ToJson(this);
+
+        NetworkPackage networkPackage = JsonUtility.FromJson<NetworkPackage>(test);
+
+        var buffer = Encoding.ASCII.GetBytes(test);
+
+        NetworkMessage message = NetworkPackage.GetDataFromBytes(buffer, buffer.Length);
+
         return Encoding.ASCII.GetBytes(JsonUtility.ToJson(this));
     }
 
     public NetworkMessage GetData()
     {
-        return _getDataActions[_type].Invoke(data);
+        return _getDataActions[type].Invoke(data);
     }
 
     public static NetworkMessage GetDataFromBytes(byte[] data, int lenght)
@@ -122,11 +129,7 @@ public class NetworkPackage
 
     #endregion
 
-    public NetworkMessageType Type { get => _type; }
-
-    private readonly NetworkMessageType _type;
-
-    private readonly int _typeNum = 0;
+    public NetworkMessageType type;
 
     public byte[] data;
 

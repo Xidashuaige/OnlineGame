@@ -229,7 +229,7 @@ public class Client : MonoBehaviour
         byte[] data = messagePackage.GetBytes();
 
         // Send data to server
-        _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, _serverEndPoint, new AsyncCallback(SendCallback), messagePackage.Type);
+        _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, _serverEndPoint, new AsyncCallback(SendCallback), messagePackage.type);
     }
 
     // After message sent
