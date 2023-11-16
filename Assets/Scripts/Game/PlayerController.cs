@@ -25,7 +25,6 @@ public class PlayerController : MonoBehaviour
             catch
             {
                 Debug.Log("Add GameObject with error");
-                DebugManager.AddLog("Add GameObject with error");
             }
         }
     }

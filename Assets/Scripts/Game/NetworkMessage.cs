@@ -25,6 +25,7 @@ public class NetworkPackage
     public NetworkPackage(NetworkMessageType type, byte[] data)
     {
         _type = type;
+        _typeNum = (int)_type;
         this.data = data;
     }
 
@@ -38,9 +39,11 @@ public class NetworkPackage
         return _getDataActions[_type].Invoke(data);
     }
 
-    public static NetworkMessage GetDataFromBytes(byte[] data)
+    public static NetworkMessage GetDataFromBytes(byte[] data, int lenght)
     {
-        var networkPackage = JsonUtility.FromJson<NetworkPackage>(Encoding.ASCII.GetString(data, 0, data.Length));
+        var jsonString = Encoding.ASCII.GetString(data, 0, lenght);
+
+        var networkPackage = JsonUtility.FromJson<NetworkPackage>(jsonString);
 
         return networkPackage.GetData();
     }
@@ -123,6 +126,8 @@ public class NetworkPackage
 
     private readonly NetworkMessageType _type;
 
+    private readonly int _typeNum = 0;
+
     public byte[] data;
 
     private delegate NetworkMessage GetDataAction(byte[] data);
@@ -186,9 +191,7 @@ public class HearthBeat : NetworkMessage
 }
 
 // -----------------------------------------------
-// -----------------------------------------------
 // ------------REQUEST IN THE SERVER--------------
-// -----------------------------------------------
 // -----------------------------------------------
 
 [Serializable]

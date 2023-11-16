@@ -45,10 +45,7 @@ public class TCP_Client : MonoBehaviour
     public void JoinRoomTCP()
     {
         if (_nameInput.text == "")
-        {
-            DebugManager.AddLog("Enter name please");
             return;
-        }
 
         _startPanel.SetActive(false);
         _clientPanel.SetActive(true);
@@ -78,7 +75,6 @@ public class TCP_Client : MonoBehaviour
             //DebugManager.AddLog(ex.Message);
         }
 
-        DebugManager.AddLog("Leave the room");
         Debug.Log("Leave the room");
     }
 
@@ -100,12 +96,10 @@ public class TCP_Client : MonoBehaviour
         {
             _socket.Send(data);
 
-            DebugManager.AddLog("Send message to Server");
             Debug.Log("Send message to Server");
         }
         catch (Exception ex)
         {
-            DebugManager.AddLog("Send message to Server has failed");
             Debug.LogWarning(ex.Message);
         }
 
@@ -133,13 +127,11 @@ public class TCP_Client : MonoBehaviour
 
             thread.Start();
 
-            DebugManager.AddLog("Connected to Server");
             Debug.Log("Connected to Server");
         }
         catch (Exception ex)
         {
             Debug.LogWarning(ex.Message);
-            DebugManager.AddLog(ex.Message);
 
             _requestLeaveRoom = true;
         }
@@ -150,7 +142,6 @@ public class TCP_Client : MonoBehaviour
         byte[] buffer = new byte[1024];
         int bytesRead;
 
-        DebugManager.AddLog("Start receive message");
         Debug.Log("Start receive message");
 
         while (_connected)
@@ -161,7 +152,6 @@ public class TCP_Client : MonoBehaviour
 
                 if (bytesRead == 0)
                 {
-                    DebugManager.AddLog("Server has been disconnect");
                     Debug.Log("Server has been disconnect");
                     _requestLeaveRoom = true;
                     return;
@@ -169,7 +159,6 @@ public class TCP_Client : MonoBehaviour
 
                 string receivedMessage = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
-                DebugManager.AddLog("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
                 Debug.Log("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
 
                 lock (this)
@@ -178,7 +167,6 @@ public class TCP_Client : MonoBehaviour
             catch (Exception ex)
             {
                 Debug.LogWarning(ex.Message);
-                DebugManager.AddLog(ex.Message);
                 _requestLeaveRoom = true;
                 return;
             }

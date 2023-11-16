@@ -95,17 +95,13 @@ public class TCP_Server : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogWarning(ex.Message);
-            DebugManager.AddLog(ex.Message);
         }
     }
 
     public void CreateRoomTCP()
     {
         if (_nameInput.text == "")
-        {
-            DebugManager.AddLog("Enter name please");
             return;
-        }
 
         _startPanel.SetActive(false);
         _serverPanel.SetActive(true);
@@ -134,17 +130,14 @@ public class TCP_Server : MonoBehaviour
                 _clientsSocket[i]?.Shutdown(SocketShutdown.Both);
                 _clientsSocket[i]?.Close();
             }
-            DebugManager.AddLog("Clients Closed");
             Debug.Log("Clients Closed");
 
             _serverSocket.Close();
-            DebugManager.AddLog("Server closed");
             Debug.Log("Server closed");
         }
         catch (Exception ex)
         {
             Debug.LogWarning(ex.Message);
-            DebugManager.AddLog(ex.Message);
         }
     }
 
@@ -160,13 +153,11 @@ public class TCP_Server : MonoBehaviour
             _serverSocket.Bind(new IPEndPoint(IPAddress.Any, serverPort));
 
             _serverSocket.Listen(5);
-            DebugManager.AddLog("Room created");
             Debug.Log("Room created!");
         }
         catch (Exception ex)
         {
             Debug.LogWarning(ex.Message);
-            DebugManager.AddLog(ex.Message);
             _requestCloseRoom = true;
             return;
         }
@@ -185,13 +176,11 @@ public class TCP_Server : MonoBehaviour
 
                 thread.Start(clientSocket);
 
-                DebugManager.AddLog("Some client connected!");
                 Debug.Log("Some client connected!");
             }
             catch (Exception ex)
             {
                 Debug.LogWarning(ex.Message);
-                DebugManager.AddLog(ex.Message);
                 _requestCloseRoom = true;
                 return;
             }
@@ -213,7 +202,6 @@ public class TCP_Server : MonoBehaviour
 
                 if (bytesRead == 0)
                 {
-                    DebugManager.AddLog("Someone leave the rooom");
                     Debug.Log("Someone leave the rooom");
 
                     client.Shutdown(SocketShutdown.Both);
@@ -224,7 +212,6 @@ public class TCP_Server : MonoBehaviour
 
                 string receivedMessage = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
-                DebugManager.AddLog("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
                 Debug.Log("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
 
                 ReSendMessageToClients(receivedMessage);
@@ -256,6 +243,6 @@ public class TCP_Server : MonoBehaviour
     public void CopyIPAdress()
     {
         GUIUtility.systemCopyBuffer = _ipAdress.text;
-        DebugManager.AddLog("IP Adress Copied");
+        Debug.Log("IP Adress Copied");
     }
 }

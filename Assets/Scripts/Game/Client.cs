@@ -3,21 +3,19 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using TMPro;
 using UnityEngine;
 
 public class Client : MonoBehaviour
 {
-    [SerializeField] private PanelManager _panelManager;
-
+    #region Paramaters
     // Unity paramaters
+    [SerializeField] private PanelManager _panelManager;
     [SerializeField] private TMP_InputField _ipInput;
     [SerializeField] private TMP_InputField _nameInput;
 
     // Clients paramaters
-
     private IPEndPoint _serverEndPoint;
 
     private Socket _socket;
@@ -38,9 +36,17 @@ public class Client : MonoBehaviour
 
     private readonly object _lock = new();
 
+    // Handle requests in unity
+    private bool _handleJoinServer = false;
+    private bool _handleLeaveServer = false;
+
+    #endregion
+
+    #region Unity events
     private void Start()
     {
-        // Init Handle events actions
+        #region Init Handle events actions
+
         _actionHandlers[NetworkMessageType.Heartbeat] = HandleHeartBeatMessage;
         _actionHandlers[NetworkMessageType.StartGame] = HandleStartGameMessage;
         _actionHandlers[NetworkMessageType.ReadyInTheRoom] = HandleReadyInTheRoomMessage;
@@ -51,7 +57,10 @@ public class Client : MonoBehaviour
         _actionHandlers[NetworkMessageType.LeaveRoom] = HandleLeaveRoomMessage;
         _actionHandlers[NetworkMessageType.LeaveServer] = HandleLeaveServerMessage;
 
-        // Init successful events actions
+        #endregion
+
+        #region Init successful events actions
+
         _actionSuccessful[NetworkMessageType.Heartbeat] = WhenHeartBeatHasSent;
         _actionSuccessful[NetworkMessageType.StartGame] = WhenStartGameHasSent;
         _actionSuccessful[NetworkMessageType.ReadyInTheRoom] = WhenReadyInTheRoomHasSent;
@@ -61,22 +70,43 @@ public class Client : MonoBehaviour
         _actionSuccessful[NetworkMessageType.JoinServer] = WhenJoinServerHasSent;
         _actionSuccessful[NetworkMessageType.LeaveRoom] = WhenLeaveRoomHasSent;
         _actionSuccessful[NetworkMessageType.LeaveServer] = WhenLeaveServerHasSent;
+
+        #endregion
+    }
+
+    private void Update()
+    {
+        if (_handleJoinServer)
+        {
+            _panelManager.ChangeScene(Panels.RoomListPanel);
+
+            _handleJoinServer = false;
+        }
+
+        if (_handleLeaveServer)
+        {
+            _panelManager.ChangeScene(Panels.StartPanel);
+
+            _handleLeaveServer = false;
+        }
     }
 
     private void OnApplicationQuit()
     {
         _connecting = false;
 
-        _actionHandlers.Clear();
+        _actionHandlers?.Clear();
         _actionHandlers = null;
 
-        _actionSuccessful.Clear();
+        _actionSuccessful?.Clear();
         _actionSuccessful = null;
 
         _socket?.Dispose();
         _socket = null;
     }
+    #endregion
 
+    #region Requests to Server
     public void RequestJoinToServer()
     {
         if (_connecting)
@@ -117,7 +147,6 @@ public class Client : MonoBehaviour
                 _socket = null;
 
                 Debug.Log(e);
-                DebugManager.AddLog(e.ToString());
                 return;
             }
         }
@@ -135,6 +164,16 @@ public class Client : MonoBehaviour
         thread.Start();
     }
 
+    public void RequestLeaveTheServer()
+    {
+        if (!_connecting)
+            return;
+
+        var messagePackage = NetworkPackage.CreateLeaveServerRequest(_id);
+
+        SendMessageToServer(messagePackage);
+    }
+
     public void RequestCloseServer()
     {
         CloseServer message = new(ID);
@@ -142,32 +181,15 @@ public class Client : MonoBehaviour
         //SendMessageToServer(message);
     }
 
-    // Utils
-    private IEnumerator InputFlashRed(UnityEngine.UI.Image img)
-    {
-        float fadeSpeed = 0.02f;
+    #endregion
 
-        for (float t = 0.0f; t < 1.0f; t += fadeSpeed)
-        {
-            img.color = Color.Lerp(Color.white, Color.red, t);
-
-            yield return null;
-        }
-
-        for (float t = 0.0f; t < 1.0f; t += fadeSpeed)
-        {
-            img.color = Color.Lerp(Color.red, Color.white, t);
-
-            yield return null;
-        }
-    }
+    #region Socket related functions
 
     private void ListenMessages()
     {
         byte[] buffer = new byte[1024];
         int bytesRead;
 
-        DebugManager.AddLog("Start receive message");
         Debug.Log("Start receive message");
 
         while (_connecting)
@@ -176,7 +198,7 @@ public class Client : MonoBehaviour
             {
                 bytesRead = _socket.Receive(buffer);
 
-                NetworkMessage message = NetworkPackage.GetDataFromBytes(buffer);
+                NetworkMessage message = NetworkPackage.GetDataFromBytes(buffer, bytesRead);
 
                 if (bytesRead <= 0)
                 {
@@ -184,20 +206,17 @@ public class Client : MonoBehaviour
                         _connecting = false;
 
                     Debug.LogWarning("Message Receive with erro, disconnect from server");
-                    DebugManager.AddLog("Message Receive with erro, disconnect from server");
 
                     return;
                 }
 
                 HandleMessage(message);
 
-                DebugManager.AddLog("Message recived: " + message + "\t" + "message length: " + bytesRead);
                 Debug.Log("Message recived: " + message + "\t" + "message length: " + bytesRead);
             }
             catch (Exception ex)
             {
                 Debug.LogWarning(ex.Message);
-                DebugManager.AddLog(ex.Message);
 
                 lock (_lock)
                     _connecting = false;
@@ -212,13 +231,13 @@ public class Client : MonoBehaviour
         // Send data to server
         _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, _serverEndPoint, new AsyncCallback(SendCallback), messagePackage.Type);
     }
+
     // After message sent
     private void SendCallback(IAsyncResult ar)
     {
         try
         {
             int bytesSent = _socket.EndSend(ar);
-            DebugManager.AddLog("Send " + bytesSent + " bytes to Server");
             Debug.Log("Send " + bytesSent + " bytes to Server");
 
             _actionSuccessful[(NetworkMessageType)ar.AsyncState]?.Invoke(true);
@@ -232,13 +251,13 @@ public class Client : MonoBehaviour
         }
     }
 
-    // -----------------------------------------------
+    #endregion
+
     // -----------------------------------------------
     // -------WHEN RECEIVE MESSAGE FROM SERVER--------
     // -----------------------------------------------
-    // -----------------------------------------------
 
-    #region HandleMessages
+    #region When recive message from server
 
     private void HandleMessage(NetworkMessage message)
     {
@@ -250,24 +269,34 @@ public class Client : MonoBehaviour
         var message = data as HearthBeat;
 
         Debug.Log("HeartBeat");
-        DebugManager.AddLog("HeartBeat");
     }
 
     private void HandleJoinServerMessage(NetworkMessage data)
     {
         var message = data as JoinServer;
 
-        _id = message.id;
+        if (message.succesful)
+        {
+            _id = message.id;
 
-        Debug.Log("Join Server Successful");
-        DebugManager.AddLog("Join Server Successful");
+            _handleJoinServer = true;
+
+            Debug.Log("Join Server Successful");
+        }
+
+        Debug.Log("Join Server Faild");
     }
 
     private void HandleLeaveServerMessage(NetworkMessage data)
     {
         var message = data as LeaveServer;
 
-        host = false;
+        if (message.succesful)
+        {
+            _handleLeaveServer = true;
+
+            Debug.Log("Leave Server Successful");
+        }
     }
 
     private void HandleCreateRoomMessage(NetworkMessage data)
@@ -307,13 +336,11 @@ public class Client : MonoBehaviour
     }
     #endregion
 
-
-    // -----------------------------------------------
     // -----------------------------------------------
     // ----------WHEN MESSAGE SENT SUCCESSFUL---------
     // -----------------------------------------------
-    // -----------------------------------------------
 
+    #region When message sent successful
     private void WhenHeartBeatHasSent(bool successful)
     {
         if (successful)
@@ -414,4 +441,31 @@ public class Client : MonoBehaviour
 
         }
     }
+
+    #endregion
+
+    // -----------------------------------------------
+    // ----------------UTIL FUNCTIONS-----------------
+    // -----------------------------------------------
+
+    #region Util
+    private IEnumerator InputFlashRed(UnityEngine.UI.Image img)
+    {
+        float fadeSpeed = 0.02f;
+
+        for (float t = 0.0f; t < 1.0f; t += fadeSpeed)
+        {
+            img.color = Color.Lerp(Color.white, Color.red, t);
+
+            yield return null;
+        }
+
+        for (float t = 0.0f; t < 1.0f; t += fadeSpeed)
+        {
+            img.color = Color.Lerp(Color.red, Color.white, t);
+
+            yield return null;
+        }
+    }
+    #endregion
 }

@@ -56,10 +56,7 @@ public class UDP_Server : MonoBehaviour
     public void CreateRoomUDP()
     {
         if (_nameInput.text == "")
-        {
-            DebugManager.AddLog("Enter name please");
             return;
-        }
 
         _startPanel.SetActive(false);
         _serverPanel.SetActive(true);
@@ -94,7 +91,6 @@ public class UDP_Server : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogWarning(ex.Message);
-            DebugManager.AddLog(ex.Message);
         }
 
         _messageInput.text = "";
@@ -115,7 +111,6 @@ public class UDP_Server : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogWarning(ex.Message);
-            DebugManager.AddLog(ex.Message);
         }
     }
 
@@ -139,13 +134,11 @@ public class UDP_Server : MonoBehaviour
             _clienEndPoints?.Clear();
 
             _serverSocket?.Close();
-            DebugManager.AddLog("Server closed");
             Debug.Log("Server closed");
         }
         catch (Exception ex)
         {
             Debug.LogWarning(ex.Message);
-            DebugManager.AddLog(ex.Message);
         }
     }
 
@@ -158,13 +151,11 @@ public class UDP_Server : MonoBehaviour
         try
         {
             _serverSocket.Bind(new IPEndPoint(IPAddress.Any, serverPort));
-            DebugManager.AddLog("Room created");
             Debug.Log("Room created!");
         }
         catch (Exception ex)
         {
             Debug.LogWarning(ex.Message);
-            DebugManager.AddLog(ex.Message);
             _requestCloseRoom = true;
             return;
         }
@@ -197,7 +188,6 @@ public class UDP_Server : MonoBehaviour
                     if (!_clienEndPoints.Contains(clientIpEndpoint))
                         _clienEndPoints.Add(clientIpEndpoint);
 
-                    DebugManager.AddLog("Some one join the room: " + clientEndpoint);
                     Debug.Log("Some one join the room: " + clientEndpoint);
                     continue;
                 }
@@ -209,12 +199,10 @@ public class UDP_Server : MonoBehaviour
                     if (_clienEndPoints.Contains(clientIpEndpoint))
                         _clienEndPoints.Remove(clientIpEndpoint);
 
-                    DebugManager.AddLog("Some one leave the room: " + clientEndpoint);
                     Debug.Log("Some one leave the room: " + clientEndpoint);
                     continue;
                 }
 
-                DebugManager.AddLog("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
                 Debug.Log("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
 
                 ReSendMessageToClients(receivedMessage);
@@ -222,7 +210,6 @@ public class UDP_Server : MonoBehaviour
             catch (Exception ex)
             {
                 Debug.LogWarning(ex.Message);
-                DebugManager.AddLog(ex.Message);
 
                 _requestCloseRoom = true;
                 return;
@@ -247,6 +234,6 @@ public class UDP_Server : MonoBehaviour
     public void CopyIPAdress()
     {
         GUIUtility.systemCopyBuffer = _ipAdress.text;
-        DebugManager.AddLog("IP Adress Copied");
+        Debug.Log("Ip Copied");
     }
 }

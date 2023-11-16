@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using TMPro;
+using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -27,7 +29,6 @@ public class Server : MonoBehaviour
     [Space, Header("Global parameters")]
     [SerializeField] private PanelManager _panelManager;
     [SerializeField] private Button _startServerBtn;
-    [SerializeField] private TMP_Text _ipAdress;
 
     // Server parameters
     private RoomManager _roomManager;
@@ -41,10 +42,13 @@ public class Server : MonoBehaviour
     private Socket _socket;
     private const int _serverPort = 8888;
     private readonly object _lock = new();
+    private string _ipAdress = "0.0.0.0";
 
-    // Requests
-    private bool _triggerStartServer = false;
+    // Events
+    public Action<string> onIpUpdate;
 
+    // Handle requests in unity
+    private bool _handleStartServer = false;
 
     // Start is called before the first frame update
     void Start()
@@ -72,9 +76,11 @@ public class Server : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (_triggerStartServer)
+        if (_handleStartServer)
         {
-            _ipAdress.text = GetIPAdress();
+            _ipAdress = GetIPAdress();
+
+            onIpUpdate?.Invoke(_ipAdress);
 
             // Change btn state
             var text = _startServerBtn.GetComponentInChildren<TMP_Text>();
@@ -89,7 +95,7 @@ public class Server : MonoBehaviour
             // Change my client to server host
             _myClient.host = true;
 
-            _triggerStartServer = false;
+            _handleStartServer = false;
         }
     }
 
@@ -130,19 +136,17 @@ public class Server : MonoBehaviour
             {
                 _socket.Bind(new IPEndPoint(IPAddress.Any, _serverPort));
 
-                DebugManager.AddLog("Server Start!");
                 Debug.Log("Server Start!");
             }
             catch (Exception ex)
             {
                 Debug.LogWarning(ex.Message);
-                DebugManager.AddLog(ex.Message);
                 return;
             }
         }
 
         // When start server successful
-        _triggerStartServer = true;
+        _handleStartServer = true;
 
         _connecting = true;
 
@@ -166,20 +170,19 @@ public class Server : MonoBehaviour
                 if (bytesRead == 0)
                     continue;
 
-                NetworkMessage message = NetworkPackage.GetDataFromBytes(buffer);
+                NetworkMessage message = NetworkPackage.GetDataFromBytes(buffer, bytesRead);
 
                 if (message.type == NetworkMessageType.JoinServer)
                     message.endPoint = _lastEndPoint;
 
                 ThreadPool.QueueUserWorkItem(new WaitCallback(HandleMessage), message);
 
-                DebugManager.AddLog("Message recived from client: " + message + "\t" + "message length: " + bytesRead);
                 Debug.Log("Message recived from client: " + message + "\t" + "message length: " + bytesRead);
             }
             catch (Exception ex)
             {
                 Debug.LogWarning(ex.Message);
-                DebugManager.AddLog(ex.Message);
+
                 buffer = null;
                 _connecting = false;
                 return;
@@ -218,13 +221,11 @@ public class Server : MonoBehaviour
         try
         {
             int bytesSent = _socket.EndSend(ar);
-            DebugManager.AddLog("Send " + bytesSent + " bytes to Server");
-            Debug.Log("Send " + bytesSent + " bytes to Server");
+            Debug.Log("Send " + bytesSent + " bytes to client");
         }
         catch (Exception e)
         {
             Debug.Log(e);
-            DebugManager.AddLog(e.ToString());
         }
     }
 
@@ -253,9 +254,8 @@ public class Server : MonoBehaviour
 
     public void CopyIPAdress()
     {
-        GUIUtility.systemCopyBuffer = _ipAdress.text;
+        GUIUtility.systemCopyBuffer = _ipAdress;
         Debug.Log("IP Adress Copied");
-        DebugManager.AddLog("IP Adress Copied");
     }
 
     // -----------------------------------------------
@@ -293,6 +293,12 @@ public class Server : MonoBehaviour
     private void HandleLeaveServerMessage(NetworkMessage data)
     {
         var message = data as LeaveServer;
+
+        ClientInServer client = _clients.FirstOrDefault(client => client.id == message.id);
+
+        _clients.Remove(client);
+
+        SendMessageToClient(client ,message);
     }
 
     private void HandleCreateRoomMessage(NetworkMessage data)

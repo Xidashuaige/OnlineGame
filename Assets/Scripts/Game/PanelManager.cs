@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Net.Sockets;
 using TMPro;
 using UnityEngine;
 
@@ -20,18 +19,20 @@ public class PanelManager : MonoBehaviour
     [SerializeField] private GameObject _gamePanel;
 
     [Space, Header("Unity objects")]
-    [SerializeField] private TMP_Text _ipAdress;
+    [SerializeField] private TMP_Text[] _ipAdresses;
 
     [Space, Header("Socket Related")]
     [SerializeField] private Server _server;
 
-    private List<GameObject> _panels = new();
+    private readonly List<GameObject> _panels = new();
 
     private GameObject _currentPanel;
 
     private void Start()
     {
         _currentPanel = _startPanel;
+
+        _server.onIpUpdate += OnIpUpdate;
 
         _panels.Add(_startPanel);
         _panels.Add(_roomListPanel);
@@ -44,5 +45,11 @@ public class PanelManager : MonoBehaviour
         _currentPanel.SetActive(false);
 
         _panels[(int)panel].SetActive(true);
+    }
+
+    private void OnIpUpdate(string newIp)
+    {
+        foreach (var adr in _ipAdresses)
+            adr.text = newIp;
     }
 }

@@ -47,10 +47,7 @@ public class UDP_Client : MonoBehaviour
     public void JoinRoomUDP()
     {
         if (_nameInput.text == "")
-        {
-            DebugManager.AddLog("Enter name please");
             return;
-        }
 
         _startPanel.SetActive(false);
         _clientPanel.SetActive(true);
@@ -82,7 +79,6 @@ public class UDP_Client : MonoBehaviour
             Debug.LogWarning(ex.Message);
         }
 
-        DebugManager.AddLog("Leave the room");
         Debug.Log("Leave the room");
 
         _socket = null;
@@ -107,13 +103,11 @@ public class UDP_Client : MonoBehaviour
             // Send data to server
             _socket.SendTo(data, 0, data.Length, SocketFlags.None, _serverEndPoint);
 
-            DebugManager.AddLog("Send message to Server");
             Debug.Log("Send message to Server");
         }
         catch (Exception ex)
         {
             Debug.LogWarning(ex.Message);
-            DebugManager.AddLog(ex.Message);
         }
 
         // Reset InputBox
@@ -140,13 +134,11 @@ public class UDP_Client : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogWarning(ex.Message);
-            DebugManager.AddLog(ex.Message);
 
             _requestLeaveTheRoom = true;
             return;
         }
 
-        DebugManager.AddLog("Joined to the room");
         Debug.Log("Joined to the room");
 
         _connected = true;
@@ -160,7 +152,6 @@ public class UDP_Client : MonoBehaviour
         byte[] buffer = new byte[1024];
         int bytesRead;
 
-        DebugManager.AddLog("Start receive message");
         Debug.Log("Start receive message");
 
         while (_connected)
@@ -177,7 +168,6 @@ public class UDP_Client : MonoBehaviour
                     return;
                 }
 
-                DebugManager.AddLog("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
                 Debug.Log("Message recived: " + receivedMessage + "\t" + "message length: " + bytesRead);
 
                 lock (this)
@@ -186,7 +176,6 @@ public class UDP_Client : MonoBehaviour
             catch (Exception ex)
             {
                 Debug.LogWarning(ex.Message);
-                DebugManager.AddLog(ex.Message);
 
                 _requestLeaveTheRoom = true;
             }
