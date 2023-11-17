@@ -88,13 +88,6 @@ public class NetworkPackage
         return new(NetworkMessageType.JoinRoom, message.GetBytes());
     }
 
-    public static NetworkPackage CreateCloseServerRequest(uint _userId)
-    {
-        CloseServer message = new(_userId);
-
-        return new(NetworkMessageType.CloseServer, message.GetBytes());
-    }
-
     public static NetworkPackage CreateLeaveRoomRequest(uint _userId)
     {
         LeaveRoom message = new(_userId);
@@ -138,7 +131,6 @@ public class NetworkPackage
         { NetworkMessageType.LeaveServer, LeaveServer.GetData },
         { NetworkMessageType.CreateRoom, CreateRoom.GetData },
         { NetworkMessageType.JoinRoom, JoinRoom.GetData },
-        { NetworkMessageType.CloseServer, CloseServer.GetData },
         { NetworkMessageType.LeaveRoom, LeaveRoom.GetData },
         { NetworkMessageType.ReadyInTheRoom, ReadyInTheRoom.GetData },
         { NetworkMessageType.StartGame, StartGame.GetData },
@@ -252,17 +244,6 @@ public class JoinRoom : NetworkMessage
     // 4 cient
     // room data, players in the room
 }
-
-[Serializable]
-public class CloseServer : NetworkMessage
-{
-    public CloseServer(uint userId) : base(NetworkMessageType.CloseServer, userId) { }
-    static public CloseServer GetData(byte[] data)
-    {
-        return JsonUtility.FromJson<CloseServer>(Encoding.ASCII.GetString(data, 0, data.Length));
-    }
-}
-
 
 // -----------------------------------------------
 // -----------------------------------------------

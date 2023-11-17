@@ -4,10 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using TMPro;
-using UnityEditor.PackageManager;
 using UnityEngine;
-using UnityEngine.UI;
 
 public struct ClientInServer
 {
@@ -105,14 +102,6 @@ public class Server : MonoBehaviour
         thread.Start();
     }
 
-    public void CloseServer(CloseServer message)
-    {
-        SendMessageToClients(message);
-
-        lock (_lock)
-            _connecting = false;
-    }
-
     private void StartServer()
     {
         if (_socket == null)
@@ -168,11 +157,13 @@ public class Server : MonoBehaviour
             {
                 Debug.LogWarning(ex.Message);
 
-                buffer = null;
                 _connecting = false;
-                return;
+
+                break;
             }
         }
+
+        buffer = null;
     }
 
     public void SendMessageToClients(NetworkMessage message)
@@ -184,7 +175,7 @@ public class Server : MonoBehaviour
         foreach (var client in _clients)
         {
             // Send data to server, this function may not block the code
-            _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, client.endPoint, new AsyncCallback(SendCallback), null);
+            _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, client.endPoint, new AsyncCallback(SendCallback), message.type);
         }
     }
 
@@ -280,11 +271,23 @@ public class Server : MonoBehaviour
     {
         var message = data as LeaveServer;
 
-        ClientInServer client = _clients.FirstOrDefault(client => client.id == message.messageOwnerId);
+        if(message.messageOwnerId == _myClient.ID)
+        {
+            SendMessageToClients(message);
 
-        _clients.Remove(client);
+            _clients.Clear();
 
-        SendMessageToClient(client, message);
+            lock (_lock)
+                _connecting = false;
+        }
+        else
+        {
+            ClientInServer client = _clients.FirstOrDefault(client => client.id == message.messageOwnerId);
+
+            _clients.Remove(client);
+
+            SendMessageToClient(client, message);
+        }
     }
 
     private void HandleCreateRoomMessage(NetworkMessage data)
@@ -315,13 +318,5 @@ public class Server : MonoBehaviour
     private void HandleKickOutRoomMessage(NetworkMessage data)
     {
         var message = data as KickOutRoom;
-    }
-
-    private void HandleCloseServer(NetworkMessage data)
-    {
-        var message = data as CloseServer;
-
-        if (message.messageOwnerId == _myClient.ID)
-            CloseServer(message);
     }
 }

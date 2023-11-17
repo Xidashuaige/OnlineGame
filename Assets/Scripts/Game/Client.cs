@@ -162,13 +162,6 @@ public class Client : MonoBehaviour
         SendMessageToServer(messagePackage);
     }
 
-    public void RequestCloseServer()
-    {
-        CloseServer message = new(ID);
-
-        //SendMessageToServer(message);
-    }
-
     #endregion
 
     #region Socket related functions
@@ -203,6 +196,9 @@ public class Client : MonoBehaviour
             catch (Exception ex)
             {
                 Debug.LogWarning(ex.Message);
+
+                lock (_lock)
+                    _handleLeaveServer = true;
 
                 lock (_lock)
                     _connecting = false;
@@ -317,11 +313,6 @@ public class Client : MonoBehaviour
         var message = data as KickOutRoom;
     }
 
-    private void HandleCloseServer(NetworkMessage data)
-    {
-        var message = data as CloseServer;
-
-    }
     #endregion
 
     // -----------------------------------------------

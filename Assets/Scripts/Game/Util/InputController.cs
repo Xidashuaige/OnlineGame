@@ -5,32 +5,32 @@ using UnityEngine.UI;
 
 public class InputController : MonoBehaviour
 {
-    private TMP_InputField _input;
-    private Image _img;
+    [SerializeField] private TMP_InputField _input;
+    [SerializeField] private Image _img;
 
     public string Value
     {
         get
         {
-            if (_input.text == "")
+            if (_input.text == "" && gameObject.activeInHierarchy)
                 StartCoroutine(FlashRed());
 
             return _input.text;
         }
     }
 
-    // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
-        _input = GetComponent<TMP_InputField>();
-        Debug.Log("input" + _input.text);
+        if (_input == null)
+            _input = GetComponent<TMP_InputField>();
 
-        _img = GetComponent<Image>();
+        if(_img == null)
+            _img = GetComponent<Image>();
     }
 
     private IEnumerator FlashRed()
     {
-        float fadeSpeed = 0.02f;
+        float fadeSpeed = 0.04f;
 
         for (float t = 0.0f; t < 1.0f; t += fadeSpeed)
         {

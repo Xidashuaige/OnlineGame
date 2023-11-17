@@ -20,6 +20,7 @@ public class PanelManager : MonoBehaviour
 
     [Space, Header("Unity objects")]
     [SerializeField] private TMP_Text[] _ipAdresses;
+    [SerializeField] private TMP_InputField _ipInput;
 
     [Space, Header("Socket Related")]
     [SerializeField] private Server _server;
@@ -53,5 +54,7 @@ public class PanelManager : MonoBehaviour
     {
         foreach (var adr in _ipAdresses)
             adr.text = newIp;
+
+        _ipInput.text = newIp;
     }
 }
