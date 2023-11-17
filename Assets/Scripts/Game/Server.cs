@@ -29,6 +29,7 @@ public class Server : MonoBehaviour
     [Space, Header("Global parameters")]
     [SerializeField] private PanelManager _panelManager;
     [SerializeField] private Button _startServerBtn;
+    [SerializeField] private InputController _nameInput;
 
     // Server parameters
     private RoomManager _roomManager;
@@ -46,6 +47,7 @@ public class Server : MonoBehaviour
 
     // Events
     public Action<string> onIpUpdate;
+    public Action onServerStart;
 
     // Handle requests in unity
     private bool _handleStartServer = false;
@@ -128,6 +130,9 @@ public class Server : MonoBehaviour
 
     private void StartServer()
     {
+        if(_nameInput.Value == "")
+            return;
+
         if (_socket == null)
         {
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
@@ -152,6 +157,8 @@ public class Server : MonoBehaviour
 
         // Start to listen messages
         ListenMessages();
+
+        onServerStart?.Invoke();
     }
 
     private void ListenMessages()
@@ -176,8 +183,6 @@ public class Server : MonoBehaviour
                     message.endPoint = _lastEndPoint;
 
                 ThreadPool.QueueUserWorkItem(new WaitCallback(HandleMessage), message);
-
-                Debug.Log("Message recived from client: " + message + "\t" + "message length: " + bytesRead);
             }
             catch (Exception ex)
             {
@@ -192,7 +197,7 @@ public class Server : MonoBehaviour
 
     public void SendMessageToClients(NetworkMessage message)
     {
-        Debug.Log("Send message : " + message.type);
+        Debug.Log("Send message : " + message.type + " to all clients");
 
         byte[] data = message.GetBytes();
 
@@ -212,7 +217,7 @@ public class Server : MonoBehaviour
         byte[] data = package.GetBytes();
 
         // Send data to server, this function may not block the code
-        _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, client.endPoint, new AsyncCallback(SendCallback), null);
+        _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, client.endPoint, new AsyncCallback(SendCallback), message.type);
     }
 
     // After message sent
@@ -221,7 +226,8 @@ public class Server : MonoBehaviour
         try
         {
             int bytesSent = _socket.EndSend(ar);
-            Debug.Log("Send " + bytesSent + " bytes to client");
+
+            Debug.Log("Server: " + (NetworkMessageType)ar.AsyncState + " send with successful!");
         }
         catch (Exception e)
         {
@@ -285,7 +291,7 @@ public class Server : MonoBehaviour
 
         _clients.Add(client);
 
-        message.id = client.id;
+        message.messageOwnerId = client.id;
 
         SendMessageToClient(client, message);
     }
@@ -294,11 +300,11 @@ public class Server : MonoBehaviour
     {
         var message = data as LeaveServer;
 
-        ClientInServer client = _clients.FirstOrDefault(client => client.id == message.id);
+        ClientInServer client = _clients.FirstOrDefault(client => client.id == message.messageOwnerId);
 
         _clients.Remove(client);
 
-        SendMessageToClient(client ,message);
+        SendMessageToClient(client, message);
     }
 
     private void HandleCreateRoomMessage(NetworkMessage data)
@@ -335,7 +341,7 @@ public class Server : MonoBehaviour
     {
         var message = data as CloseServer;
 
-        if (message.userId == _myClient.ID)
+        if (message.messageOwnerId == _myClient.ID)
             CloseServer(message);
     }
 }

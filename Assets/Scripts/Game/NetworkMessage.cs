@@ -149,9 +149,10 @@ public class NetworkPackage
 [Serializable]
 public class NetworkMessage
 {
-    protected NetworkMessage(NetworkMessageType type)
+    protected NetworkMessage(NetworkMessageType type, uint messageOwnerId)
     {
         this.type = type;
+        this.messageOwnerId = messageOwnerId;
     }
 
     virtual public byte[] GetBytes()
@@ -162,6 +163,8 @@ public class NetworkMessage
     // 4 server & client
     public NetworkMessageType type = NetworkMessageType.Null;
 
+    public uint messageOwnerId = 0;
+
     // 4 client
     public bool succesful = false;
 
@@ -171,10 +174,7 @@ public class NetworkMessage
 [Serializable]
 public class HearthBeat : NetworkMessage
 {
-    public HearthBeat(uint userid) : base(NetworkMessageType.Heartbeat)
-    {
-        id = userid;
-    }
+    public HearthBeat(uint userId) : base(NetworkMessageType.Heartbeat, userId) { }
 
     public override byte[] GetBytes()
     {
@@ -185,8 +185,6 @@ public class HearthBeat : NetworkMessage
     {
         return JsonUtility.FromJson<HearthBeat>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
-
-    public uint id;
 }
 
 // -----------------------------------------------
@@ -196,7 +194,7 @@ public class HearthBeat : NetworkMessage
 [Serializable]
 public class JoinServer : NetworkMessage
 {
-    public JoinServer(string userName) : base(NetworkMessageType.JoinServer)
+    public JoinServer(string userName) : base(NetworkMessageType.JoinServer, 0)
     {
         name = userName;
     }
@@ -208,43 +206,28 @@ public class JoinServer : NetworkMessage
 
     // 4 server
     public string name;
-
-    // 4 client
-    public uint id;
 }
 
 [Serializable]
 public class LeaveServer : NetworkMessage
 {
-    public LeaveServer(uint userId) : base(NetworkMessageType.LeaveServer)
-    {
-        id = userId;
-    }
+    public LeaveServer(uint userId) : base(NetworkMessageType.LeaveServer, userId) { }
 
     static public LeaveServer GetData(byte[] data)
     {
         return JsonUtility.FromJson<LeaveServer>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
-
-    // 4 server
-    public uint id;
 }
 
 [Serializable]
 public class CreateRoom : NetworkMessage
 {
-    public CreateRoom(uint userId) : base(NetworkMessageType.CreateRoom)
-    {
-        this.userId = userId;
-    }
+    public CreateRoom(uint userId) : base(NetworkMessageType.CreateRoom, userId) { }
 
     static public CreateRoom GetData(byte[] data)
     {
         return JsonUtility.FromJson<CreateRoom>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
-
-    // 4 server
-    public uint userId;
 
     // 4 client
     public uint roomId;
@@ -253,9 +236,8 @@ public class CreateRoom : NetworkMessage
 [Serializable]
 public class JoinRoom : NetworkMessage
 {
-    public JoinRoom(uint userId, uint roomId) : base(NetworkMessageType.JoinRoom)
+    public JoinRoom(uint userId, uint roomId) : base(NetworkMessageType.JoinRoom, userId)
     {
-        this.userId = userId;
         this.roomId = roomId;
     }
 
@@ -265,7 +247,6 @@ public class JoinRoom : NetworkMessage
     }
 
     // 4 server
-    public uint userId;
     public uint roomId;
 
     // 4 cient
@@ -275,18 +256,11 @@ public class JoinRoom : NetworkMessage
 [Serializable]
 public class CloseServer : NetworkMessage
 {
-    public CloseServer(uint userId) : base(NetworkMessageType.CloseServer)
-    {
-        this.userId = userId;
-    }
-
+    public CloseServer(uint userId) : base(NetworkMessageType.CloseServer, userId) { }
     static public CloseServer GetData(byte[] data)
     {
         return JsonUtility.FromJson<CloseServer>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
-
-    // 4 server
-    public uint userId;
 }
 
 
@@ -299,62 +273,43 @@ public class CloseServer : NetworkMessage
 [Serializable]
 public class LeaveRoom : NetworkMessage
 {
-    public LeaveRoom(uint userId) : base(NetworkMessageType.LeaveRoom)
-    {
-        id = userId;
-    }
+    public LeaveRoom(uint userId) : base(NetworkMessageType.LeaveRoom, userId) { }
 
     static public LeaveRoom GetData(byte[] data)
     {
         return JsonUtility.FromJson<LeaveRoom>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
-
-    // 4 server
-    public uint id;
 }
 
 [Serializable]
 public class ReadyInTheRoom : NetworkMessage
 {
-    public ReadyInTheRoom(uint userId) : base(NetworkMessageType.ReadyInTheRoom)
-    {
-        id = userId;
-    }
+    public ReadyInTheRoom(uint userId) : base(NetworkMessageType.ReadyInTheRoom, userId) { }
 
     static public ReadyInTheRoom GetData(byte[] data)
     {
         return JsonUtility.FromJson<ReadyInTheRoom>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
-
-    // 4 server
-    public uint id;
 }
 
 // Just for Room Master
 [Serializable]
 public class StartGame : NetworkMessage
 {
-    public StartGame(uint userId) : base(NetworkMessageType.StartGame)
-    {
-        id = userId;
-    }
+    public StartGame(uint userId) : base(NetworkMessageType.StartGame, userId) { }
 
     static public StartGame GetData(byte[] data)
     {
         return JsonUtility.FromJson<StartGame>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
-
-    // 4 server
-    public uint id;
 }
 
 // Just for Room Master
 [Serializable]
 public class KickOutRoom : NetworkMessage
 {
-    public KickOutRoom(uint userId, uint targetUserId) : base(NetworkMessageType.KickOutRoom)
+    public KickOutRoom(uint userId, uint targetUserId) : base(NetworkMessageType.KickOutRoom, userId)
     {
-        id = userId;
         this.targetUserId = targetUserId;
     }
 
@@ -362,9 +317,6 @@ public class KickOutRoom : NetworkMessage
     {
         return JsonUtility.FromJson<KickOutRoom>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
-
-    // 4 server
-    public uint id;
 
     // 4 server & client
     public uint targetUserId;

@@ -3053,7 +3053,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 17.339996, y: -14.786671}
+  m_AnchoredPosition: {x: 17.339996, y: -14.786667}
   m_SizeDelta: {x: 685.32, y: 63.67}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &620974610
@@ -3700,6 +3700,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _panelManager: {fileID: 28050810}
   _startServerBtn: {fileID: 1119606505}
+  _nameInput: {fileID: 746061644}
   _myClient: {fileID: 1334899241}
 --- !u!4 &732073140
 Transform:
@@ -3804,6 +3805,7 @@ GameObject:
   - component: {fileID: 746061643}
   - component: {fileID: 746061642}
   - component: {fileID: 746061641}
+  - component: {fileID: 746061644}
   m_Layer: 5
   m_Name: Username input
   m_TagString: Untagged
@@ -3968,6 +3970,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 746061639}
   m_CullTransparentMesh: 1
+--- !u!114 &746061644
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 746061639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da20e6ca5add39743baae255fa5b56e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &753694323
 GameObject:
   m_ObjectHideFlags: 0
@@ -7045,6 +7059,7 @@ GameObject:
   - component: {fileID: 1285123755}
   - component: {fileID: 1285123754}
   - component: {fileID: 1285123753}
+  - component: {fileID: 1285123756}
   m_Layer: 5
   m_Name: IP input
   m_TagString: Untagged
@@ -7209,6 +7224,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1285123751}
   m_CullTransparentMesh: 1
+--- !u!114 &1285123756
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1285123751}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da20e6ca5add39743baae255fa5b56e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1301359276
 GameObject:
   m_ObjectHideFlags: 0
@@ -7344,8 +7371,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _panelManager: {fileID: 28050810}
-  _ipInput: {fileID: 1285123753}
-  _nameInput: {fileID: 746061641}
+  _ipInput: {fileID: 1285123756}
+  _nameInput: {fileID: 746061644}
+  _server: {fileID: 732073139}
   host: 0
 --- !u!4 &1334899242
 Transform:
@@ -10903,7 +10931,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1970348079
 RectTransform:
   m_ObjectHideFlags: 0

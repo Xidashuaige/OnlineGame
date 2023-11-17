@@ -12,8 +12,9 @@ public class Client : MonoBehaviour
     #region Paramaters
     // Unity paramaters
     [SerializeField] private PanelManager _panelManager;
-    [SerializeField] private TMP_InputField _ipInput;
-    [SerializeField] private TMP_InputField _nameInput;
+    [SerializeField] private InputController _ipInput;
+    [SerializeField] private InputController _nameInput;
+    [SerializeField] private Server _server;
 
     // Clients paramaters
     private IPEndPoint _serverEndPoint;
@@ -72,6 +73,8 @@ public class Client : MonoBehaviour
         _actionSuccessful[NetworkMessageType.LeaveServer] = WhenLeaveServerHasSent;
 
         #endregion
+
+        _server.onServerStart += RequestJoinToServer;
     }
 
     private void Update()
@@ -112,25 +115,11 @@ public class Client : MonoBehaviour
         if (_connecting)
             return;
 
-        if (_nameInput.text == "")
-        {
-            Debug.Log("name null");
-
-            if (_nameInput.TryGetComponent<UnityEngine.UI.Image>(out var img))
-                StartCoroutine(InputFlashRed(img));
-
+        if (_nameInput.Value == "")
             return;
-        }
 
-        if (_ipInput.text == "")
-        {
-            Debug.Log("ip null");
-
-            if (_ipInput.TryGetComponent<UnityEngine.UI.Image>(out var img))
-                StartCoroutine(InputFlashRed(img));
-
+        if (_ipInput.Value == "")
             return;
-        }
 
         if (_socket == null)
         {
@@ -139,7 +128,7 @@ public class Client : MonoBehaviour
                 // Create socket and and serverEndPoint
                 _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
-                _serverEndPoint = new(IPAddress.Parse(_ipInput.text), SERVER_PORT);
+                _serverEndPoint = new(IPAddress.Parse(_ipInput.Value), SERVER_PORT);
             }
             catch (Exception e)
             {
@@ -154,7 +143,7 @@ public class Client : MonoBehaviour
         _connecting = true;
 
         // Try to connect to server
-        var messagePackage = NetworkPackage.CreateJoinServerRequest(_nameInput.text);
+        var messagePackage = NetworkPackage.CreateJoinServerRequest(_nameInput.Value);
 
         SendMessageToServer(messagePackage);
 
@@ -190,7 +179,7 @@ public class Client : MonoBehaviour
         byte[] buffer = new byte[1024];
         int bytesRead;
 
-        Debug.Log("Start receive message");
+        Debug.Log("Client " + _nameInput.Value + " start receive message");
 
         while (_connecting)
         {
@@ -205,14 +194,12 @@ public class Client : MonoBehaviour
                     lock (_lock)
                         _connecting = false;
 
-                    Debug.LogWarning("Message Receive with erro, disconnect from server");
+                    Debug.LogWarning("Message Receive with error, disconnect from server");
 
                     return;
                 }
 
                 HandleMessage(message);
-
-                Debug.Log("Message recived: " + message + "\t" + "message length: " + bytesRead);
             }
             catch (Exception ex)
             {
@@ -238,7 +225,7 @@ public class Client : MonoBehaviour
         try
         {
             int bytesSent = _socket.EndSend(ar);
-            Debug.Log("Send " + bytesSent + " bytes to Server");
+            Debug.Log("Client " + _nameInput.Value + " " + (NetworkMessageType)ar.AsyncState + " send with successful!");
 
             _actionSuccessful[(NetworkMessageType)ar.AsyncState]?.Invoke(true);
 
@@ -268,7 +255,7 @@ public class Client : MonoBehaviour
     {
         var message = data as HearthBeat;
 
-        Debug.Log("HeartBeat");
+        Debug.Log("HeartBeat from server");
     }
 
     private void HandleJoinServerMessage(NetworkMessage data)
@@ -277,11 +264,13 @@ public class Client : MonoBehaviour
 
         if (message.succesful)
         {
-            _id = message.id;
+            _id = message.messageOwnerId;
 
             _handleJoinServer = true;
 
             Debug.Log("Join Server Successful");
+
+            return;
         }
 
         Debug.Log("Join Server Faild");
@@ -447,25 +436,4 @@ public class Client : MonoBehaviour
     // -----------------------------------------------
     // ----------------UTIL FUNCTIONS-----------------
     // -----------------------------------------------
-
-    #region Util
-    private IEnumerator InputFlashRed(UnityEngine.UI.Image img)
-    {
-        float fadeSpeed = 0.02f;
-
-        for (float t = 0.0f; t < 1.0f; t += fadeSpeed)
-        {
-            img.color = Color.Lerp(Color.white, Color.red, t);
-
-            yield return null;
-        }
-
-        for (float t = 0.0f; t < 1.0f; t += fadeSpeed)
-        {
-            img.color = Color.Lerp(Color.red, Color.white, t);
-
-            yield return null;
-        }
-    }
-    #endregion
 }
