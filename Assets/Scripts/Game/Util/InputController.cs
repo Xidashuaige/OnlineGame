@@ -23,6 +23,8 @@ public class InputController : MonoBehaviour
     void Start()
     {
         _input = GetComponent<TMP_InputField>();
+        Debug.Log("input" + _input.text);
+
         _img = GetComponent<Image>();
     }
 

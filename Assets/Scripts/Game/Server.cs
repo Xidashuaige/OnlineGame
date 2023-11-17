@@ -28,7 +28,6 @@ public class Server : MonoBehaviour
     // Unity Objects
     [Space, Header("Global parameters")]
     [SerializeField] private PanelManager _panelManager;
-    [SerializeField] private Button _startServerBtn;
     [SerializeField] private InputController _nameInput;
 
     // Server parameters
@@ -84,15 +83,7 @@ public class Server : MonoBehaviour
 
             onIpUpdate?.Invoke(_ipAdress);
 
-            // Change btn state
-            var text = _startServerBtn.GetComponentInChildren<TMP_Text>();
-
-            _startServerBtn.onClick.RemoveAllListeners();
-
-            _startServerBtn.onClick.AddListener(_myClient.RequestCloseServer);
-
-            if (text != null)
-                text.text = "Close Server";
+            onServerStart?.Invoke();
 
             // Change my client to server host
             _myClient.host = true;
@@ -117,15 +108,6 @@ public class Server : MonoBehaviour
     public void CloseServer(CloseServer message)
     {
         SendMessageToClients(message);
-
-        _startServerBtn.onClick.RemoveAllListeners();
-
-        _startServerBtn.onClick.AddListener(CreateServer);
-
-        var text = _startServerBtn.GetComponentInChildren<TMP_Text>();
-
-        if (text != null)
-            text.text = "Start Server";
 
         lock (_lock)
             _connecting = false;
@@ -157,8 +139,6 @@ public class Server : MonoBehaviour
 
         // Start to listen messages
         ListenMessages();
-
-        onServerStart?.Invoke();
     }
 
     private void ListenMessages()

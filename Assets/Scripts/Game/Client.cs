@@ -108,6 +108,7 @@ public class Client : MonoBehaviour
     #endregion
 
     #region Requests to Server
+
     public void RequestJoinToServer()
     {
         if (_connecting)
