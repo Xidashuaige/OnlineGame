@@ -13,7 +13,7 @@ public class InputController : MonoBehaviour
         get
         {
             if (_input.text == "")
-                FlashRed();
+                StartCoroutine(FlashRed());
 
             return _input.text;
         }

@@ -106,6 +106,9 @@ public class Server : MonoBehaviour
         if (_connecting)
             return;
 
+        if (_nameInput.Value == "")
+            return;
+
         Thread thread = new(StartServer);
 
         thread.Start();
@@ -130,9 +133,6 @@ public class Server : MonoBehaviour
 
     private void StartServer()
     {
-        if(_nameInput.Value == "")
-            return;
-
         if (_socket == null)
         {
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
