@@ -30,20 +30,20 @@ public class InputController : MonoBehaviour
 
     private IEnumerator FlashRed()
     {
-        float fadeSpeed = 0.04f;
+        float fadeSpeed = 0.2f;
 
-        for (float t = 0.0f; t < 1.0f; t += fadeSpeed)
+        for (float t = 0.0f; t <= 1.05f; t += fadeSpeed)
         {
             _img.color = Color.Lerp(Color.white, Color.red, t);
 
-            yield return null;
+            yield return new WaitForFixedUpdate();
         }
 
-        for (float t = 0.0f; t < 1.0f; t += fadeSpeed)
+        for (float t = 0.0f; t <= 1.05f; t += fadeSpeed)
         {
             _img.color = Color.Lerp(Color.red, Color.white, t);
 
-            yield return null;
+            yield return new WaitForFixedUpdate();
         }
     }
 }

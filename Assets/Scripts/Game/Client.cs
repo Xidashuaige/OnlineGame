@@ -9,12 +9,16 @@ public class Client : MonoBehaviour
 {
     #region Paramaters
     // Unity paramaters
-    [SerializeField] private PanelManager _panelManager;
     [SerializeField] private InputController _ipInput;
     [SerializeField] private InputController _nameInput;
+
+    // General
     [SerializeField] private Server _server;
+    [SerializeField] private RoomManager roomManager;
 
     // Clients paramaters
+    private const int SERVER_PORT = 8888;
+
     private IPEndPoint _serverEndPoint;
 
     private Socket _socket;
@@ -23,21 +27,24 @@ public class Client : MonoBehaviour
 
     public bool host = false;
 
-    private const int SERVER_PORT = 8888;
-
     public uint ID { get => _id; }
 
     private uint _id;
 
+    // Callbacks
     private Dictionary<NetworkMessageType, Action<NetworkMessage>> _actionHandlers = new();
-
     private Dictionary<NetworkMessageType, Action<bool>> _actionSuccessful = new();
 
+    // locker
     private readonly object _lock = new();
 
     // Handle requests in unity
     private bool _handleJoinServer = false;
     private bool _handleLeaveServer = false;
+
+    // Events
+    public Action onJoinServer = null;
+    public Action onLeaveServer = null;
 
     #endregion
 
@@ -79,14 +86,14 @@ public class Client : MonoBehaviour
     {
         if (_handleJoinServer)
         {
-            _panelManager.ChangeScene(Panels.RoomListPanel);
+            onJoinServer.Invoke();
 
             _handleJoinServer = false;
         }
 
         if (_handleLeaveServer)
         {
-            _panelManager.ChangeScene(Panels.StartPanel);
+            onLeaveServer.Invoke();
 
             _handleLeaveServer = false;
         }
@@ -94,7 +101,8 @@ public class Client : MonoBehaviour
 
     private void OnApplicationQuit()
     {
-        _connecting = false;
+        onJoinServer = null;
+        onLeaveServer = null;
 
         _actionHandlers?.Clear();
         _actionHandlers = null;
@@ -105,6 +113,7 @@ public class Client : MonoBehaviour
         _socket?.Dispose();
         _socket = null;
     }
+
     #endregion
 
     #region Requests to Server
@@ -162,6 +171,16 @@ public class Client : MonoBehaviour
         SendMessageToServer(messagePackage);
     }
 
+    public void RequestCreateRoom()
+    {
+        if (!_connecting)
+            return;
+
+        var messagePackage = NetworkPackage.CreateCreateRoomRequest(_id);
+
+        SendMessageToServer(messagePackage);
+    }
+
     #endregion
 
     #region Socket related functions
@@ -169,7 +188,7 @@ public class Client : MonoBehaviour
     private void ListenMessages()
     {
         byte[] buffer = new byte[1024];
-        int bytesRead;
+        int bytesRead = 0;
 
         Debug.Log("Client " + _nameInput.Value + " start receive message");
 
@@ -178,6 +197,8 @@ public class Client : MonoBehaviour
             try
             {
                 bytesRead = _socket.Receive(buffer);
+
+                Debug.Log("Package recived with lenght: " + bytesRead);
 
                 NetworkMessage message = NetworkPackage.GetDataFromBytes(buffer, bytesRead);
 
@@ -191,7 +212,22 @@ public class Client : MonoBehaviour
                     return;
                 }
 
-                HandleMessage(message);
+                ThreadPool.QueueUserWorkItem(new WaitCallback(HandleMessage), message);
+            }
+            catch (SocketException ex)
+            {
+                // I DON'T KNOW WHY HAVE THIS ERROR!!!!
+                if (ex.ErrorCode == (int)SocketError.InvalidArgument)
+                {
+                    Debug.LogWarning(ex.Message);
+                    continue;
+                }
+
+                lock (_lock)
+                    _handleLeaveServer = true;
+
+                lock (_lock)
+                    _connecting = false;
             }
             catch (Exception ex)
             {
@@ -241,8 +277,10 @@ public class Client : MonoBehaviour
 
     #region When recive message from server
 
-    private void HandleMessage(NetworkMessage message)
+    private void HandleMessage(object messageObj)
     {
+        var message = messageObj as NetworkMessage;
+
         _actionHandlers[message.type].Invoke(message);
     }
 
@@ -279,6 +317,8 @@ public class Client : MonoBehaviour
         {
             _handleLeaveServer = true;
 
+            _connecting = false;
+
             Debug.Log("Leave Server Successful");
         }
     }
@@ -286,6 +326,18 @@ public class Client : MonoBehaviour
     private void HandleCreateRoomMessage(NetworkMessage data)
     {
         var message = data as CreateRoom;
+
+        if (message.succesful)
+        {
+            if (message.roomMaseter.id != _id)
+                roomManager.CreateRoom(message.roomMaseter, message.roomId, message.maxUser);
+
+            Debug.Log("Some player create a room");
+        }
+        else
+        {
+            Debug.Log("Create room faild: Is max number of rooms yet");
+        }
     }
 
     private void HandleJoinRoomMessage(NetworkMessage data)

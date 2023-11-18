@@ -74,7 +74,7 @@ public class NetworkPackage
         return new(NetworkMessageType.LeaveServer, message.GetBytes());
     }
 
-    public static NetworkPackage CreateCreateRoomRequest(uint _userId)
+    public static NetworkPackage CreateCreateRoomRequest(uint _userId, uint maxPlayer = 4)
     {
         CreateRoom message = new(_userId);
 
@@ -214,7 +214,7 @@ public class LeaveServer : NetworkMessage
 [Serializable]
 public class CreateRoom : NetworkMessage
 {
-    public CreateRoom(uint userId) : base(NetworkMessageType.CreateRoom, userId) { }
+    public CreateRoom(uint userId, int maxUser = 4) : base(NetworkMessageType.CreateRoom, userId) { }
 
     static public CreateRoom GetData(byte[] data)
     {
@@ -223,6 +223,22 @@ public class CreateRoom : NetworkMessage
 
     // 4 client
     public uint roomId;
+    public ClientInfo roomMaseter;
+    public int maxUser;
+}
+
+[Serializable]
+public class UpdateRoomListInfo : NetworkMessage
+{
+    public UpdateRoomListInfo(uint userId) : base(NetworkMessageType.CreateRoom, userId) { }
+
+    static public UpdateRoomListInfo GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<UpdateRoomListInfo>(Encoding.ASCII.GetString(data, 0, data.Length));
+    }
+
+    // 4 client
+    public List<RoomInfo> _roomsInfo;
 }
 
 [Serializable]

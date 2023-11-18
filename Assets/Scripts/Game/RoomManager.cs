@@ -1,30 +1,88 @@
+using System;
 using System.Collections.Generic;
+using UnityEngine;
 
-public class Room
+public class RoomManager : MonoBehaviour
 {
-    //public Room(User roomMaster, int limitUser)
-    //{
-    //    _users = new();
-    //    _roomMaster = roomMaster;
-    //    _users.Add(roomMaster);
-    //    _limitUsers = limitUser;
-    //}
+    [SerializeField] private int _maxRooms = 20;
+    [SerializeField] private GameObject roomPrefab;
+    [SerializeField] private GameObject roomParent;
 
-    //public User RoomMaster { get { return _roomMaster; } }
-    //public List<User> Users { get { return _users; } }
-    //public int LimitUsers { get { return _limitUsers; } }
+    // Client use
+    private readonly List<Room> _roomPool = new();
 
-    //private List<User> _users;
-    //private int _limitUsers = 2;
-    //private User _roomMaster;
-}
+    // Server use
+    private int _roomCreated = 0;
+    private uint _idGen = 0;
+    public bool CanCreateMore { get => _roomCreated >= _maxRooms ? false : true; }
 
-public class RoomManager
-{
-    private List<Room> _rooms = new();
+    private void Start()
+    {
+        for (int i = 0; i < _maxRooms; i++)
+        {
+            var room = Instantiate(roomPrefab);
+            room.SetActive(false);
+            room.transform.SetParent(roomParent.transform);
+            _roomPool.Add(room.GetComponent<Room>());
+        }
+    }
 
-    //public void CreateRoom(User roomMaster, int limitUser = 2)
-    //{
-    //    _rooms.Add(new Room(roomMaster, limitUser));
-    //}
+    private void OnApplicationQuit()
+    {
+        _roomPool.Clear();
+    }
+
+    // -----------------------------------------------
+    // -----------------------------------------------
+    // ---------------SERVER FUNCTIONS----------------
+    // -----------------------------------------------
+    // -----------------------------------------------
+    public uint CreateRoomFromServer(ClientInfo roomMaster, int maxUser = 4)
+    {
+        if (CanCreateMore)
+        {
+            _roomCreated++;
+
+            var newRoom = CreateRoom(roomMaster, GetNextID(), maxUser);
+
+            return newRoom.ID;
+        }
+        return 0;
+    }
+
+    private uint GetNextID()
+    {
+        return ++_idGen;
+    }
+
+    // -----------------------------------------------
+    // -----------------------------------------------
+    // ---------SERVER & CLIENT FUNCTIONS-------------
+    // -----------------------------------------------
+    // -----------------------------------------------
+    public Room CreateRoom(ClientInfo roomMaster, uint roomId, int limitUser = 4)
+    {
+        Room room = GetNextRoom();
+
+        if (room == null)
+            return null;
+
+        room.RoomInit(roomId, roomMaster, limitUser);
+
+        room.transform.SetAsLastSibling();
+
+        room.gameObject.SetActive(true);
+
+        return room;
+    }
+
+    private Room GetNextRoom()
+    {
+        for (int i = 0; i < _roomPool.Count; i++)
+        {
+            if (!_roomPool[i].gameObject.activeInHierarchy)
+                return _roomPool[i];
+        }
+        return null;
+    }
 }

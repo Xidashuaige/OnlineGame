@@ -6,9 +6,10 @@ using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
 
-public struct ClientInServer
+[Serializable]
+public struct ClientInfo
 {
-    public ClientInServer(string name, uint id, IPEndPoint endPoint)
+    public ClientInfo(string name, uint id, IPEndPoint endPoint)
     {
         this.name = name;
         this.id = id;
@@ -25,11 +26,11 @@ public class Server : MonoBehaviour
     // Unity Objects
     [Space, Header("Global parameters")]
     [SerializeField] private PanelManager _panelManager;
+    [SerializeField] private RoomManager _roomManager;
     [SerializeField] private InputController _nameInput;
 
     // Server parameters
-    private RoomManager _roomManager;
-    private List<ClientInServer> _clients = new();
+    private List<ClientInfo> _clients = new();
     private uint _idGen = 0;
     private Dictionary<NetworkMessageType, Action<NetworkMessage>> _actionHandlers = new();
     [SerializeField] private Client _myClient;
@@ -48,7 +49,11 @@ public class Server : MonoBehaviour
     // Handle requests in unity
     private bool _handleStartServer = false;
 
-    // Start is called before the first frame update
+    // -----------------------------------------------
+    // -----------------------------------------------
+    // -----------------UNITY EVENTS------------------
+    // -----------------------------------------------
+    // -----------------------------------------------
     void Start()
     {
         // Init Handle events actions
@@ -65,7 +70,22 @@ public class Server : MonoBehaviour
 
     private void OnApplicationQuit()
     {
-        _connecting = false;
+        if (_connecting)
+        {
+            SendMessageToClients(new LeaveServer(_myClient.ID));
+
+            lock (_lock)
+                _connecting = false;
+
+            _clients?.Clear();
+            _clients = null;
+        }
+
+        onIpUpdate = null;
+        onServerStart = null;
+
+        _actionHandlers?.Clear();
+        _actionHandlers = null;
 
         _socket?.Dispose();
         _socket = null;
@@ -89,6 +109,11 @@ public class Server : MonoBehaviour
         }
     }
 
+    // -----------------------------------------------
+    // -----------------------------------------------
+    // ---------------SERVER FUNCTIONS----------------
+    // -----------------------------------------------
+    // -----------------------------------------------
     public void CreateServer()
     {
         if (_connecting)
@@ -111,15 +136,18 @@ public class Server : MonoBehaviour
             try
             {
                 _socket.Bind(new IPEndPoint(IPAddress.Any, _serverPort));
-
-                Debug.Log("Server Start!");
             }
             catch (Exception ex)
             {
                 Debug.LogWarning(ex.Message);
+
+                _socket = null;
+
                 return;
             }
         }
+
+        Debug.Log("Server Start!");
 
         // When start server successful
         _handleStartServer = true;
@@ -170,7 +198,9 @@ public class Server : MonoBehaviour
     {
         Debug.Log("Send message : " + message.type + " to all clients");
 
-        byte[] data = message.GetBytes();
+        NetworkPackage package = new(message.type, message.GetBytes());
+
+        byte[] data = package.GetBytes();
 
         foreach (var client in _clients)
         {
@@ -179,13 +209,15 @@ public class Server : MonoBehaviour
         }
     }
 
-    public void SendMessageToClient(ClientInServer client, NetworkMessage message)
+    public void SendMessageToClient(ClientInfo client, NetworkMessage message)
     {
         Debug.Log("Send messages : " + message.type + " to client : " + client.name);
 
         NetworkPackage package = new(message.type, message.GetBytes());
 
         byte[] data = package.GetBytes();
+
+        Debug.Log("Package Send with lenght: " + data.Length);
 
         // Send data to server, this function may not block the code
         _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, client.endPoint, new AsyncCallback(SendCallback), message.type);
@@ -258,7 +290,7 @@ public class Server : MonoBehaviour
     {
         var message = data as JoinServer;
 
-        ClientInServer client = new(message.name, GetNextID(), message.endPoint as IPEndPoint);
+        ClientInfo client = new(message.name, GetNextID(), message.endPoint as IPEndPoint);
 
         _clients.Add(client);
 
@@ -271,18 +303,20 @@ public class Server : MonoBehaviour
     {
         var message = data as LeaveServer;
 
-        if(message.messageOwnerId == _myClient.ID)
+        if (message.messageOwnerId == _myClient.ID)
         {
             SendMessageToClients(message);
 
             _clients.Clear();
+
+            Debug.Log("Server Close!");
 
             lock (_lock)
                 _connecting = false;
         }
         else
         {
-            ClientInServer client = _clients.FirstOrDefault(client => client.id == message.messageOwnerId);
+            ClientInfo client = _clients.FirstOrDefault(client => client.id == message.messageOwnerId);
 
             _clients.Remove(client);
 
@@ -293,6 +327,32 @@ public class Server : MonoBehaviour
     private void HandleCreateRoomMessage(NetworkMessage data)
     {
         var message = data as CreateRoom;
+
+        Debug.Log("Server: some player request for create a room");
+
+        ClientInfo client = _clients.FirstOrDefault(client => client.id == message.messageOwnerId);
+
+        message.roomId = _roomManager.CreateRoomFromServer(client, message.maxUser);
+
+        message.roomMaseter = client;
+
+        if (message.roomId != 0)
+        {
+            message.succesful = true;
+
+            Debug.Log("Server: Room create successful!");
+
+            SendMessageToClients(message);
+        }
+
+        else
+        {
+            message.succesful = false;
+
+            Debug.Log("Server: Room create faild!");
+
+            SendMessageToClient(client, message);
+        }
     }
 
     private void HandleJoinRoomMessage(NetworkMessage data)
