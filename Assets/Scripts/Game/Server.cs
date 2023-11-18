@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -7,18 +8,37 @@ using System.Threading;
 using UnityEngine;
 
 [Serializable]
-public struct ClientInfo
+public class ClientInfo
 {
     public ClientInfo(string name, uint id, IPEndPoint endPoint)
     {
         this.name = name;
         this.id = id;
         this.endPoint = endPoint;
+        roomId = 0;
     }
 
     public string name;
     public uint id;
+    public uint roomId;
     public IPEndPoint endPoint;
+}
+
+public class MessageHandler
+{
+    public MessageHandler(NetworkMessage message, Action<NetworkMessage> action)
+    {
+        _message = message;
+        _action = action;
+    }
+
+    public void Execute()
+    {
+        _action.Invoke(_message);
+    }
+
+    private NetworkMessage _message;
+    private Action<NetworkMessage> _action;
 }
 
 public class Server : MonoBehaviour
@@ -30,10 +50,11 @@ public class Server : MonoBehaviour
     [SerializeField] private InputController _nameInput;
 
     // Server parameters
-    private List<ClientInfo> _clients = new();
+    private Dictionary<uint, ClientInfo> _clients = new();
     private uint _idGen = 0;
     private Dictionary<NetworkMessageType, Action<NetworkMessage>> _actionHandlers = new();
     [SerializeField] private Client _myClient;
+    private ConcurrentQueue<MessageHandler> _tasks = new();
 
     // Socket parameters
     private bool _connecting = false;
@@ -107,6 +128,12 @@ public class Server : MonoBehaviour
 
             _handleStartServer = false;
         }
+
+        if (_tasks.Count > 0)
+        {
+            if (_tasks.TryDequeue(out MessageHandler task))
+                task.Execute();
+        }
     }
 
     // -----------------------------------------------
@@ -141,8 +168,8 @@ public class Server : MonoBehaviour
             {
                 Debug.LogWarning(ex.Message);
 
+                _socket.Dispose();
                 _socket = null;
-
                 return;
             }
         }
@@ -179,7 +206,9 @@ public class Server : MonoBehaviour
                 if (message.type == NetworkMessageType.JoinServer)
                     message.endPoint = _lastEndPoint;
 
-                ThreadPool.QueueUserWorkItem(new WaitCallback(HandleMessage), message);
+                _tasks.Enqueue(new(message, HandleMessage));
+
+                //ThreadPool.QueueUserWorkItem(new WaitCallback(HandleMessage), message);
             }
             catch (Exception ex)
             {
@@ -205,7 +234,7 @@ public class Server : MonoBehaviour
         foreach (var client in _clients)
         {
             // Send data to server, this function may not block the code
-            _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, client.endPoint, new AsyncCallback(SendCallback), message.type);
+            _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, client.Value.endPoint, new AsyncCallback(SendCallback), message.type);
         }
     }
 
@@ -292,7 +321,7 @@ public class Server : MonoBehaviour
 
         ClientInfo client = new(message.name, GetNextID(), message.endPoint as IPEndPoint);
 
-        _clients.Add(client);
+        _clients.Add(client.id, client);
 
         message.messageOwnerId = client.id;
 
@@ -309,16 +338,18 @@ public class Server : MonoBehaviour
 
             _clients.Clear();
 
-            Debug.Log("Server Close!");
+            _socket?.Dispose();
+
+            Debug.Log("Server Closed!");
 
             lock (_lock)
                 _connecting = false;
         }
         else
         {
-            ClientInfo client = _clients.FirstOrDefault(client => client.id == message.messageOwnerId);
+            ClientInfo client = _clients[message.messageOwnerId];
 
-            _clients.Remove(client);
+            _clients.Remove(client.id);
 
             SendMessageToClient(client, message);
         }
@@ -330,11 +361,13 @@ public class Server : MonoBehaviour
 
         Debug.Log("Server: some player request for create a room");
 
-        ClientInfo client = _clients.FirstOrDefault(client => client.id == message.messageOwnerId);
+        var client = _clients[message.messageOwnerId];
 
         message.roomId = _roomManager.CreateRoomFromServer(client, message.maxUser);
 
         message.roomMaseter = client;
+
+        _clients[message.messageOwnerId].roomId = message.roomId;
 
         if (message.roomId != 0)
         {
@@ -363,6 +396,8 @@ public class Server : MonoBehaviour
     private void HandleLeaveRoomMessage(NetworkMessage data)
     {
         var message = data as LeaveRoom;
+
+        // TODO
     }
 
     private void HandleReadyInTheRoomMessage(NetworkMessage data)

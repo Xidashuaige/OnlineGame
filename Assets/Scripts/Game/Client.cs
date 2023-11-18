@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -39,12 +40,12 @@ public class Client : MonoBehaviour
     private readonly object _lock = new();
 
     // Handle requests in unity
-    private bool _handleJoinServer = false;
-    private bool _handleLeaveServer = false;
+    private ConcurrentQueue<MessageHandler> _tasks = new();
 
     // Events
     public Action onJoinServer = null;
     public Action onLeaveServer = null;
+    public Action onJoinRoom = null;
 
     #endregion
 
@@ -84,18 +85,11 @@ public class Client : MonoBehaviour
 
     private void Update()
     {
-        if (_handleJoinServer)
+        // Do handle task in main thread
+        if (_tasks.Count > 0)
         {
-            onJoinServer.Invoke();
-
-            _handleJoinServer = false;
-        }
-
-        if (_handleLeaveServer)
-        {
-            onLeaveServer.Invoke();
-
-            _handleLeaveServer = false;
+            if (_tasks.TryDequeue(out MessageHandler task))
+                task.Execute();
         }
     }
 
@@ -181,6 +175,24 @@ public class Client : MonoBehaviour
         SendMessageToServer(messagePackage);
     }
 
+    public void RequestJoinRoom()
+    {
+        if (!_connecting)
+            return;
+
+        var messagePackage = NetworkPackage.CreateJoinRoomRequest(_id, 0);
+    }
+
+    public void RequestLeaveRoom()
+    {
+        if (!_connecting)
+            return;
+
+        var messagePackage = NetworkPackage.CreateLeaveRoomRequest(_id);
+
+        SendMessageToServer(messagePackage);
+    }
+
     #endregion
 
     #region Socket related functions
@@ -212,32 +224,30 @@ public class Client : MonoBehaviour
                     return;
                 }
 
-                ThreadPool.QueueUserWorkItem(new WaitCallback(HandleMessage), message);
+                _tasks.Enqueue(new(message, HandleMessage));
+
+                //ThreadPool.QueueUserWorkItem(new WaitCallback(HandleMessage), message);
             }
             catch (SocketException ex)
             {
-                // I DON'T KNOW WHY HAVE THIS ERROR!!!!
+                // I DON'T KNOW WHY HAVE I THIS ERROR!!!!
                 if (ex.ErrorCode == (int)SocketError.InvalidArgument)
                 {
                     Debug.LogWarning(ex.Message);
                     continue;
                 }
 
-                lock (_lock)
-                    _handleLeaveServer = true;
+                LeaveServer leaveServer = new(_id, true);
 
-                lock (_lock)
-                    _connecting = false;
+                _tasks.Enqueue(new(leaveServer, HandleMessage));
             }
             catch (Exception ex)
             {
                 Debug.LogWarning(ex.Message);
 
-                lock (_lock)
-                    _handleLeaveServer = true;
+                LeaveServer leaveServer = new(_id, true);
 
-                lock (_lock)
-                    _connecting = false;
+                _tasks.Enqueue(new(leaveServer, HandleMessage));
             }
         }
     }
@@ -299,7 +309,7 @@ public class Client : MonoBehaviour
         {
             _id = message.messageOwnerId;
 
-            _handleJoinServer = true;
+            onJoinServer.Invoke();
 
             Debug.Log("Join Server Successful");
 
@@ -315,9 +325,12 @@ public class Client : MonoBehaviour
 
         if (message.succesful)
         {
-            _handleLeaveServer = true;
+            _socket?.Dispose();
 
-            _connecting = false;
+            lock (_lock)
+                _connecting = false;
+
+            onLeaveServer.Invoke();
 
             Debug.Log("Leave Server Successful");
         }
@@ -329,10 +342,16 @@ public class Client : MonoBehaviour
 
         if (message.succesful)
         {
-            if (message.roomMaseter.id != _id)
+            if (!host)
+            {
                 roomManager.CreateRoom(message.roomMaseter, message.roomId, message.maxUser);
 
-            Debug.Log("Some player create a room");
+                Debug.Log("Some player create a room");
+            }            
+            else
+            {
+                onJoinRoom.Invoke();
+            }            
         }
         else
         {

@@ -74,9 +74,9 @@ public class NetworkPackage
         return new(NetworkMessageType.LeaveServer, message.GetBytes());
     }
 
-    public static NetworkPackage CreateCreateRoomRequest(uint _userId, uint maxPlayer = 4)
+    public static NetworkPackage CreateCreateRoomRequest(uint _userId, int maxPlayer = 4)
     {
-        CreateRoom message = new(_userId);
+        CreateRoom message = new(_userId, maxPlayer);
 
         return new(NetworkMessageType.CreateRoom, message.GetBytes());
     }
@@ -203,7 +203,10 @@ public class JoinServer : NetworkMessage
 [Serializable]
 public class LeaveServer : NetworkMessage
 {
-    public LeaveServer(uint userId) : base(NetworkMessageType.LeaveServer, userId) { }
+    public LeaveServer(uint userId, bool forceLeave = false) : base(NetworkMessageType.LeaveServer, userId)
+    {
+        succesful = forceLeave;
+    }
 
     static public LeaveServer GetData(byte[] data)
     {
@@ -214,7 +217,10 @@ public class LeaveServer : NetworkMessage
 [Serializable]
 public class CreateRoom : NetworkMessage
 {
-    public CreateRoom(uint userId, int maxUser = 4) : base(NetworkMessageType.CreateRoom, userId) { }
+    public CreateRoom(uint userId, int maxUser) : base(NetworkMessageType.CreateRoom, userId)
+    {
+        this.maxUser = maxUser;
+    }
 
     static public CreateRoom GetData(byte[] data)
     {

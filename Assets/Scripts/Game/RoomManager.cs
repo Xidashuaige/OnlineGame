@@ -23,6 +23,7 @@ public class RoomManager : MonoBehaviour
             var room = Instantiate(roomPrefab);
             room.SetActive(false);
             room.transform.SetParent(roomParent.transform);
+            room.transform.localScale = Vector3.one;
             _roomPool.Add(room.GetComponent<Room>());
         }
     }

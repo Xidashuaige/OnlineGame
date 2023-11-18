@@ -44,6 +44,7 @@ public class PanelManager : MonoBehaviour
         // client callbacks
         _client.onJoinServer += OnJoinServer;
         _client.onLeaveServer += OnLeaveServer;
+        _client.onJoinRoom += OnJoinRoom;
 
         // Init Panels
         _panels.Add(_startPanel);
@@ -91,5 +92,10 @@ public class PanelManager : MonoBehaviour
     private void OnLeaveServer()
     {
         ChangeScene(Panels.StartPanel);
+    }
+
+    private void OnJoinRoom()
+    {
+        ChangeScene(Panels.RoomPanel);
     }
 }
