@@ -94,7 +94,7 @@ public class PanelManager : MonoBehaviour
         ChangeScene(Panels.StartPanel);
     }
 
-    private void OnJoinRoom()
+    private void OnJoinRoom(JoinRoom message)
     {
         ChangeScene(Panels.RoomPanel);
     }

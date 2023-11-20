@@ -9,17 +9,19 @@ using UnityEngine;
 [Serializable]
 public class ClientInfo
 {
-    public ClientInfo(string name, uint id, IPEndPoint endPoint)
+    public ClientInfo(string name, uint id, IPEndPoint endPoint = null, bool roomMaster = false)
     {
         this.name = name;
         this.id = id;
         this.endPoint = endPoint;
+        this.roomMaster = roomMaster;
         roomId = 0;
     }
 
     public string name;
     public uint id;
     public uint roomId; // 0 if is not in any room
+    public bool roomMaster = false;
     public IPEndPoint endPoint;
 }
 
@@ -397,6 +399,8 @@ public class Server : MonoBehaviour
             message.succesful = true;
 
             message.client = _clients[message.messageOwnerId];
+
+            message.clientsInTheRoom = _roomManager.GetPlayersByRoomId(message.roomId).ToArray();
 
             SendMessageToClients(message);
         }

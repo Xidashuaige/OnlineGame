@@ -29,6 +29,7 @@ public class Room : MonoBehaviour
 
     public bool IsFull { get => _limitUsers <= _clients.Count; }
 
+    public List<ClientInfo> Clients { get => _clients; }
     private List<ClientInfo> _clients = new();
     private ClientInfo _roomMaster;
     private Button _btn = null;

@@ -6,6 +6,8 @@ TagManager:
   tags:
   - PlayerManager
   - Client
+  - RoomController
+  - Server
   layers:
   - Default
   - TransparentFX

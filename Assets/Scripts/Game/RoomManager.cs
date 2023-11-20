@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class RoomManager : MonoBehaviour
@@ -8,6 +7,7 @@ public class RoomManager : MonoBehaviour
     [SerializeField] private GameObject _roomPrefab;
     [SerializeField] private GameObject _roomParent;
     [SerializeField] private Client _client;
+    [SerializeField] private RoomController _roomController;
 
     // Client use
     private readonly List<Room> _roomPool = new();
@@ -19,6 +19,14 @@ public class RoomManager : MonoBehaviour
 
     private void Start()
     {
+        if (_client == null)
+            _client = GameObject.FindWithTag("Client").GetComponent<Client>();
+
+        if (_roomController == null)
+            _roomController = GameObject.FindWithTag("RoomController").GetComponent<RoomController>();
+
+        _roomController.InitRoomController();
+
         for (int i = 0; i < _maxRooms; i++)
         {
             var room = Instantiate(_roomPrefab);
@@ -62,6 +70,16 @@ public class RoomManager : MonoBehaviour
         return false;
     }
 
+    public List<ClientInfo> GetPlayersByRoomId(uint roomId)
+    {
+        var index = _roomPool.FindIndex(room => room.ID == roomId);
+
+        if (index == -1 || !_roomPool[index].gameObject.activeInHierarchy)
+            return new();
+
+        return _roomPool[index].Clients;
+    }
+
     private uint GetNextID()
     {
         return ++_idGen;
@@ -93,12 +111,28 @@ public class RoomManager : MonoBehaviour
         return room;
     }
 
-    public void JoinRoom(uint roomId, ClientInfo client)
+    public void JoinRoom(JoinRoom message)
     {
-        var roomIndex = _roomPool.FindIndex(room => room.ID == roomId);
+        var roomIndex = _roomPool.FindIndex(room => room.ID == message.roomId);
 
         if (roomIndex > -1)
-            _roomPool[roomIndex].JoinRoom(client);
+        {
+            _roomPool[roomIndex].JoinRoom(message.client);
+
+            if (message.messageOwnerId != _client.ID)
+                return;
+
+            if (message.clientsInTheRoom == null)
+                return;
+
+            for (int i = 0; i < message.clientsInTheRoom.Length; i++)
+            {
+                if (message.clientsInTheRoom[i].id == _client.ID)
+                    continue;
+
+                _roomPool[roomIndex].JoinRoom(message.clientsInTheRoom[i]);
+            }
+        }
     }
 
     private Room GetNextRoom()

@@ -3679,7 +3679,7 @@ GameObject:
   - component: {fileID: 732073139}
   m_Layer: 0
   m_Name: Server
-  m_TagString: Untagged
+  m_TagString: Server
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4866,6 +4866,7 @@ MonoBehaviour:
   _roomPrefab: {fileID: 8325717549004073296, guid: e1459e0b9045ca643bcc2d77b9911c06, type: 3}
   _roomParent: {fileID: 7962004159466712770}
   _client: {fileID: 1334899241}
+  _roomController: {fileID: 1425583832}
 --- !u!1 &911928194
 GameObject:
   m_ObjectHideFlags: 0
@@ -6240,7 +6241,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 1203693927}
   m_OnClick:
     m_PersistentCalls:
@@ -6935,7 +6936,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 1271326908}
   m_OnClick:
     m_PersistentCalls:
@@ -8052,9 +8053,10 @@ GameObject:
   - component: {fileID: 1425583831}
   - component: {fileID: 1425583830}
   - component: {fileID: 1425583829}
+  - component: {fileID: 1425583832}
   m_Layer: 5
-  m_Name: Middle
-  m_TagString: Untagged
+  m_Name: Middle (RoomController)
+  m_TagString: RoomController
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -8147,6 +8149,32 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1425583827}
   m_CullTransparentMesh: 1
+--- !u!114 &1425583832
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1425583827}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48f63a76d6666b048aa66c221c4f7726, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _avatarSprites:
+  - {fileID: 21300000, guid: 53e5b7337d661ea4e96ae3644cae42f7, type: 3}
+  - {fileID: 21300000, guid: 6c36c876caeda3d4ea1f8d95e04ba1bd, type: 3}
+  - {fileID: 21300000, guid: 5f767fc5901743d4091e9bd874f03e88, type: 3}
+  - {fileID: 21300000, guid: ad283a1d11a60f4438d3817dd14727dc, type: 3}
+  - {fileID: 21300000, guid: e981eae3fc5901f4cb49a8905e184c95, type: 3}
+  - {fileID: 21300000, guid: 55a380322b03ce441af22a1506b9b134, type: 3}
+  - {fileID: 21300000, guid: f940485ad03612344bdbf4d0c8a056f2, type: 3}
+  - {fileID: 21300000, guid: 58aae0b978f89094287265ba098ae5a0, type: 3}
+  - {fileID: 21300000, guid: b60966b1a40edaa48a8008880c4f9ebf, type: 3}
+  - {fileID: 21300000, guid: cb37e471d4254de4090e632e417bfa08, type: 3}
+  - {fileID: 21300000, guid: c46ae1cfd6feec94c9cae31d73169b99, type: 3}
+  _noPlayerSprite: {fileID: 21300000, guid: 575b5e374afed264fa15ba7dde26288d, type: 3}
+  _client: {fileID: 1334899241}
 --- !u!1 &1436181219
 GameObject:
   m_ObjectHideFlags: 0
@@ -9735,7 +9763,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 1672777872}
   m_OnClick:
     m_PersistentCalls:

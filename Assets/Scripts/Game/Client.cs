@@ -47,7 +47,7 @@ public class Client : MonoBehaviour
     // Events
     public Action onJoinServer = null;
     public Action onLeaveServer = null;
-    public Action onJoinRoom = null;
+    public Action<JoinRoom> onJoinRoom = null;
 
     #endregion
 
@@ -182,7 +182,7 @@ public class Client : MonoBehaviour
         if (!_connecting)
             return;
 
-        var messagePackage = NetworkPackage.CreateJoinRoomRequest(_id, roomId);
+        var messagePackage = NetworkPackage.CreateJoinRoomRequest(_id, roomId, name);
 
         SendMessageToServer(messagePackage);
     }
@@ -356,13 +356,14 @@ public class Client : MonoBehaviour
             {
                 _roomId = message.roomId;
 
-                onJoinRoom.Invoke();
-                Debug.Log("Create the room successful!");         
-            }            
+                onJoinRoom.Invoke(new(_id, message.roomId, _nameInput.Value, true));
+
+                Debug.Log("Create the room successful!");
+            }
             else
             {
                 Debug.Log("Some player create a room");
-            }            
+            }
         }
         else
         {
@@ -374,16 +375,17 @@ public class Client : MonoBehaviour
     {
         var message = data as JoinRoom;
 
-        if(message.messageOwnerId == ID)
-        {
+        if (message.messageOwnerId == ID)
             _roomId = message.roomId;
 
-            _roomManager.JoinRoom(message.roomId, message.client);
+        else if (_roomId != message.roomId)
+            return;
 
-            onJoinRoom.Invoke();
+        _roomManager.JoinRoom(message);
 
-            Debug.Log("Join the room successful!");
-        }      
+        onJoinRoom.Invoke(message);
+
+        Debug.Log("Join the room successful!");
     }
 
     private void HandleLeaveRoomMessage(NetworkMessage data)
