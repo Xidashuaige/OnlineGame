@@ -4863,8 +4863,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _maxRooms: 20
-  roomPrefab: {fileID: 8325717549004073296, guid: e1459e0b9045ca643bcc2d77b9911c06, type: 3}
-  roomParent: {fileID: 7962004159466712770}
+  _roomPrefab: {fileID: 8325717549004073296, guid: e1459e0b9045ca643bcc2d77b9911c06, type: 3}
+  _roomParent: {fileID: 7962004159466712770}
+  _client: {fileID: 1334899241}
 --- !u!1 &911928194
 GameObject:
   m_ObjectHideFlags: 0
@@ -7433,7 +7434,7 @@ GameObject:
   - component: {fileID: 1334899241}
   m_Layer: 0
   m_Name: Client
-  m_TagString: Untagged
+  m_TagString: Client
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7453,7 +7454,7 @@ MonoBehaviour:
   _ipInput: {fileID: 1285123756}
   _nameInput: {fileID: 746061644}
   _server: {fileID: 732073139}
-  roomManager: {fileID: 880644431}
+  _roomManager: {fileID: 880644431}
   host: 0
 --- !u!4 &1334899242
 Transform:

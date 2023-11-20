@@ -15,7 +15,7 @@ public class Client : MonoBehaviour
 
     // General
     [SerializeField] private Server _server;
-    [SerializeField] private RoomManager roomManager;
+    [SerializeField] private RoomManager _roomManager;
 
     // Clients paramaters
     private const int SERVER_PORT = 8888;
@@ -30,7 +30,9 @@ public class Client : MonoBehaviour
 
     public uint ID { get => _id; }
 
-    private uint _id;
+    private uint _id = 0;
+
+    private uint _roomId = 0;
 
     // Callbacks
     private Dictionary<NetworkMessageType, Action<NetworkMessage>> _actionHandlers = new();
@@ -175,12 +177,14 @@ public class Client : MonoBehaviour
         SendMessageToServer(messagePackage);
     }
 
-    public void RequestJoinRoom()
+    public void RequestJoinRoom(uint roomId)
     {
         if (!_connecting)
             return;
 
-        var messagePackage = NetworkPackage.CreateJoinRoomRequest(_id, 0);
+        var messagePackage = NetworkPackage.CreateJoinRoomRequest(_id, roomId);
+
+        SendMessageToServer(messagePackage);
     }
 
     public void RequestLeaveRoom()
@@ -240,6 +244,8 @@ public class Client : MonoBehaviour
                 LeaveServer leaveServer = new(_id, true);
 
                 _tasks.Enqueue(new(leaveServer, HandleMessage));
+
+                break;
             }
             catch (Exception ex)
             {
@@ -248,6 +254,8 @@ public class Client : MonoBehaviour
                 LeaveServer leaveServer = new(_id, true);
 
                 _tasks.Enqueue(new(leaveServer, HandleMessage));
+
+                break;
             }
         }
     }
@@ -342,15 +350,18 @@ public class Client : MonoBehaviour
 
         if (message.succesful)
         {
-            if (!host)
-            {
-                roomManager.CreateRoom(message.roomMaseter, message.roomId, message.maxUser);
+            _roomManager.CreateRoom(message.roomMaster, message.roomId, message.maxUser);
 
-                Debug.Log("Some player create a room");
+            if (_id == message.messageOwnerId)
+            {
+                _roomId = message.roomId;
+
+                onJoinRoom.Invoke();
+                Debug.Log("Create the room successful!");         
             }            
             else
             {
-                onJoinRoom.Invoke();
+                Debug.Log("Some player create a room");
             }            
         }
         else
@@ -362,6 +373,17 @@ public class Client : MonoBehaviour
     private void HandleJoinRoomMessage(NetworkMessage data)
     {
         var message = data as JoinRoom;
+
+        if(message.messageOwnerId == ID)
+        {
+            _roomId = message.roomId;
+
+            _roomManager.JoinRoom(message.roomId, message.client);
+
+            onJoinRoom.Invoke();
+
+            Debug.Log("Join the room successful!");
+        }      
     }
 
     private void HandleLeaveRoomMessage(NetworkMessage data)

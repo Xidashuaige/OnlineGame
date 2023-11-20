@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -20,7 +19,7 @@ public class ClientInfo
 
     public string name;
     public uint id;
-    public uint roomId;
+    public uint roomId; // 0 if is not in any room
     public IPEndPoint endPoint;
 }
 
@@ -361,43 +360,57 @@ public class Server : MonoBehaviour
 
         Debug.Log("Server: some player request for create a room");
 
-        var client = _clients[message.messageOwnerId];
-
-        message.roomId = _roomManager.CreateRoomFromServer(client, message.maxUser);
-
-        message.roomMaseter = client;
-
-        _clients[message.messageOwnerId].roomId = message.roomId;
+        message.roomId = _clients[message.messageOwnerId].roomId = _roomManager.CreateRoomFromServer();
 
         if (message.roomId != 0)
         {
             message.succesful = true;
 
+            message.roomMaster = _clients[message.messageOwnerId];
+
             Debug.Log("Server: Room create successful!");
 
             SendMessageToClients(message);
         }
-
         else
         {
             message.succesful = false;
 
             Debug.Log("Server: Room create faild!");
 
-            SendMessageToClient(client, message);
+            SendMessageToClient(_clients[message.messageOwnerId], message);
         }
     }
 
     private void HandleJoinRoomMessage(NetworkMessage data)
     {
         var message = data as JoinRoom;
+
+        if (_clients[message.messageOwnerId].roomId != 0 || !_roomManager.CheckIfRoomAvaliable(message.roomId))
+        {
+            message.succesful = false;
+
+            SendMessageToClient(_clients[message.messageOwnerId], message);
+        }
+        else
+        {
+            message.succesful = true;
+
+            message.client = _clients[message.messageOwnerId];
+
+            SendMessageToClients(message);
+        }
     }
 
     private void HandleLeaveRoomMessage(NetworkMessage data)
     {
         var message = data as LeaveRoom;
 
-        // TODO
+        // TODO 
+        var client = _clients[message.messageOwnerId];
+
+
+
     }
 
     private void HandleReadyInTheRoomMessage(NetworkMessage data)

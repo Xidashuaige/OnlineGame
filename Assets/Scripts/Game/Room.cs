@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 [Serializable]
 public struct RoomInfo
@@ -22,16 +23,38 @@ public enum RoomState
 
 public class Room : MonoBehaviour
 {
-    public void RoomInit(uint roomId, ClientInfo roomMaster, int limitUser)
+    [SerializeField] private int _limitUsers = 4;
+    [SerializeField] private uint _roomId = 0;
+    [SerializeField] private RoomState _state = RoomState.NotFull;
+
+    public bool IsFull { get => _limitUsers <= _clients.Count; }
+
+    private List<ClientInfo> _clients = new();
+    private ClientInfo _roomMaster;
+    private Button _btn = null;
+    private Action<uint> _onJoinRoomRequest;
+
+    public uint ID { get => _roomId; }
+
+    public void RoomInit(uint roomId, ClientInfo roomMaster, int limitUser, Action<uint> onJoinRoomAction = null)
     {
+        if (_btn == null)
+        {
+            _btn = GetComponent<Button>();
+            _btn.onClick.AddListener(OnbtnCLick);
+            _onJoinRoomRequest += onJoinRoomAction;
+        }
+
         _roomMaster = roomMaster;
         _roomId = roomId;
         _limitUsers = limitUser;
         _clients.Add(roomMaster);
     }
-    //public User RoomMaster { get { return _roomMaster; } }
-    //public List<User> Users { get { return _users; } }
-    //public int LimitUsers { get { return _limitUsers; } }
+
+    public void JoinRoom(ClientInfo client)
+    {
+        _clients.Add(client);
+    }
 
     public RoomInfo GetRoomInfo()
     {
@@ -46,20 +69,16 @@ public class Room : MonoBehaviour
         return roomInfo;
     }
 
-    public uint ID { get => _roomId; }
-
-    [SerializeField] private int _limitUsers = 4;
-    [SerializeField] private uint _roomId = 0;
-    [SerializeField] private RoomState _state = RoomState.NotFull;
-
-    private List<ClientInfo> _clients = new();
-    private ClientInfo _roomMaster;
-
     public RoomState State
     {
         get
         {
             return _state == RoomState.Playing ? _state : _limitUsers > _clients.Count ? RoomState.NotFull : RoomState.Full;
         }
+    }
+
+    private void OnbtnCLick()
+    {
+        _onJoinRoomRequest?.Invoke(ID);
     }
 }

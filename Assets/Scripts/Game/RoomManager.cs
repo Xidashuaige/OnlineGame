@@ -1,12 +1,13 @@
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class RoomManager : MonoBehaviour
 {
     [SerializeField] private int _maxRooms = 20;
-    [SerializeField] private GameObject roomPrefab;
-    [SerializeField] private GameObject roomParent;
+    [SerializeField] private GameObject _roomPrefab;
+    [SerializeField] private GameObject _roomParent;
+    [SerializeField] private Client _client;
 
     // Client use
     private readonly List<Room> _roomPool = new();
@@ -20,9 +21,9 @@ public class RoomManager : MonoBehaviour
     {
         for (int i = 0; i < _maxRooms; i++)
         {
-            var room = Instantiate(roomPrefab);
+            var room = Instantiate(_roomPrefab);
             room.SetActive(false);
-            room.transform.SetParent(roomParent.transform);
+            room.transform.SetParent(_roomParent.transform);
             room.transform.localScale = Vector3.one;
             _roomPool.Add(room.GetComponent<Room>());
         }
@@ -38,22 +39,37 @@ public class RoomManager : MonoBehaviour
     // ---------------SERVER FUNCTIONS----------------
     // -----------------------------------------------
     // -----------------------------------------------
-    public uint CreateRoomFromServer(ClientInfo roomMaster, int maxUser = 4)
+    public uint CreateRoomFromServer()
     {
         if (CanCreateMore)
         {
             _roomCreated++;
 
-            var newRoom = CreateRoom(roomMaster, GetNextID(), maxUser);
+            //var newRoom = CreateRoom(roomMaster, GetNextID(), maxUser);
 
-            return newRoom.ID;
+            return GetNextID();
         }
         return 0;
+    }
+
+    public bool CheckIfRoomAvaliable(uint roomID)
+    {
+        var roomIndex = _roomPool.FindIndex(room => room.ID == roomID);
+
+        if (roomIndex > -1 && !_roomPool[roomIndex].IsFull)
+            return true;
+
+        return false;
     }
 
     private uint GetNextID()
     {
         return ++_idGen;
+    }
+
+    public void LeaveRoomFromServer(uint userId, uint roomId)
+    {
+
     }
 
     // -----------------------------------------------
@@ -68,13 +84,21 @@ public class RoomManager : MonoBehaviour
         if (room == null)
             return null;
 
-        room.RoomInit(roomId, roomMaster, limitUser);
+        room.RoomInit(roomId, roomMaster, limitUser, _client.RequestJoinRoom);
 
         room.transform.SetAsLastSibling();
 
         room.gameObject.SetActive(true);
 
         return room;
+    }
+
+    public void JoinRoom(uint roomId, ClientInfo client)
+    {
+        var roomIndex = _roomPool.FindIndex(room => room.ID == roomId);
+
+        if (roomIndex > -1)
+            _roomPool[roomIndex].JoinRoom(client);
     }
 
     private Room GetNextRoom()

@@ -229,7 +229,7 @@ public class CreateRoom : NetworkMessage
 
     // 4 client
     public uint roomId;
-    public ClientInfo roomMaseter;
+    public ClientInfo roomMaster;
     public int maxUser;
 }
 
@@ -262,6 +262,7 @@ public class JoinRoom : NetworkMessage
 
     // 4 server
     public uint roomId;
+    public ClientInfo client;
 
     // 4 cient
     // room data, players in the room
