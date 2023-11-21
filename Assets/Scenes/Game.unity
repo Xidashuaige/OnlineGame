@@ -4863,10 +4863,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _maxRooms: 20
+  _roomUIController: {fileID: 0}
   _roomPrefab: {fileID: 8325717549004073296, guid: e1459e0b9045ca643bcc2d77b9911c06, type: 3}
   _roomParent: {fileID: 7962004159466712770}
   _client: {fileID: 1334899241}
-  _roomController: {fileID: 1425583832}
 --- !u!1 &911928194
 GameObject:
   m_ObjectHideFlags: 0
@@ -6936,7 +6936,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 0
+  m_Interactable: 1
   m_TargetGraphic: {fileID: 1271326908}
   m_OnClick:
     m_PersistentCalls:
