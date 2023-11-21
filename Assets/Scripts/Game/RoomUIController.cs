@@ -18,7 +18,7 @@ class PlayerInTheRoomPanel
 }
 
 
-public class RoomController : MonoBehaviour
+public class RoomUIController : MonoBehaviour
 {
     [SerializeField] List<Sprite> _avatarSprites = new();
     [SerializeField] Sprite _noPlayerSprite;
@@ -87,6 +87,7 @@ public class RoomController : MonoBehaviour
             _client = GameObject.FindWithTag("Client").GetComponent<Client>();
 
         _client.onJoinRoom += JoinRoom;
+        _client.onLeaveRoom += CloseRoom;
     }
 
     private void JoinRoom(JoinRoom message)
@@ -96,7 +97,7 @@ public class RoomController : MonoBehaviour
         player.inTheRoom = true;
         player.avatarImg.sprite = _avatarSprites[Random.Range(0, _avatarSprites.Count)];
         player.name.text = message.client.name;
-        player.roomMaster = message.client.roomMaster;
+        player.roomMaster = message.client.isRoomMaster;
         if (player.roomMaster)
             player.roomMasterImg.gameObject.SetActive(true);
 
@@ -113,7 +114,7 @@ public class RoomController : MonoBehaviour
             player.inTheRoom = true;
             player.avatarImg.sprite = _avatarSprites[Random.Range(0, _avatarSprites.Count)];
             player.name.text = message.clientsInTheRoom[i].name;
-            player.roomMaster = message.clientsInTheRoom[i].roomMaster;
+            player.roomMaster = message.clientsInTheRoom[i].isRoomMaster;
             if (player.roomMaster)
                 player.roomMasterImg.gameObject.SetActive(true);
         }
@@ -131,8 +132,17 @@ public class RoomController : MonoBehaviour
         player.inTheRoom = false;
         player.avatarImg.sprite = _noPlayerSprite;
         player.name.text = "";
+        player.roomMasterImg.gameObject.SetActive(false);
+    }
 
-        if (player.roomMaster)
+    private void CloseRoom()
+    {
+        foreach (var player in _players)
+        {
+            player.inTheRoom = false;
+            player.avatarImg.sprite = _noPlayerSprite;
+            player.name.text = "";
             player.roomMasterImg.gameObject.SetActive(false);
+        }
     }
 }

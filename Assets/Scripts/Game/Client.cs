@@ -34,6 +34,8 @@ public class Client : MonoBehaviour
 
     private uint _roomId = 0;
 
+    private bool _roomMaster = false;
+
     // Callbacks
     private Dictionary<NetworkMessageType, Action<NetworkMessage>> _actionHandlers = new();
     private Dictionary<NetworkMessageType, Action<bool>> _actionSuccessful = new();
@@ -48,6 +50,7 @@ public class Client : MonoBehaviour
     public Action onJoinServer = null;
     public Action onLeaveServer = null;
     public Action<JoinRoom> onJoinRoom = null;
+    public Action onLeaveRoom = null;
 
     #endregion
 
@@ -256,7 +259,6 @@ public class Client : MonoBehaviour
             }
         }
     }
-
     public void SendMessageToServer(NetworkPackage messagePackage)
     {
         byte[] data = messagePackage.GetBytes();
@@ -379,6 +381,7 @@ public class Client : MonoBehaviour
         if (message.messageOwnerId == ID)
         {
             _roomId = message.roomId;
+
             Debug.Log("Join the room successful!");
         }
         else
@@ -395,6 +398,19 @@ public class Client : MonoBehaviour
     private void HandleLeaveRoomMessage(NetworkMessage data)
     {
         var message = data as LeaveRoom;
+
+        if (!message.isRoomMaster && message.messageOwnerId != ID)
+        {
+            Debug.Log("Someone leave the room!");
+            return;
+        }
+
+        if (message.isRoomMaster || message.messageOwnerId == ID)
+        {
+            _roomManager.CloseRoom(message.roomId);
+
+            onLeaveRoom.Invoke();
+        }
     }
 
     private void HandleReadyInTheRoomMessage(NetworkMessage data)

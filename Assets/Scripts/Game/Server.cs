@@ -9,19 +9,19 @@ using UnityEngine;
 [Serializable]
 public class ClientInfo
 {
-    public ClientInfo(string name, uint id, IPEndPoint endPoint = null, bool roomMaster = false)
+    public ClientInfo(string name, uint id, IPEndPoint endPoint = null, bool isRoomMaster = false)
     {
         this.name = name;
         this.id = id;
         this.endPoint = endPoint;
-        this.roomMaster = roomMaster;
-        roomId = 0;
+        this.isRoomMaster = isRoomMaster;
+        room = null;
     }
 
     public string name;
     public uint id;
-    public uint roomId; // 0 if is not in any room
-    public bool roomMaster = false;
+    public RoomInfo room; // 0 if is not in any room
+    public bool isRoomMaster = false;
     public IPEndPoint endPoint;
 }
 
@@ -374,10 +374,34 @@ public class Server : MonoBehaviour
 
         Debug.Log("Server: some player request for create a room");
 
+        var client = message.roomMaster = _clients[message.messageOwnerId];
+
+        var newRoom = _roomManager.CreateRoomFromServer(message);
+
+        if (newRoom == null)
+        {
+            message.succesful = false;
+
+            SendMessageToClient(message.roomMaster, message);
+
+            return;
+        }
+
+        message.succesful = true;
+
+        client.room = newRoom;
+
+        client.isRoomMaster = true;
+
+        SendMessageToClients(message);
+
+        /*
         message.roomId = _clients[message.messageOwnerId].roomId = _roomManager.CreateRoomFromServer();
 
         if (message.roomId != 0)
         {
+            _clients[message.messageOwnerId].roomMaster = true;
+
             message.succesful = true;
 
             message.roomMaster = _clients[message.messageOwnerId];
@@ -393,7 +417,7 @@ public class Server : MonoBehaviour
             Debug.Log("Server: Room create faild!");
 
             SendMessageToClient(_clients[message.messageOwnerId], message);
-        }
+        }*/
     }
 
     private void HandleJoinRoomMessage(NetworkMessage data)
@@ -402,9 +426,12 @@ public class Server : MonoBehaviour
 
         Debug.Log("JOIN ROOOOOOOM");
 
-        if (_clients[message.messageOwnerId].roomId != 0 || !_roomManager.CheckIfRoomAvaliable(message.roomId))
+        /*
+        if (_clients[message.messageOwnerId].room != 0 || !_roomManager.CheckIfRoomAvaliable(message.roomId))
         {
             message.succesful = false;
+
+            _clients[message.messageOwnerId].isRoomMaster = false;
 
             SendMessageToClient(_clients[message.messageOwnerId], message);
         }
@@ -415,6 +442,8 @@ public class Server : MonoBehaviour
             message.client = _clients[message.messageOwnerId];
 
             message.clientsInTheRoom = _roomManager.GetPlayersByRoomId(message.roomId).ToArray();
+
+            _clients[message.messageOwnerId].room = message.roomId;
 
             Debug.Log("Clients in the room: " + message.clientsInTheRoom.Length);
 
@@ -427,17 +456,22 @@ public class Server : MonoBehaviour
                 SendMessageToClient(client, message);
             }
         }
+        */
     }
 
     private void HandleLeaveRoomMessage(NetworkMessage data)
     {
         var message = data as LeaveRoom;
 
-        // TODO 
-        var client = _clients[message.messageOwnerId];
+        var sender = _clients[message.messageOwnerId];
 
-        _roomManager.LeaveRoomFromServer(message.messageOwnerId, message.roomId);
+        message.isRoomMaster = sender.isRoomMaster;
 
+        var clients = sender.room.clients;
+
+        _roomManager.LeaveRoomFromServer(_clients[message.messageOwnerId]);
+
+        SendMessageToClients(message);
     }
 
     private void HandleReadyInTheRoomMessage(NetworkMessage data)

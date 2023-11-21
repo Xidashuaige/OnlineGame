@@ -3,29 +3,30 @@ using UnityEngine;
 
 public class RoomManager : MonoBehaviour
 {
+    [Header("Server")]
     [SerializeField] private int _maxRooms = 20;
+    private readonly List<RoomInfo> _roomPoolForServer = new();
+    private uint _idGen = 0;
+    public bool CanCreateMore { get => _roomPoolForServer.Count >= _maxRooms ? false : true; }
+
+    [Space, Header("Client")]
+    [SerializeField] private RoomUIController _roomUIController;
     [SerializeField] private GameObject _roomPrefab;
     [SerializeField] private GameObject _roomParent;
+    private readonly List<Room> _roomPoolForClient = new();
+
+    [Space, Header("Server & Client")]
     [SerializeField] private Client _client;
-    [SerializeField] private RoomController _roomController;
-
-    // Client use
-    private readonly List<Room> _roomPool = new();
-
-    // Server use
-    private int _roomCreated = 0;
-    private uint _idGen = 0;
-    public bool CanCreateMore { get => _roomCreated >= _maxRooms ? false : true; }
-
     private void Start()
     {
         if (_client == null)
             _client = GameObject.FindWithTag("Client").GetComponent<Client>();
 
-        if (_roomController == null)
-            _roomController = GameObject.FindWithTag("RoomController").GetComponent<RoomController>();
+        // Init for client
+        if (_roomUIController == null)
+            _roomUIController = GameObject.FindWithTag("RoomController").GetComponent<RoomUIController>();
 
-        _roomController.InitRoomController();
+        _roomUIController.InitRoomController();
 
         for (int i = 0; i < _maxRooms; i++)
         {
@@ -33,13 +34,14 @@ public class RoomManager : MonoBehaviour
             room.SetActive(false);
             room.transform.SetParent(_roomParent.transform);
             room.transform.localScale = Vector3.one;
-            _roomPool.Add(room.GetComponent<Room>());
+            _roomPoolForClient.Add(room.GetComponent<Room>());
         }
     }
 
     private void OnApplicationQuit()
     {
-        _roomPool.Clear();
+        _roomPoolForServer.Clear();
+        _roomPoolForClient.Clear();
     }
 
     // -----------------------------------------------
@@ -47,45 +49,42 @@ public class RoomManager : MonoBehaviour
     // ---------------SERVER FUNCTIONS----------------
     // -----------------------------------------------
     // -----------------------------------------------
-    public uint CreateRoomFromServer()
+    public RoomInfo CreateRoomFromServer(CreateRoom message)
     {
         if (CanCreateMore)
         {
-            _roomCreated++;
+            RoomInfo newRoom = new(GetNextID(), message.roomMaster, message.maxUser);
+            _roomPoolForServer.Add(newRoom);
 
-            //var newRoom = CreateRoom(roomMaster, GetNextID(), maxUser);
-
-            return GetNextID();
+            return newRoom;
         }
-        return 0;
+        return null;
     }
 
+    public void CloseRoomFromServer()
+    {
+
+    }
+
+    /*
     public bool CheckIfRoomAvaliable(uint roomID)
     {
-        var roomIndex = _roomPool.FindIndex(room => room.ID == roomID);
+        var roomIndex = _roomPoolForServer.FindIndex(room => room.ID == roomID);
 
-        if (roomIndex > -1 && !_roomPool[roomIndex].IsFull)
+        if (roomIndex > -1 && !_roomPoolForServer[roomIndex].IsFull)
             return true;
 
         return false;
     }
-
-    public List<ClientInfo> GetPlayersByRoomId(uint roomId)
-    {
-        var index = _roomPool.FindIndex(room => room.ID == roomId);
-
-        if (index == -1 || !_roomPool[index].gameObject.activeInHierarchy)
-            return new();
-
-        return _roomPool[index].Clients;
-    }
-
+    */
     public void JoinRoomFromServer(JoinRoom message)
     {
-        var roomIndex = _roomPool.FindIndex(room => room.ID == message.roomId);
+        /*
+        var roomIndex = _roomPoolForServer.FindIndex(room => room.ID == message.roomId);
 
         if (roomIndex > -1)
-            _roomPool[roomIndex].JoinRoom(message.client);
+            _roomPoolForServer[roomIndex].JoinRoom(message.client);
+        */
     }
 
     private uint GetNextID()
@@ -93,14 +92,22 @@ public class RoomManager : MonoBehaviour
         return ++_idGen;
     }
 
-    public void LeaveRoomFromServer(uint userId, uint roomId)
+    public void LeaveRoomFromServer(ClientInfo user)
     {
-        // var room = _roomPool.
+        /*
+        var roomIdex = _roomPoolForServer.FindIndex(room => room.ID == user.room);
+
+        _roomPoolForServer[roomIdex].LeaveRoom(user);
+
+        user.isRoomMaster = false;
+
+        user.room = 0;
+        */
     }
 
     // -----------------------------------------------
     // -----------------------------------------------
-    // ---------SERVER & CLIENT FUNCTIONS-------------
+    // ------------- CLIENT FUNCTIONS-----------------
     // -----------------------------------------------
     // -----------------------------------------------
     public Room CreateRoom(ClientInfo roomMaster, uint roomId, int limitUser = 4)
@@ -112,37 +119,45 @@ public class RoomManager : MonoBehaviour
 
         room.RoomInit(roomId, roomMaster, limitUser, _client.RequestJoinRoom);
 
-        room.transform.SetAsLastSibling();
-
-        room.gameObject.SetActive(true);
-
         return room;
     }
 
+    public void CloseRoom(uint roomId)
+    {
+        /*
+        var roomIndex = _roomPoolForServer.FindIndex(room => room.ID == roomId);
+
+        if (roomIndex < 0)
+            return;
+
+        _roomPoolForServer[roomIndex].CloseRoom();
+        */
+    }
     public void JoinRoom(JoinRoom message)
     {
-        var roomIndex = _roomPool.FindIndex(room => room.ID == message.roomId);
+        /*
+        var roomIndex = _roomPoolForServer.FindIndex(room => room.ID == message.roomId);
 
         if (roomIndex > -1)
         {
-            _roomPool[roomIndex].JoinRoom(message.client);
+            _roomPoolForServer[roomIndex].JoinRoom(message.client);
 
             for (int i = 0; message.clientsInTheRoom != null && i < message.clientsInTheRoom.Length; i++)
             {
                 if (message.clientsInTheRoom[i].id == _client.ID)
                     continue;
 
-                _roomPool[roomIndex].JoinRoom(message.clientsInTheRoom[i]);
+                _roomPoolForServer[roomIndex].JoinRoom(message.clientsInTheRoom[i]);
             }
         }
+        */
     }
-
     private Room GetNextRoom()
     {
-        for (int i = 0; i < _roomPool.Count; i++)
+        for (int i = 0; i < _roomPoolForClient.Count; i++)
         {
-            if (!_roomPool[i].gameObject.activeInHierarchy)
-                return _roomPool[i];
+            if (!_roomPoolForClient[i].gameObject.activeInHierarchy)
+                return _roomPoolForClient[i];
         }
         return null;
     }

@@ -4,13 +4,21 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [Serializable]
-public struct RoomInfo
+public class RoomInfo // For Server
 {
+    public RoomInfo(uint roomId, ClientInfo roomMaster, int limitUsers = 4, RoomState state = RoomState.NotFull)
+    {
+        this.roomId = roomId;
+        clients = new ClientInfo[limitUsers];
+        clients[0] = roomMaster;
+        this.state = state;
+    }
+
     public uint roomId;
-    public int clientCount;
     public int limitUsers;
-    public ClientInfo roomMaster;
+    public ClientInfo[] clients;
     public RoomState state;
+    public bool IsFull { get => limitUsers <= clients.Length; }
 }
 
 [Serializable]
@@ -21,35 +29,45 @@ public enum RoomState
     Playing,
 }
 
-public class Room : MonoBehaviour
+public class Room : MonoBehaviour // For Client
 {
+    // Room info
     [SerializeField] private int _limitUsers = 4;
     [SerializeField] private uint _roomId = 0;
     [SerializeField] private RoomState _state = RoomState.NotFull;
-
-    public bool IsFull { get => _limitUsers <= _clients.Count; }
-
-    public List<ClientInfo> Clients { get => _clients; }
-    private List<ClientInfo> _clients = new();
     private ClientInfo _roomMaster;
-    private Button _btn = null;
-    private Action<uint> _onJoinRoomRequest;
+    private List<ClientInfo> _clients = new();
+    public List<ClientInfo> Clients { get => _clients; }
+    public bool IsFull { get => _limitUsers <= _clients.Count; }
 
     public uint ID { get => _roomId; }
 
+    // Unity objects
+    private Button _btn = null;
+
+    // Event
+    private Action<uint> _onJoinRoomRequest;
+
     public void RoomInit(uint roomId, ClientInfo roomMaster, int limitUser, Action<uint> onJoinRoomAction = null)
     {
+        // Init room init
+        _roomMaster = roomMaster;
+        _roomId = roomId;
+        _limitUsers = limitUser;
+        _clients.Add(roomMaster);
+        _state = RoomState.NotFull;
+
+        // Unity Setting
+        transform.SetAsLastSibling();
+
+        gameObject.SetActive(true);
+
         if (_btn == null)
         {
             _btn = GetComponent<Button>();
             _btn.onClick.AddListener(OnbtnCLick);
             _onJoinRoomRequest += onJoinRoomAction;
         }
-
-        _roomMaster = roomMaster;
-        _roomId = roomId;
-        _limitUsers = limitUser;
-        _clients.Add(roomMaster);
     }
 
     public void JoinRoom(ClientInfo client)
@@ -60,6 +78,15 @@ public class Room : MonoBehaviour
     public void LeaveRoom(ClientInfo client)
     {
         _clients.Remove(client);
+    }
+
+    public void CloseRoom()
+    {
+        _clients.Clear();
+        _roomMaster = null;
+        _roomId = 0;
+        _limitUsers = 4;
+        _state = RoomState.NotFull;
     }
 
     public RoomInfo GetRoomInfo()

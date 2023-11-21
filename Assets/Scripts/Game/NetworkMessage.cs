@@ -227,10 +227,12 @@ public class CreateRoom : NetworkMessage
         return JsonUtility.FromJson<CreateRoom>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
 
+    // 4 server
+    public int maxUser;
+
     // 4 client
     public uint roomId;
     public ClientInfo roomMaster;
-    public int maxUser;
 }
 
 [Serializable]
@@ -266,6 +268,7 @@ public class JoinRoom : NetworkMessage
     public ClientInfo client;
 
     // 4 client
+    public uint roomMasterId;
     public ClientInfo[] clientsInTheRoom;
 }
 
@@ -290,6 +293,9 @@ public class LeaveRoom : NetworkMessage
 
     // 4 server
     public uint roomId;
+
+    // 4 clients
+    public bool isRoomMaster;
 }
 
 [Serializable]
