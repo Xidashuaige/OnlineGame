@@ -89,19 +89,6 @@ public class Room : MonoBehaviour // For Client
         _state = RoomState.NotFull;
     }
 
-    public RoomInfo GetRoomInfo()
-    {
-        RoomInfo roomInfo;
-
-        roomInfo.roomId = _roomId;
-        roomInfo.clientCount = _clients.Count;
-        roomInfo.state = State;
-        roomInfo.roomMaster = _roomMaster;
-        roomInfo.limitUsers = _limitUsers;
-
-        return roomInfo;
-    }
-
     public RoomState State
     {
         get

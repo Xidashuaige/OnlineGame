@@ -467,8 +467,6 @@ public class Server : MonoBehaviour
 
         message.isRoomMaster = sender.isRoomMaster;
 
-        var clients = sender.room.clients;
-
         _roomManager.LeaveRoomFromServer(_clients[message.messageOwnerId]);
 
         SendMessageToClients(message);
