@@ -30,6 +30,8 @@ public class Client : MonoBehaviour
 
     public uint ID { get => _id; }
 
+    public string Name { get => _nameInput.Value; }
+
     private uint _id = 0;
 
     private uint _roomId = 0;
@@ -214,7 +216,7 @@ public class Client : MonoBehaviour
             {
                 bytesRead = _socket.Receive(buffer);
 
-                Debug.Log("Package recived with lenght: " + bytesRead);
+                //Debug.Log("Package recived with lenght: " + bytesRead);
 
                 NetworkMessage message = NetworkPackage.GetDataFromBytes(buffer, bytesRead);
 
@@ -273,7 +275,7 @@ public class Client : MonoBehaviour
         try
         {
             int bytesSent = _socket.EndSend(ar);
-            Debug.Log("Client " + _nameInput.Value + " " + (NetworkMessageType)ar.AsyncState + " send with successful!");
+            //Debug.Log("Client " + _nameInput.Value + " " + (NetworkMessageType)ar.AsyncState + " send with successful!");
 
             _actionSuccessful[(NetworkMessageType)ar.AsyncState]?.Invoke(true);
 
@@ -349,15 +351,15 @@ public class Client : MonoBehaviour
 
         if (message.succesful)
         {
-            _roomManager.CreateRoom(message.roomMaster, message.roomId, message.maxUser);
+            _roomManager.CreateRoomFromClient(message);
 
-            if (_id == message.messageOwnerId)
+            if (message.messageOwnerId == _id)
             {
                 _roomId = message.roomId;
 
-                //onJoinRoom.Invoke(new(_id, message.roomId, _nameInput.Value, true));
-
                 Debug.Log("Create the room successful!");
+
+                Debug.Log("Try to enter room " + _roomId);
 
                 var messagePackage = NetworkPackage.CreateJoinRoomRequest(_id, _roomId, _nameInput.Value, true);
 
@@ -378,21 +380,26 @@ public class Client : MonoBehaviour
     {
         var message = data as JoinRoom;
 
+        if (message.succesful == false)
+            return;
+
+        _roomManager.JoinRoomFromClient(message);
+
         if (message.messageOwnerId == ID)
+            _roomMaster = message.client.isRoomMaster;
+
+        if (message.messageOwnerId == ID || _roomId == message.roomId)
         {
             _roomId = message.roomId;
 
-            Debug.Log("Join the room successful!");
+            onJoinRoom.Invoke(message);
+
+            Debug.Log(message.client.name + " join the room successful!");
         }
         else
         {
             Debug.Log("Someone enter the room!");
         }
-
-        if (!host)
-            _roomManager.JoinRoom(message);
-
-        onJoinRoom.Invoke(message);
     }
 
     private void HandleLeaveRoomMessage(NetworkMessage data)

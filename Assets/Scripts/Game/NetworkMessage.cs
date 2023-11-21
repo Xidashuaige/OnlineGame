@@ -269,7 +269,7 @@ public class JoinRoom : NetworkMessage
 
     // 4 client
     public uint roomMasterId;
-    public ClientInfo[] clientsInTheRoom;
+    public List<ClientInfo> clientsInTheRoom;
 }
 
 // -----------------------------------------------

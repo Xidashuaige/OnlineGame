@@ -66,25 +66,59 @@ public class RoomManager : MonoBehaviour
 
     }
 
-    /*
+
     public bool CheckIfRoomAvaliable(uint roomID)
     {
-        var roomIndex = _roomPoolForServer.FindIndex(room => room.ID == roomID);
+        var roomIndex = _roomPoolForServer.FindIndex(room => room.id == roomID);
 
-        if (roomIndex > -1 && !_roomPoolForServer[roomIndex].IsFull)
+        if (roomIndex >= 0 && !_roomPoolForServer[roomIndex].IsFull)
             return true;
 
         return false;
     }
-    */
-    public void JoinRoomFromServer(JoinRoom message)
-    {
-        /*
-        var roomIndex = _roomPoolForServer.FindIndex(room => room.ID == message.roomId);
 
-        if (roomIndex > -1)
-            _roomPoolForServer[roomIndex].JoinRoom(message.client);
-        */
+    public bool JoinRoomFromServer(JoinRoom message)
+    {
+        var roomIndex = _roomPoolForServer.FindIndex(room => room.id == message.roomId);
+
+        if (roomIndex < 0)
+        {
+            Debug.Log("Room is not found");
+            return false;
+        }
+
+        var room = _roomPoolForServer[roomIndex];
+
+        if (room.IsFull)
+        {
+            Debug.Log("Room is already full");
+            return false;
+        }
+
+        var client = message.client;
+
+        Debug.Log("Server: room " + room.id + " has " + room.clients?.Count + " clients");
+
+        if (room.clients?.Count == 0)
+        {
+            Debug.Log("The player will join room with room master role");
+            client.isRoomMaster = true;
+        }
+        else
+        {
+            Debug.Log("Get other players from server");
+            // Get clients for other players
+            message.clientsInTheRoom = room.clients;
+        }
+
+        client.roomId = room.id;
+
+        room.clients.Add(client);
+
+        // First player in the room will be room master
+        message.roomMasterId = room.clients[0].id;
+
+        return true;
     }
 
     private uint GetNextID()
@@ -110,14 +144,14 @@ public class RoomManager : MonoBehaviour
     // ------------- CLIENT FUNCTIONS-----------------
     // -----------------------------------------------
     // -----------------------------------------------
-    public Room CreateRoom(ClientInfo roomMaster, uint roomId, int limitUser = 4)
+    public Room CreateRoomFromClient(CreateRoom meesage)
     {
         Room room = GetNextRoom();
 
         if (room == null)
             return null;
 
-        room.RoomInit(roomId, roomMaster, limitUser, _client.RequestJoinRoom);
+        room.RoomInit(meesage.roomId, meesage.roomMaster, meesage.maxUser, _client.RequestJoinRoom);
 
         return room;
     }
@@ -133,24 +167,37 @@ public class RoomManager : MonoBehaviour
         _roomPoolForServer[roomIndex].CloseRoom();
         */
     }
-    public void JoinRoom(JoinRoom message)
+    public bool JoinRoomFromClient(JoinRoom message)
     {
-        /*
-        var roomIndex = _roomPoolForServer.FindIndex(room => room.ID == message.roomId);
+        var roomIndex = _roomPoolForClient.FindIndex(room => room.ID == message.roomId);
 
-        if (roomIndex > -1)
+        if (roomIndex < 0)
         {
-            _roomPoolForServer[roomIndex].JoinRoom(message.client);
+            Debug.Log("Do not find room " + message.roomId + " in the client (" + _client.Name + ")");
+            return false;
+        }
 
-            for (int i = 0; message.clientsInTheRoom != null && i < message.clientsInTheRoom.Length; i++)
+        var room = _roomPoolForClient[roomIndex];
+
+        if (!room.JoinRoom(message.client))
+        {
+            Debug.Log("Room " + message.roomId + " is full in the client");
+            return false;
+        }
+
+        for (int i = 0; message.client.id == _client.ID && message.clientsInTheRoom != null && i < message.clientsInTheRoom.Count; i++)
+        {
+            if (message.clientsInTheRoom[i].id == _client.ID)
+                continue;
+
+            if (!room.JoinRoom(message.clientsInTheRoom[i]))
             {
-                if (message.clientsInTheRoom[i].id == _client.ID)
-                    continue;
-
-                _roomPoolForServer[roomIndex].JoinRoom(message.clientsInTheRoom[i]);
+                Debug.Log("Room " + message.roomId + " is full in the client");
+                return false;
             }
         }
-        */
+
+        return true;
     }
     private Room GetNextRoom()
     {

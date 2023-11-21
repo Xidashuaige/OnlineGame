@@ -101,14 +101,13 @@ public class RoomUIController : MonoBehaviour
         if (player.roomMaster)
             player.roomMasterImg.gameObject.SetActive(true);
 
-        if (message.messageOwnerId != _client.ID)
-            return;
-
         // Add other players
-        for (int i = 0; message.clientsInTheRoom != null && i < message.clientsInTheRoom.Length; i++)
+        for (int i = 0; message.messageOwnerId == _client.ID && message.clientsInTheRoom != null && i < message.clientsInTheRoom.Count; i++)
         {
             if (message.clientsInTheRoom[i].id == _client.ID)
                 continue;
+
+            // Debug.Log("(" + _client.Name + ") Add client" + i + " in the room");
 
             player = _players[_players.FindIndex(p => p.inTheRoom == false)];
             player.inTheRoom = true;

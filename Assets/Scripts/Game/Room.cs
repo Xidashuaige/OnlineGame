@@ -8,17 +8,19 @@ public class RoomInfo // For Server
 {
     public RoomInfo(uint roomId, ClientInfo roomMaster, int limitUsers = 4, RoomState state = RoomState.NotFull)
     {
-        this.roomId = roomId;
-        clients = new ClientInfo[limitUsers];
-        clients[0] = roomMaster;
+        id = roomId;
+        clients = new();
+        clients.Add(roomMaster);
         this.state = state;
+        this.limitUsers = limitUsers;
     }
 
-    public uint roomId;
-    public int limitUsers;
-    public ClientInfo[] clients;
-    public RoomState state;
-    public bool IsFull { get => limitUsers <= clients.Length; }
+    public uint id = 0;
+    public int limitUsers = 4;
+    // BUG, only run is ClientInfo is array
+    public List<ClientInfo> clients = null; 
+    public RoomState state = RoomState.NotFull;
+    public bool IsFull { get => clients != null && limitUsers <= clients.Count; }
 }
 
 [Serializable]
@@ -70,9 +72,14 @@ public class Room : MonoBehaviour // For Client
         }
     }
 
-    public void JoinRoom(ClientInfo client)
+    public bool JoinRoom(ClientInfo client)
     {
+        if (IsFull)
+            return false;
+
         _clients.Add(client);
+
+        return true;
     }
 
     public void LeaveRoom(ClientInfo client)
@@ -89,13 +96,7 @@ public class Room : MonoBehaviour // For Client
         _state = RoomState.NotFull;
     }
 
-    public RoomState State
-    {
-        get
-        {
-            return _state == RoomState.Playing ? _state : _limitUsers > _clients.Count ? RoomState.NotFull : RoomState.Full;
-        }
-    }
+    public RoomState State { get => _state; }
 
     private void OnbtnCLick()
     {

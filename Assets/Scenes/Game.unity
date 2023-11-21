@@ -4863,7 +4863,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _maxRooms: 20
-  _roomUIController: {fileID: 0}
+  _roomUIController: {fileID: 1425583832}
   _roomPrefab: {fileID: 8325717549004073296, guid: e1459e0b9045ca643bcc2d77b9911c06, type: 3}
   _roomParent: {fileID: 7962004159466712770}
   _client: {fileID: 1334899241}

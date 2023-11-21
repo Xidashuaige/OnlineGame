@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -15,12 +16,12 @@ public class ClientInfo
         this.id = id;
         this.endPoint = endPoint;
         this.isRoomMaster = isRoomMaster;
-        room = null;
+        roomId = 0;
     }
 
     public string name;
     public uint id;
-    public RoomInfo room; // 0 if is not in any room
+    public uint roomId; // 0 if is not in any room
     public bool isRoomMaster = false;
     public IPEndPoint endPoint;
 }
@@ -240,6 +241,24 @@ public class Server : MonoBehaviour
         }
     }
 
+    public void SendMessageToClients(ClientInfo[] clients, NetworkMessage message)
+    {
+        Debug.Log("Send message : " + message.type + " to select clients");
+
+        NetworkPackage package = new(message.type, message.GetBytes());
+
+        byte[] data = package.GetBytes();
+
+        foreach (var client in clients)
+        {
+            lock (_lock)
+                _messageHandleFlag++;
+
+            // Send data to server, this function may not block the code
+            _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, client.endPoint, new AsyncCallback(SendCallback), message.type);
+        }
+    }
+
     public void SendMessageToClient(ClientInfo client, NetworkMessage message)
     {
         Debug.Log("Send messages : " + message.type + " to client : " + client.name);
@@ -374,24 +393,22 @@ public class Server : MonoBehaviour
 
         Debug.Log("Server: some player request for create a room");
 
-        var client = message.roomMaster = _clients[message.messageOwnerId];
-
         var newRoom = _roomManager.CreateRoomFromServer(message);
 
         if (newRoom == null)
         {
             message.succesful = false;
 
-            SendMessageToClient(message.roomMaster, message);
+            SendMessageToClient(_clients[message.messageOwnerId], message);
 
             return;
         }
 
         message.succesful = true;
 
-        client.room = newRoom;
+        message.roomId = newRoom.id;
 
-        client.isRoomMaster = true;
+        message.roomMaster = _clients[message.messageOwnerId];
 
         SendMessageToClients(message);
 
@@ -425,6 +442,32 @@ public class Server : MonoBehaviour
         var message = data as JoinRoom;
 
         Debug.Log("JOIN ROOOOOOOM");
+
+        var sender = _clients[message.messageOwnerId];
+
+        // if client already have room or room is not avaliable for moment
+        if (sender.roomId != 0 || !_roomManager.CheckIfRoomAvaliable(message.roomId))
+        {
+            message.succesful = false;
+
+            SendMessageToClient(sender, message);
+        }
+        else
+        {
+            message.client = sender;
+
+            message.succesful = _roomManager.JoinRoomFromServer(message);
+
+            Debug.Log("Server has found " + message.clientsInTheRoom?.Count + " clients");
+
+            SendMessageToClient(sender, message);
+
+            message.clientsInTheRoom = null;
+
+            var otherClients = _clients.Values.Where(client => client.id != message.messageOwnerId).ToArray();
+
+            SendMessageToClients(otherClients, message);
+        }
 
         /*
         if (_clients[message.messageOwnerId].room != 0 || !_roomManager.CheckIfRoomAvaliable(message.roomId))
