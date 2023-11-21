@@ -125,23 +125,20 @@ public class Client : MonoBehaviour
         if (_ipInput.Value == "")
             return;
 
-        if (_socket == null)
+        try
         {
-            try
-            {
-                // Create socket and and serverEndPoint
-                _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            // Create socket and and serverEndPoint
+            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
-                _serverEndPoint = new(IPAddress.Parse(_ipInput.Value), SERVER_PORT);
-            }
-            catch (Exception e)
-            {
-                _socket?.Dispose();
-                _socket = null;
+            _serverEndPoint = new(IPAddress.Parse(_ipInput.Value), SERVER_PORT);
+        }
+        catch (Exception e)
+        {
+            _socket?.Dispose();
+            _socket = null;
 
-                Debug.Log(e);
-                return;
-            }
+            Debug.Log(e);
+            return;
         }
 
         _connecting = true;
@@ -182,7 +179,7 @@ public class Client : MonoBehaviour
         if (!_connecting)
             return;
 
-        var messagePackage = NetworkPackage.CreateJoinRoomRequest(_id, roomId, name);
+        var messagePackage = NetworkPackage.CreateJoinRoomRequest(_id, roomId, _nameInput.Value);
 
         SendMessageToServer(messagePackage);
     }
@@ -192,7 +189,7 @@ public class Client : MonoBehaviour
         if (!_connecting)
             return;
 
-        var messagePackage = NetworkPackage.CreateLeaveRoomRequest(_id);
+        var messagePackage = NetworkPackage.CreateLeaveRoomRequest(_id, _roomId);
 
         SendMessageToServer(messagePackage);
     }
@@ -356,9 +353,13 @@ public class Client : MonoBehaviour
             {
                 _roomId = message.roomId;
 
-                onJoinRoom.Invoke(new(_id, message.roomId, _nameInput.Value, true));
+                //onJoinRoom.Invoke(new(_id, message.roomId, _nameInput.Value, true));
 
                 Debug.Log("Create the room successful!");
+
+                var messagePackage = NetworkPackage.CreateJoinRoomRequest(_id, _roomId, _nameInput.Value, true);
+
+                SendMessageToServer(messagePackage);
             }
             else
             {
@@ -376,16 +377,19 @@ public class Client : MonoBehaviour
         var message = data as JoinRoom;
 
         if (message.messageOwnerId == ID)
+        {
             _roomId = message.roomId;
+            Debug.Log("Join the room successful!");
+        }
+        else
+        {
+            Debug.Log("Someone enter the room!");
+        }
 
-        else if (_roomId != message.roomId)
-            return;
-
-        _roomManager.JoinRoom(message);
+        if (!host)
+            _roomManager.JoinRoom(message);
 
         onJoinRoom.Invoke(message);
-
-        Debug.Log("Join the room successful!");
     }
 
     private void HandleLeaveRoomMessage(NetworkMessage data)

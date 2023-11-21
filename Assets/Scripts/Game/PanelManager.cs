@@ -34,7 +34,7 @@ public class PanelManager : MonoBehaviour
 
     private readonly List<GameObject> _panels = new();
 
-    private GameObject _currentPanel;
+    private Panels _currentPanel;
 
     private void Start()
     {
@@ -52,16 +52,16 @@ public class PanelManager : MonoBehaviour
         _panels.Add(_roomPanel);
         _panels.Add(_gamePanel);
 
-        _currentPanel = _startPanel;
+        _currentPanel = Panels.StartPanel;
     }
 
     private void ChangeScene(Panels panel)
     {
-        _currentPanel.SetActive(false);
+        _panels[(int)_currentPanel].SetActive(false);
 
-        _currentPanel = _panels[(int)panel];
+        _currentPanel = panel;
 
-        _currentPanel.SetActive(true);
+        _panels[(int)_currentPanel].SetActive(true);
     }
 
     private void OnIpUpdate(string newIp)
@@ -81,12 +81,12 @@ public class PanelManager : MonoBehaviour
         {
             _btnCopyIp.SetActive(true);
             _avatarText.text = "S";
-        }       
+        }
         else // If not
         {
             _btnCopyIp.SetActive(false);
             _avatarText.text = "C";
-        }           
+        }
     }
 
     private void OnLeaveServer()
@@ -96,6 +96,7 @@ public class PanelManager : MonoBehaviour
 
     private void OnJoinRoom(JoinRoom message)
     {
-        ChangeScene(Panels.RoomPanel);
+        if (_currentPanel != Panels.RoomPanel)
+            ChangeScene(Panels.RoomPanel);
     }
 }

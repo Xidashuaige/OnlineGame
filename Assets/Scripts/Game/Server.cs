@@ -63,6 +63,7 @@ public class Server : MonoBehaviour
     private const int _serverPort = 8888;
     private readonly object _lock = new();
     private string _ipAdress = "0.0.0.0";
+    private int _messageHandleFlag = 0;
 
     // Events
     public Action<string> onIpUpdate;
@@ -157,22 +158,19 @@ public class Server : MonoBehaviour
 
     private void StartServer()
     {
-        if (_socket == null)
+        _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
+        try
         {
-            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            _socket.Bind(new IPEndPoint(IPAddress.Any, _serverPort));
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning(ex.Message);
 
-            try
-            {
-                _socket.Bind(new IPEndPoint(IPAddress.Any, _serverPort));
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning(ex.Message);
-
-                _socket.Dispose();
-                _socket = null;
-                return;
-            }
+            _socket.Dispose();
+            _socket = null;
+            return;
         }
 
         Debug.Log("Server Start!");
@@ -234,6 +232,9 @@ public class Server : MonoBehaviour
 
         foreach (var client in _clients)
         {
+            lock (_lock)
+                _messageHandleFlag++;
+
             // Send data to server, this function may not block the code
             _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, client.Value.endPoint, new AsyncCallback(SendCallback), message.type);
         }
@@ -249,6 +250,9 @@ public class Server : MonoBehaviour
 
         Debug.Log("Package Send with lenght: " + data.Length);
 
+        lock (_lock)
+            _messageHandleFlag++;
+
         // Send data to server, this function may not block the code
         _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, client.endPoint, new AsyncCallback(SendCallback), message.type);
     }
@@ -256,6 +260,9 @@ public class Server : MonoBehaviour
     // After message sent
     private void SendCallback(IAsyncResult ar)
     {
+        lock (_lock)
+            _messageHandleFlag--;
+
         try
         {
             int bytesSent = _socket.EndSend(ar);
@@ -337,6 +344,11 @@ public class Server : MonoBehaviour
         {
             SendMessageToClients(message);
 
+            while (_messageHandleFlag != 0)
+            {
+                Debug.Log("Waiting for Server close action!");
+            }
+
             _clients.Clear();
 
             _socket?.Dispose();
@@ -388,6 +400,8 @@ public class Server : MonoBehaviour
     {
         var message = data as JoinRoom;
 
+        Debug.Log("JOIN ROOOOOOOM");
+
         if (_clients[message.messageOwnerId].roomId != 0 || !_roomManager.CheckIfRoomAvaliable(message.roomId))
         {
             message.succesful = false;
@@ -402,7 +416,16 @@ public class Server : MonoBehaviour
 
             message.clientsInTheRoom = _roomManager.GetPlayersByRoomId(message.roomId).ToArray();
 
-            SendMessageToClients(message);
+            Debug.Log("Clients in the room: " + message.clientsInTheRoom.Length);
+
+            _roomManager.JoinRoomFromServer(message);
+
+            SendMessageToClient(message.client, message);
+
+            foreach (var client in message.clientsInTheRoom)
+            {
+                SendMessageToClient(client, message);
+            }
         }
     }
 
@@ -413,7 +436,7 @@ public class Server : MonoBehaviour
         // TODO 
         var client = _clients[message.messageOwnerId];
 
-
+        _roomManager.LeaveRoomFromServer(message.messageOwnerId, message.roomId);
 
     }
 

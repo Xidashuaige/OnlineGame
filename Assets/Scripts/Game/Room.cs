@@ -57,6 +57,11 @@ public class Room : MonoBehaviour
         _clients.Add(client);
     }
 
+    public void LeaveRoom(ClientInfo client)
+    {
+        _clients.Remove(client);
+    }
+
     public RoomInfo GetRoomInfo()
     {
         RoomInfo roomInfo;

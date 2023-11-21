@@ -28,8 +28,6 @@ public class RoomController : MonoBehaviour
 
     public void InitRoomController()
     {
-        Debug.Log("RC Init");
-
         // Get all images
         var images = GetComponentsInChildren<Image>();
 
@@ -93,7 +91,7 @@ public class RoomController : MonoBehaviour
 
     private void JoinRoom(JoinRoom message)
     {
-
+        // Add current player
         var player = _players[_players.FindIndex(p => p.inTheRoom == false)];
         player.inTheRoom = true;
         player.avatarImg.sprite = _avatarSprites[Random.Range(0, _avatarSprites.Count)];
@@ -105,10 +103,8 @@ public class RoomController : MonoBehaviour
         if (message.messageOwnerId != _client.ID)
             return;
 
-        if (message.clientsInTheRoom == null)
-            return;
-
-        for (int i = 0; i < message.clientsInTheRoom.Length; i++)
+        // Add other players
+        for (int i = 0; message.clientsInTheRoom != null && i < message.clientsInTheRoom.Length; i++)
         {
             if (message.clientsInTheRoom[i].id == _client.ID)
                 continue;

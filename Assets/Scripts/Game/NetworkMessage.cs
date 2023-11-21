@@ -88,9 +88,9 @@ public class NetworkPackage
         return new(NetworkMessageType.JoinRoom, message.GetBytes());
     }
 
-    public static NetworkPackage CreateLeaveRoomRequest(uint userId)
+    public static NetworkPackage CreateLeaveRoomRequest(uint userId, uint roomId)
     {
-        LeaveRoom message = new(userId);
+        LeaveRoom message = new(userId, roomId);
 
         return new(NetworkMessageType.LeaveRoom, message.GetBytes());
     }
@@ -278,12 +278,18 @@ public class JoinRoom : NetworkMessage
 [Serializable]
 public class LeaveRoom : NetworkMessage
 {
-    public LeaveRoom(uint userId) : base(NetworkMessageType.LeaveRoom, userId) { }
+    public LeaveRoom(uint userId, uint roomId) : base(NetworkMessageType.LeaveRoom, userId)
+    {
+        this.roomId = roomId;
+    }
 
     static public LeaveRoom GetData(byte[] data)
     {
         return JsonUtility.FromJson<LeaveRoom>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
+
+    // 4 server
+    public uint roomId;
 }
 
 [Serializable]

@@ -80,6 +80,14 @@ public class RoomManager : MonoBehaviour
         return _roomPool[index].Clients;
     }
 
+    public void JoinRoomFromServer(JoinRoom message)
+    {
+        var roomIndex = _roomPool.FindIndex(room => room.ID == message.roomId);
+
+        if (roomIndex > -1)
+            _roomPool[roomIndex].JoinRoom(message.client);
+    }
+
     private uint GetNextID()
     {
         return ++_idGen;
@@ -87,7 +95,7 @@ public class RoomManager : MonoBehaviour
 
     public void LeaveRoomFromServer(uint userId, uint roomId)
     {
-
+        // var room = _roomPool.
     }
 
     // -----------------------------------------------
@@ -119,13 +127,7 @@ public class RoomManager : MonoBehaviour
         {
             _roomPool[roomIndex].JoinRoom(message.client);
 
-            if (message.messageOwnerId != _client.ID)
-                return;
-
-            if (message.clientsInTheRoom == null)
-                return;
-
-            for (int i = 0; i < message.clientsInTheRoom.Length; i++)
+            for (int i = 0; message.clientsInTheRoom != null && i < message.clientsInTheRoom.Length; i++)
             {
                 if (message.clientsInTheRoom[i].id == _client.ID)
                     continue;
