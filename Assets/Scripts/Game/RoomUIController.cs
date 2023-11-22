@@ -31,8 +31,15 @@ public class RoomUIController : MonoBehaviour
         // Get all images
         var images = GetComponentsInChildren<Image>();
 
+        foreach (var image in images)
+        {
+            Debug.Log(image.name);
+        }
+
         // Init avatar images
         var avatarImg = images.Where(avatar => avatar.gameObject.name == "Avatar").ToArray();
+        Debug.Log("avatarImg:" + avatarImg.Length);
+
         foreach (var avatar in avatarImg)
         {
             avatar.sprite = _noPlayerSprite;
@@ -46,6 +53,9 @@ public class RoomUIController : MonoBehaviour
 
         // Init room master images
         var roomMasterImg = images.Where(roomMaster => roomMaster.gameObject.name == "RM").ToArray();
+
+        Debug.Log("roomMasterImg:" + roomMasterImg.Length);
+
         for (int i = 0; i < roomMasterImg.Length; i++)
         {
             roomMasterImg[i].gameObject.SetActive(false);
@@ -114,6 +124,7 @@ public class RoomUIController : MonoBehaviour
             player.avatarImg.sprite = _avatarSprites[Random.Range(0, _avatarSprites.Count)];
             player.name.text = message.clientsInTheRoom[i].name;
             player.roomMaster = message.clientsInTheRoom[i].isRoomMaster;
+
             if (player.roomMaster)
                 player.roomMasterImg.gameObject.SetActive(true);
         }

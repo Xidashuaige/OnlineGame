@@ -53,7 +53,7 @@ public class RoomManager : MonoBehaviour
     {
         if (CanCreateMore)
         {
-            RoomInfo newRoom = new(GetNextID(), message.roomMaster, message.maxUser);
+            RoomInfo newRoom = new(GetNextID(), null, message.maxUser);
             _roomPoolForServer.Add(newRoom);
 
             return newRoom;

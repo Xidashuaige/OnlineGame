@@ -10,7 +10,9 @@ public class RoomInfo // For Server
     {
         id = roomId;
         clients = new();
-        clients.Add(roomMaster);
+        if (roomMaster != null)
+            clients.Add(roomMaster);
+
         this.state = state;
         this.limitUsers = limitUsers;
     }
@@ -18,7 +20,7 @@ public class RoomInfo // For Server
     public uint id = 0;
     public int limitUsers = 4;
     // BUG, only run is ClientInfo is array
-    public List<ClientInfo> clients = null; 
+    public List<ClientInfo> clients = null;
     public RoomState state = RoomState.NotFull;
     public bool IsFull { get => clients != null && limitUsers <= clients.Count; }
 }

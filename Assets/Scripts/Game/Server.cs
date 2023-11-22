@@ -441,8 +441,6 @@ public class Server : MonoBehaviour
     {
         var message = data as JoinRoom;
 
-        Debug.Log("JOIN ROOOOOOOM");
-
         var sender = _clients[message.messageOwnerId];
 
         // if client already have room or room is not avaliable for moment
@@ -457,8 +455,6 @@ public class Server : MonoBehaviour
             message.client = sender;
 
             message.succesful = _roomManager.JoinRoomFromServer(message);
-
-            Debug.Log("Server has found " + message.clientsInTheRoom?.Count + " clients");
 
             SendMessageToClient(sender, message);
 
