@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -39,6 +40,10 @@ public class Room : MonoBehaviour // For Client
     [SerializeField] private int _limitUsers = 4;
     [SerializeField] private uint _roomId = 0;
     [SerializeField] private RoomState _state = RoomState.NotFull;
+    [SerializeField] private TMP_Text _roomName;
+    [SerializeField] private TMP_Text _roomPlayers;
+    [SerializeField] private Image _stateImage;
+
     private ClientInfo _roomMaster;
     private List<ClientInfo> _clients = new();
     public List<ClientInfo> Clients { get => _clients; }
@@ -60,6 +65,8 @@ public class Room : MonoBehaviour // For Client
         _limitUsers = limitUser;
         _clients.Add(roomMaster);
         _state = RoomState.NotFull;
+        _roomName.text = "Room " + roomId.ToString("D4");
+        _roomPlayers.text = _clients.Count + "/" + _limitUsers;
 
         // Unity Setting
         transform.SetAsLastSibling();
@@ -81,12 +88,16 @@ public class Room : MonoBehaviour // For Client
 
         _clients.Add(client);
 
+        _roomPlayers.text = _clients.Count + "/" + _limitUsers;
+
         return true;
     }
 
     public void LeaveRoom(ClientInfo client)
     {
         _clients.Remove(client);
+
+        _roomPlayers.text = _clients.Count + "/" + _limitUsers;
     }
 
     public void CloseRoom()

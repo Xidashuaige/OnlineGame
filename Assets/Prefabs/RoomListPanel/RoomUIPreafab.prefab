@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 403945699617520368}
   - component: {fileID: 6477577602187397265}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: Room name
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -147,7 +147,7 @@ GameObject:
   - component: {fileID: 2818244403129163642}
   - component: {fileID: 6009553364870621042}
   m_Layer: 5
-  m_Name: Image
+  m_Name: State image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -223,7 +223,7 @@ GameObject:
   - component: {fileID: 1270071613364765724}
   - component: {fileID: 5078917667090548049}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: Room players
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -513,3 +513,6 @@ MonoBehaviour:
   _limitUsers: 4
   _roomId: 0
   _state: 0
+  _roomName: {fileID: 6477577602187397265}
+  _roomPlayers: {fileID: 5078917667090548049}
+  _stateImage: {fileID: 6009553364870621042}

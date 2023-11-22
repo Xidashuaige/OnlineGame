@@ -31,14 +31,8 @@ public class RoomUIController : MonoBehaviour
         // Get all images
         var images = GetComponentsInChildren<Image>();
 
-        foreach (var image in images)
-        {
-            Debug.Log(image.name);
-        }
-
         // Init avatar images
         var avatarImg = images.Where(avatar => avatar.gameObject.name == "Avatar").ToArray();
-        Debug.Log("avatarImg:" + avatarImg.Length);
 
         foreach (var avatar in avatarImg)
         {
@@ -53,8 +47,6 @@ public class RoomUIController : MonoBehaviour
 
         // Init room master images
         var roomMasterImg = images.Where(roomMaster => roomMaster.gameObject.name == "RM").ToArray();
-
-        Debug.Log("roomMasterImg:" + roomMasterImg.Length);
 
         for (int i = 0; i < roomMasterImg.Length; i++)
         {
