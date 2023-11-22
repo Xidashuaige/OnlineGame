@@ -208,7 +208,7 @@ public class Client : MonoBehaviour
         byte[] buffer = new byte[1024];
         int bytesRead = 0;
 
-        Debug.Log("Client " + _nameInput.Value + " start receive message");
+        Debug.Log("Client (" + _nameInput.Value + ") start receive message");
 
         while (_connecting)
         {
@@ -320,12 +320,12 @@ public class Client : MonoBehaviour
 
             onJoinServer.Invoke();
 
-            Debug.Log("Join Server Successful");
+            Debug.Log("Client(" + Name + "): join server successful");
 
             return;
         }
 
-        Debug.Log("Join Server Faild");
+        Debug.Log("Client(" + Name + "): join server faild");
     }
 
     private void HandleLeaveServerMessage(NetworkMessage data)
@@ -341,7 +341,7 @@ public class Client : MonoBehaviour
 
             onLeaveServer.Invoke();
 
-            Debug.Log("Leave Server Successful");
+            Debug.Log("Client(" + Name + "): leave server successful");
         }
     }
 
@@ -357,9 +357,9 @@ public class Client : MonoBehaviour
             {
                 _roomId = message.roomId;
 
-                Debug.Log("Create the room successful!");
+                Debug.Log("Client (" + Name + "): create the room successful! with room id: " + _roomId);
 
-                Debug.Log("Try to enter room " + _roomId);
+                Debug.Log("Client (" + Name + "): try to enter room " + _roomId);
 
                 var messagePackage = NetworkPackage.CreateJoinRoomRequest(_id, _roomId, _nameInput.Value, true);
 
@@ -367,12 +367,12 @@ public class Client : MonoBehaviour
             }
             else
             {
-                Debug.Log("Some player create a room");
+                Debug.Log("Client (" + Name + "): some player create a room");
             }
         }
         else
         {
-            Debug.Log("Create room faild: Is max number of rooms yet");
+            Debug.Log("Client (" + Name + "): create room faild: Is max number of rooms yet");
         }
     }
 
@@ -394,11 +394,11 @@ public class Client : MonoBehaviour
 
             onJoinRoom.Invoke(message);
 
-            Debug.Log(message.client.name + " join the room successful!");
+            Debug.Log("Client(" + Name + "): join the room successful!");
         }
         else
         {
-            Debug.Log("Someone enter the room!");
+            Debug.Log("Client(" + Name + "): (" + message.client.name + ") entered the room!");
         }
     }
 
@@ -408,7 +408,7 @@ public class Client : MonoBehaviour
 
         if (!message.isRoomMaster && message.messageOwnerId != ID)
         {
-            Debug.Log("Someone leave the room!");
+            Debug.Log("Client(" + Name + "): someone leave the room!");
             return;
         }
 

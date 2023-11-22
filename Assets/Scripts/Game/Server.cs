@@ -225,7 +225,7 @@ public class Server : MonoBehaviour
 
     public void SendMessageToClients(NetworkMessage message)
     {
-        Debug.Log("Send message : " + message.type + " to all clients");
+        Debug.Log("Server: send message [" + message.type + "] to all clients");
 
         NetworkPackage package = new(message.type, message.GetBytes());
 
@@ -243,7 +243,7 @@ public class Server : MonoBehaviour
 
     public void SendMessageToClients(ClientInfo[] clients, NetworkMessage message)
     {
-        Debug.Log("Send message : " + message.type + " to select clients");
+        Debug.Log("Server: send message [" + message.type + "] to select clients");
 
         NetworkPackage package = new(message.type, message.GetBytes());
 
@@ -261,13 +261,13 @@ public class Server : MonoBehaviour
 
     public void SendMessageToClient(ClientInfo client, NetworkMessage message)
     {
-        Debug.Log("Send messages : " + message.type + " to client : " + client.name);
+        Debug.Log("Server: send messages [" + message.type + "] to client (" + client.name + ")");
 
         NetworkPackage package = new(message.type, message.GetBytes());
 
         byte[] data = package.GetBytes();
 
-        Debug.Log("Package Send with lenght: " + data.Length);
+        //Debug.Log("Server : package send with lenght: " + data.Length);
 
         lock (_lock)
             _messageHandleFlag++;
@@ -286,7 +286,7 @@ public class Server : MonoBehaviour
         {
             int bytesSent = _socket.EndSend(ar);
 
-            Debug.Log("Server: " + (NetworkMessageType)ar.AsyncState + " send with successful!");
+            Debug.Log("Server: [" + (NetworkMessageType)ar.AsyncState + "] send with successful!");
         }
         catch (Exception e)
         {
@@ -365,14 +365,14 @@ public class Server : MonoBehaviour
 
             while (_messageHandleFlag != 0)
             {
-                Debug.Log("Waiting for Server close action!");
+                Debug.Log("Server :waiting for Server close action!");
             }
 
             _clients.Clear();
 
             _socket?.Dispose();
 
-            Debug.Log("Server Closed!");
+            Debug.Log("Server: Server Closed!");
 
             lock (_lock)
                 _connecting = false;

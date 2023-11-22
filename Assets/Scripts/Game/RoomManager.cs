@@ -83,7 +83,7 @@ public class RoomManager : MonoBehaviour
 
         if (roomIndex < 0)
         {
-            Debug.Log("Room is not found");
+            Debug.Log("Server: room " + message.roomId + " is not found");
             return false;
         }
 
@@ -91,7 +91,7 @@ public class RoomManager : MonoBehaviour
 
         if (room.IsFull)
         {
-            Debug.Log("Room is already full");
+            Debug.Log("Server: Room " + message.roomId + " is already full");
             return false;
         }
 
@@ -101,12 +101,12 @@ public class RoomManager : MonoBehaviour
 
         if (room.clients?.Count == 0)
         {
-            Debug.Log("The player will join room with room master role");
+            Debug.Log("Server: client (" + client.name + ") will join room with room master role");
             client.isRoomMaster = true;
         }
         else
         {
-            Debug.Log("Get other players from server");
+            Debug.Log("Server : get other players in the same room");
             // Get clients for other players
             message.clientsInTheRoom = room.clients;
         }
@@ -173,7 +173,7 @@ public class RoomManager : MonoBehaviour
 
         if (roomIndex < 0)
         {
-            Debug.Log("Do not find room " + message.roomId + " in the client (" + _client.Name + ")");
+            Debug.Log("Client: doesn't find room " + message.roomId + " in the client (" + _client.Name + ")");
             return false;
         }
 
@@ -181,7 +181,7 @@ public class RoomManager : MonoBehaviour
 
         if (!room.JoinRoom(message.client))
         {
-            Debug.Log("Room " + message.roomId + " is full in the client");
+            Debug.Log("Client: room " + message.roomId + " is full in the client");
             return false;
         }
 
