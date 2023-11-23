@@ -51,73 +51,6 @@ public class NetworkPackage
         return networkPackage.GetData();
     }
 
-    #region Factory Pattern
-
-    public static NetworkPackage CreateJoinServerRequest(uint userId)
-    {
-        HearthBeat message = new(userId);
-
-        return new(NetworkMessageType.Heartbeat, message.GetBytes());
-    }
-
-    public static NetworkPackage CreateJoinServerRequest(string userName)
-    {
-        JoinServer message = new(userName);
-
-        return new(NetworkMessageType.JoinServer, message.GetBytes());
-    }
-
-    public static NetworkPackage CreateLeaveServerRequest(uint userId)
-    {
-        LeaveServer message = new(userId);
-
-        return new(NetworkMessageType.LeaveServer, message.GetBytes());
-    }
-
-    public static NetworkPackage CreateCreateRoomRequest(uint userId, int maxPlayer = 4)
-    {
-        CreateRoom message = new(userId, maxPlayer);
-
-        return new(NetworkMessageType.CreateRoom, message.GetBytes());
-    }
-
-    public static NetworkPackage CreateJoinRoomRequest(uint userId, uint roomId, string name = "Default", bool isRoomMaster = false)
-    {
-        JoinRoom message = new(userId, roomId, name, isRoomMaster);
-
-        return new(NetworkMessageType.JoinRoom, message.GetBytes());
-    }
-
-    public static NetworkPackage CreateLeaveRoomRequest(uint userId, uint roomId)
-    {
-        LeaveRoom message = new(userId, roomId);
-
-        return new(NetworkMessageType.LeaveRoom, message.GetBytes());
-    }
-
-    public static NetworkPackage CreateReadyInTheRoomRequest(uint userId)
-    {
-        ReadyInTheRoom message = new(userId);
-
-        return new(NetworkMessageType.ReadyInTheRoom, message.GetBytes());
-    }
-
-    public static NetworkPackage CreateStartGameRequest(uint userId)
-    {
-        StartGame message = new(userId);
-
-        return new(NetworkMessageType.StartGame, message.GetBytes());
-    }
-
-    public static NetworkPackage CreateKickOutRoomRequest(uint userId, uint targetId)
-    {
-        KickOutRoom message = new(userId, targetId);
-
-        return new(NetworkMessageType.KickOutRoom, message.GetBytes());
-    }
-
-    #endregion
-
     public NetworkMessageType type;
 
     public byte[] data;
@@ -161,6 +94,8 @@ public class NetworkMessage
     public bool succesful = false;
 
     public EndPoint endPoint = null;
+
+    public EndPoint testEndPoint = null;
 }
 
 [Serializable]
@@ -239,7 +174,7 @@ public class LeaveServer : NetworkMessage
 [Serializable]
 public class CreateRoom : NetworkMessage
 {
-    public CreateRoom(uint userId, int maxUser) : base(NetworkMessageType.CreateRoom, userId)
+    public CreateRoom(uint userId, int maxUser = 4) : base(NetworkMessageType.CreateRoom, userId)
     {
         this.maxUser = maxUser;
     }
@@ -286,11 +221,10 @@ public class JoinRoom : NetworkMessage
 
     // 4 server
     public uint roomId;
+
     // 4 client
     public uint roomMasterId;
-
     public List<ClientInfo> clientsInTheRoom;
-
     public ClientInfo client;
 }
 

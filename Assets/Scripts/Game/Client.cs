@@ -149,9 +149,9 @@ public class Client : MonoBehaviour
         _connecting = true;
 
         // Try to connect to server
-        var messagePackage = NetworkPackage.CreateJoinServerRequest(_nameInput.Value);
+        var message = new JoinServer(_nameInput.Value);
 
-        SendMessageToServer(messagePackage);
+        SendMessageToServer(message);
 
         // Start to listen messages from server
         Thread thread = new(ListenMessages);
@@ -164,9 +164,9 @@ public class Client : MonoBehaviour
         if (!_connecting)
             return;
 
-        var messagePackage = NetworkPackage.CreateLeaveServerRequest(_id);
+        var message = new LeaveServer(_id);
 
-        SendMessageToServer(messagePackage);
+        SendMessageToServer(message);
     }
 
     public void RequestCreateRoom()
@@ -174,9 +174,9 @@ public class Client : MonoBehaviour
         if (!_connecting)
             return;
 
-        var messagePackage = NetworkPackage.CreateCreateRoomRequest(_id);
+        var message = new CreateRoom(_id);
 
-        SendMessageToServer(messagePackage);
+        SendMessageToServer(message);
     }
 
     public void RequestJoinRoom(uint roomId)
@@ -184,9 +184,9 @@ public class Client : MonoBehaviour
         if (!_connecting)
             return;
 
-        var messagePackage = NetworkPackage.CreateJoinRoomRequest(_id, roomId, _nameInput.Value);
+        var message = new JoinRoom(_id, roomId, _nameInput.Value);
 
-        SendMessageToServer(messagePackage);
+        SendMessageToServer(message);
     }
 
     public void RequestLeaveRoom()
@@ -194,9 +194,9 @@ public class Client : MonoBehaviour
         if (!_connecting)
             return;
 
-        var messagePackage = NetworkPackage.CreateLeaveRoomRequest(_id, _roomId);
+        var message = new LeaveRoom(_id, _roomId);
 
-        SendMessageToServer(messagePackage);
+        SendMessageToServer(message);
     }
 
     #endregion
@@ -208,7 +208,7 @@ public class Client : MonoBehaviour
         byte[] buffer = new byte[1024];
         int bytesRead = 0;
 
-        Debug.Log("Client (" + _nameInput.Value + ") start receive message");
+        Debug.Log("Client (" + _nameInput.Value + "): start receive message");
 
         while (_connecting)
         {
@@ -216,7 +216,7 @@ public class Client : MonoBehaviour
             {
                 bytesRead = _socket.Receive(buffer);
 
-                //Debug.Log("Package recived with lenght: " + bytesRead);
+                Debug.Log("Client (" + _nameInput.Value + "): package recived with lenght: " + bytesRead);
 
                 NetworkMessage message = NetworkPackage.GetDataFromBytes(buffer, bytesRead);
 
@@ -225,7 +225,7 @@ public class Client : MonoBehaviour
                     lock (_lock)
                         _connecting = false;
 
-                    Debug.LogWarning("Message Receive with error, disconnect from server");
+                    Debug.LogWarning("Client (" + _nameInput.Value + "): message Receive with error, disconnect from server");
 
                     return;
                 }
@@ -261,8 +261,10 @@ public class Client : MonoBehaviour
             }
         }
     }
-    public void SendMessageToServer(NetworkPackage messagePackage)
+    public void SendMessageToServer(NetworkMessage message)
     {
+        NetworkPackage messagePackage = new(message.type, message.GetBytes());
+
         byte[] data = messagePackage.GetBytes();
 
         // Send data to server
@@ -351,30 +353,29 @@ public class Client : MonoBehaviour
     {
         var message = data as CreateRoom;
 
-        if (message.succesful)
+        if (!message.succesful)
         {
-            _roomManager.CreateRoomFromClient(message);
+            Debug.Log("Client (" + Name + "): create room faild: Is max number of rooms yet");
+            return;
+        }
 
-            if (message.messageOwnerId == _id)
-            {
-                _roomId = message.roomId;
+        _roomManager.CreateRoomFromClient(message);
 
-                Debug.Log("Client (" + Name + "): create the room successful! with room id: " + _roomId);
+        if (message.messageOwnerId == _id)
+        {
+            _roomId = message.roomId;
 
-                Debug.Log("Client (" + Name + "): try to enter room " + _roomId);
+            Debug.Log("Client (" + Name + "): create the room successful! with room id: " + _roomId);
 
-                var messagePackage = NetworkPackage.CreateJoinRoomRequest(_id, _roomId, _nameInput.Value, true);
+            Debug.Log("Client (" + Name + "): try to enter room " + _roomId);
 
-                SendMessageToServer(messagePackage);
-            }
-            else
-            {
-                Debug.Log("Client (" + Name + "): some player create a room");
-            }
+            var joinRoomMessage = new JoinRoom(_id, _roomId, _nameInput.Value, true);
+
+            SendMessageToServer(joinRoomMessage);
         }
         else
         {
-            Debug.Log("Client (" + Name + "): create room faild: Is max number of rooms yet");
+            Debug.Log("Client (" + Name + "): some player create a room");
         }
     }
 
@@ -409,6 +410,14 @@ public class Client : MonoBehaviour
     {
         var message = data as LeaveRoom;
 
+        if (!message.succesful)
+        {
+            Debug.Log("Client(" + Name + "): someone leave room faild");
+            return;
+        }
+
+        _roomManager.LeaveRoomFromClient(message.messageOwnerId, message.roomId);
+
         if (!message.isRoomMaster && message.messageOwnerId != ID)
         {
             Debug.Log("Client(" + Name + "): someone leave the room!");
@@ -417,7 +426,7 @@ public class Client : MonoBehaviour
 
         if (message.isRoomMaster || message.messageOwnerId == ID)
         {
-            _roomManager.CloseRoom(message.roomId);
+            _roomManager.CloseRoomFromClient(message.roomId);
 
             onLeaveRoom.Invoke();
         }

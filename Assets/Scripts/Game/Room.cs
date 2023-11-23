@@ -18,6 +18,12 @@ public class RoomInfo // For Server
         this.limitUsers = limitUsers;
     }
 
+    ~RoomInfo()
+    {
+        clients.Clear();
+        clients = null;
+    }
+
     public uint id = 0;
     public int limitUsers = 4;
     // BUG, only run is ClientInfo is array
@@ -79,7 +85,7 @@ public class Room : MonoBehaviour // For Client
         }
     }
 
-    public bool JoinRoom(ClientInfo client)
+    public bool JoinRoom()
     {
         if (IsFull)
             return false;
@@ -91,7 +97,7 @@ public class Room : MonoBehaviour // For Client
         return true;
     }
 
-    public void LeaveRoom(ClientInfo client)
+    public void LeaveRoom()
     {
         _playerCount--;
 

@@ -141,6 +141,8 @@ public class RoomUIController : MonoBehaviour
     {
         foreach (var player in _players)
         {
+            Debug.Log(player.name);
+
             player.inTheRoom = false;
             player.avatarImg.sprite = _noPlayerSprite;
             player.name.text = "";

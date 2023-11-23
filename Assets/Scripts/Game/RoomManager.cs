@@ -61,11 +61,6 @@ public class RoomManager : MonoBehaviour
         return null;
     }
 
-    public void CloseRoomFromServer()
-    {
-
-    }
-
     public bool CheckIfRoomAvaliable(uint roomID)
     {
         var roomIndex = _roomPoolForServer.FindIndex(room => room.id == roomID);
@@ -133,16 +128,31 @@ public class RoomManager : MonoBehaviour
     }
 
     public void LeaveRoomFromServer(ClientInfo user)
-    {
-        /*
-        var roomIdex = _roomPoolForServer.FindIndex(room => room.ID == user.room);
+    { 
+        var roomIdex = _roomPoolForServer.FindIndex(room => room.id == user.roomId);
 
-        _roomPoolForServer[roomIdex].LeaveRoom(user);
+        if (roomIdex == -1)
+            return;
+
+        var room = _roomPoolForServer[roomIdex];
 
         user.isRoomMaster = false;
 
-        user.room = 0;
-        */
+        user.roomId = 0;
+
+        room.clients.Remove(user);
+
+       // _roomPoolForServer[roomIdex]   
+    }
+
+    public void CloseRoomFromServer(uint roomId)
+    {
+        var roomIdex = _roomPoolForServer.FindIndex(room => room.id == roomId);
+
+        if (roomIdex == -1)
+            return;
+
+        _roomPoolForServer.Remove(_roomPoolForServer[roomIdex]);
     }
 
     // -----------------------------------------------
@@ -180,17 +190,29 @@ public class RoomManager : MonoBehaviour
         return room;
     }
 
-    public void CloseRoom(uint roomId)
+    public void CloseRoomFromClient(uint roomId)
     {
-        /*
-        var roomIndex = _roomPoolForServer.FindIndex(room => room.ID == roomId);
+        var roomIndex = _roomPoolForClient.FindIndex(room => room.ID == roomId);
 
         if (roomIndex < 0)
             return;
 
-        _roomPoolForServer[roomIndex].CloseRoom();
-        */
+        _roomPoolForClient[roomIndex].CloseRoom();
     }
+
+    public void LeaveRoomFromClient(uint userId, uint roomId)
+    {
+        var roomIndex = _roomPoolForClient.FindIndex(room => room.ID == roomId);
+
+        if (roomIndex < 0)
+            return;
+
+        var room = _roomPoolForClient[roomIndex];
+
+        room.LeaveRoom();
+
+    }
+
     public bool JoinRoomFromClient(JoinRoom message)
     {
         var roomIndex = _roomPoolForClient.FindIndex(room => room.ID == message.roomId);
@@ -203,7 +225,7 @@ public class RoomManager : MonoBehaviour
 
         var room = _roomPoolForClient[roomIndex];
 
-        if (!room.JoinRoom(message.client))
+        if (!room.JoinRoom())
         {
             Debug.Log("Client: room " + message.roomId + " is full in the client");
             return false;

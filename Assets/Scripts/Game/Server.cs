@@ -21,9 +21,11 @@ public class ClientInfo
 
     public string name;
     public uint id;
+    public IPEndPoint endPoint;
+
+    // room info
     public uint roomId; // 0 if is not in any room
     public bool isRoomMaster = false;
-    public IPEndPoint endPoint;
 }
 
 public class MessageHandler
@@ -97,6 +99,11 @@ public class Server : MonoBehaviour
         if (_connecting)
         {
             SendMessageToClients(new LeaveServer(_myClient.ID));
+
+            while (_messageHandleFlag > 0)
+            {
+                Debug.Log("Server: waiting for exit all clients");
+            }
 
             lock (_lock)
                 _connecting = false;
@@ -332,7 +339,14 @@ public class Server : MonoBehaviour
     {
         var message = messageObj as NetworkMessage;
 
-        message.succesful = true;
+        if (message.type == NetworkMessageType.Null)
+        {
+            message.succesful = false;
+
+            Debug.Log("Server: undefined message");
+
+            return;
+        }
 
         _actionHandlers[message.type].Invoke(message);
     }
@@ -354,12 +368,16 @@ public class Server : MonoBehaviour
 
         message.AddRooms(_roomManager.GetActiveRooms());
 
+        message.succesful = true;
+
         SendMessageToClient(client, message);
     }
 
     private void HandleLeaveServerMessage(NetworkMessage data)
     {
         var message = data as LeaveServer;
+
+        message.succesful = true;
 
         if (message.messageOwnerId == _myClient.ID)
         {
@@ -464,38 +482,6 @@ public class Server : MonoBehaviour
 
             SendMessageToClients(otherClients, message);
         }
-
-        /*
-        if (_clients[message.messageOwnerId].room != 0 || !_roomManager.CheckIfRoomAvaliable(message.roomId))
-        {
-            message.succesful = false;
-
-            _clients[message.messageOwnerId].isRoomMaster = false;
-
-            SendMessageToClient(_clients[message.messageOwnerId], message);
-        }
-        else
-        {
-            message.succesful = true;
-
-            message.client = _clients[message.messageOwnerId];
-
-            message.clientsInTheRoom = _roomManager.GetPlayersByRoomId(message.roomId).ToArray();
-
-            _clients[message.messageOwnerId].room = message.roomId;
-
-            Debug.Log("Clients in the room: " + message.clientsInTheRoom.Length);
-
-            _roomManager.JoinRoomFromServer(message);
-
-            SendMessageToClient(message.client, message);
-
-            foreach (var client in message.clientsInTheRoom)
-            {
-                SendMessageToClient(client, message);
-            }
-        }
-        */
     }
 
     private void HandleLeaveRoomMessage(NetworkMessage data)
@@ -506,7 +492,14 @@ public class Server : MonoBehaviour
 
         message.isRoomMaster = sender.isRoomMaster;
 
-        _roomManager.LeaveRoomFromServer(_clients[message.messageOwnerId]);
+        if (message.isRoomMaster)
+        {
+            _roomManager.CloseRoomFromServer(message.roomId);
+        }
+        else
+        {
+            _roomManager.LeaveRoomFromServer(_clients[message.messageOwnerId]);
+        }
 
         SendMessageToClients(message);
     }
