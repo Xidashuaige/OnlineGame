@@ -352,6 +352,8 @@ public class Server : MonoBehaviour
 
         message.messageOwnerId = client.id;
 
+        message.AddRooms(_roomManager.GetActiveRooms());
+
         SendMessageToClient(client, message);
     }
 
@@ -407,8 +409,6 @@ public class Server : MonoBehaviour
         message.succesful = true;
 
         message.roomId = newRoom.id;
-
-        message.roomMaster = _clients[message.messageOwnerId];
 
         SendMessageToClients(message);
 

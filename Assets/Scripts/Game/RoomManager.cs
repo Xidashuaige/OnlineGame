@@ -16,11 +16,11 @@ public class RoomManager : MonoBehaviour
     private readonly List<Room> _roomPoolForClient = new();
 
     [Space, Header("Server & Client")]
-    [SerializeField] private Client _client;
+    [SerializeField] private Client _myClient;
     private void Start()
     {
-        if (_client == null)
-            _client = GameObject.FindWithTag("Client").GetComponent<Client>();
+        if (_myClient == null)
+            _myClient = GameObject.FindWithTag("Client").GetComponent<Client>();
 
         // Init for client
         if (_roomUIController == null)
@@ -66,7 +66,6 @@ public class RoomManager : MonoBehaviour
 
     }
 
-
     public bool CheckIfRoomAvaliable(uint roomID)
     {
         var roomIndex = _roomPoolForServer.FindIndex(room => room.id == roomID);
@@ -75,6 +74,11 @@ public class RoomManager : MonoBehaviour
             return true;
 
         return false;
+    }
+
+    public List<RoomInfo> GetActiveRooms()
+    {
+        return _roomPoolForServer;
     }
 
     public bool JoinRoomFromServer(JoinRoom message)
@@ -115,6 +119,8 @@ public class RoomManager : MonoBehaviour
 
         room.clients.Add(client);
 
+        room.state = room.clients.Count >= room.limitUsers ? RoomState.Full : RoomState.NotFull;
+
         // First player in the room will be room master
         message.roomMasterId = room.clients[0].id;
 
@@ -144,14 +150,32 @@ public class RoomManager : MonoBehaviour
     // ------------- CLIENT FUNCTIONS-----------------
     // -----------------------------------------------
     // -----------------------------------------------
-    public Room CreateRoomFromClient(CreateRoom meesage)
+
+    public void CreateRoomWhenJoinServer(JoinServer message)
+    {
+        if (message.currentPlayers == null)
+            return;
+
+
+        for (int i = 0; i < message.currentPlayers.Count; i++)
+        {
+            Room room = GetNextRoom();
+
+            if (room == null)
+                return;
+
+            room.RoomInit(message.roomsId[i], message.maxPlayers[i], _myClient.RequestJoinRoom, message.currentPlayers[i], message.roomState[i]);
+        }
+    }
+
+    public Room CreateRoomFromClient(CreateRoom message)
     {
         Room room = GetNextRoom();
 
         if (room == null)
             return null;
 
-        room.RoomInit(meesage.roomId, meesage.roomMaster, meesage.maxUser, _client.RequestJoinRoom);
+        room.RoomInit(message.roomId, message.maxUser, _myClient.RequestJoinRoom);
 
         return room;
     }
@@ -173,7 +197,7 @@ public class RoomManager : MonoBehaviour
 
         if (roomIndex < 0)
         {
-            Debug.Log("Client: doesn't find room " + message.roomId + " in the client (" + _client.Name + ")");
+            Debug.Log("Client: doesn't find room " + message.roomId + " in the client (" + _myClient.Name + ")");
             return false;
         }
 
@@ -185,9 +209,10 @@ public class RoomManager : MonoBehaviour
             return false;
         }
 
-        for (int i = 0; message.client.id == _client.ID && message.clientsInTheRoom != null && i < message.clientsInTheRoom.Count; i++)
+        /*
+        for (int i = 0; message.messageOwnerId == _myClient.ID && message.clientsInTheRoom != null && i < message.clientsInTheRoom.Count; i++)
         {
-            if (message.clientsInTheRoom[i].id == _client.ID)
+            if (message.clientsInTheRoom[i].id == _myClient.ID)
                 continue;
 
             if (!room.JoinRoom(message.clientsInTheRoom[i]))
@@ -196,6 +221,7 @@ public class RoomManager : MonoBehaviour
                 return false;
             }
         }
+        */
 
         return true;
     }

@@ -196,8 +196,30 @@ public class JoinServer : NetworkMessage
         return JsonUtility.FromJson<JoinServer>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
 
+    public void AddRooms(List<RoomInfo> rooms)
+    {
+        roomsId = new();
+        currentPlayers = new();
+        maxPlayers = new();
+        roomState = new();
+
+        foreach (RoomInfo room in rooms)
+        {
+            roomsId.Add(room.id);
+            currentPlayers.Add(room.clients == null ? 0 : room.clients.Count);
+            maxPlayers.Add(room.limitUsers);
+            roomState.Add(room.state);
+        }
+    }
+
     // 4 server
     public string name;
+
+    // 4 clients
+    public List<uint> roomsId = null;
+    public List<int> currentPlayers = null;
+    public List<int> maxPlayers = null;
+    public List<RoomState> roomState = null;
 }
 
 [Serializable]
@@ -232,7 +254,6 @@ public class CreateRoom : NetworkMessage
 
     // 4 client
     public uint roomId;
-    public ClientInfo roomMaster;
 }
 
 [Serializable]
@@ -265,11 +286,12 @@ public class JoinRoom : NetworkMessage
 
     // 4 server
     public uint roomId;
-    public ClientInfo client;
-
     // 4 client
     public uint roomMasterId;
+
     public List<ClientInfo> clientsInTheRoom;
+
+    public ClientInfo client;
 }
 
 // -----------------------------------------------

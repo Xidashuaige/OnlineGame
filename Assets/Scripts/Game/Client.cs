@@ -34,9 +34,9 @@ public class Client : MonoBehaviour
 
     private uint _id = 0;
 
+    // Room paramaters
     private uint _roomId = 0;
-
-    private bool _roomMaster = false;
+    private bool _ImRoomMaster = false;
 
     // Callbacks
     private Dictionary<NetworkMessageType, Action<NetworkMessage>> _actionHandlers = new();
@@ -320,6 +320,8 @@ public class Client : MonoBehaviour
 
             onJoinServer.Invoke();
 
+            _roomManager.CreateRoomWhenJoinServer(message);
+
             Debug.Log("Client(" + Name + "): join server successful");
 
             return;
@@ -386,12 +388,13 @@ public class Client : MonoBehaviour
         _roomManager.JoinRoomFromClient(message);
 
         if (message.messageOwnerId == ID)
-            _roomMaster = message.client.isRoomMaster;
-
-        if (message.messageOwnerId == ID || _roomId == message.roomId)
         {
+            _ImRoomMaster = message.client.isRoomMaster;
             _roomId = message.roomId;
+        }
 
+        if (_roomId == message.roomId)
+        {
             onJoinRoom.Invoke(message);
 
             Debug.Log("Client(" + Name + "): join the room successful!");

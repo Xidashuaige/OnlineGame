@@ -44,10 +44,8 @@ public class Room : MonoBehaviour // For Client
     [SerializeField] private TMP_Text _roomPlayers;
     [SerializeField] private Image _stateImage;
 
-    private ClientInfo _roomMaster;
-    private List<ClientInfo> _clients = new();
-    public List<ClientInfo> Clients { get => _clients; }
-    public bool IsFull { get => _limitUsers <= _clients.Count; }
+    private int _playerCount = 0;
+    public bool IsFull { get => _limitUsers <= _playerCount; }
 
     public uint ID { get => _roomId; }
 
@@ -57,16 +55,16 @@ public class Room : MonoBehaviour // For Client
     // Event
     private Action<uint> _onJoinRoomRequest;
 
-    public void RoomInit(uint roomId, ClientInfo roomMaster, int limitUser, Action<uint> onJoinRoomAction = null)
+    public void RoomInit(uint roomId, int limitUser, Action<uint> onJoinRoomAction = null, int playerCount = 0, RoomState state = RoomState.NotFull)
     {
         // Init room init
-        _roomMaster = roomMaster;
         _roomId = roomId;
         _limitUsers = limitUser;
-        _clients.Add(roomMaster);
-        _state = RoomState.NotFull;
+        _state = state;
+        _playerCount = playerCount;
+
         _roomName.text = "Room " + roomId.ToString("D4");
-        _roomPlayers.text = _clients.Count + "/" + _limitUsers;
+        _roomPlayers.text = _playerCount + "/" + _limitUsers;
 
         // Unity Setting
         transform.SetAsLastSibling();
@@ -86,24 +84,23 @@ public class Room : MonoBehaviour // For Client
         if (IsFull)
             return false;
 
-        _clients.Add(client);
+        _playerCount++;
 
-        _roomPlayers.text = _clients.Count + "/" + _limitUsers;
+        _roomPlayers.text = _playerCount + "/" + _limitUsers;
 
         return true;
     }
 
     public void LeaveRoom(ClientInfo client)
     {
-        _clients.Remove(client);
+        _playerCount--;
 
-        _roomPlayers.text = _clients.Count + "/" + _limitUsers;
+        _roomPlayers.text = _playerCount + "/" + _limitUsers;
     }
 
     public void CloseRoom()
     {
-        _clients.Clear();
-        _roomMaster = null;
+        _playerCount = 0;
         _roomId = 0;
         _limitUsers = 4;
         _state = RoomState.NotFull;
