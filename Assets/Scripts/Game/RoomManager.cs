@@ -207,10 +207,7 @@ public class RoomManager : MonoBehaviour
         if (roomIndex < 0)
             return;
 
-        var room = _roomPoolForClient[roomIndex];
-
-        room.LeaveRoom();
-
+        _roomPoolForClient[roomIndex].LeaveRoom();
     }
 
     public bool JoinRoomFromClient(JoinRoom message)

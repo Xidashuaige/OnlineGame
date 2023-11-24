@@ -89,7 +89,7 @@ public class RoomUIController : MonoBehaviour
             _client = GameObject.FindWithTag("Client").GetComponent<Client>();
 
         _client.onJoinRoom += JoinRoom;
-        _client.onLeaveRoom += CloseRoom;
+        _client.onLeaveRoom += LeaveTheRoom;
     }
 
     private void JoinRoom(JoinRoom message)
@@ -127,9 +127,15 @@ public class RoomUIController : MonoBehaviour
 
     }
 
-    private void LeaveTheRoom(uint playerId)
+    private void LeaveTheRoom(LeaveRoom message, bool closeRoom)
     {
-        var player = _players[_players.FindIndex(player => player.inTheRoom == false)];
+        if (closeRoom)
+        {
+            CloseRoom();
+            return;
+        }
+
+        var player = _players[_players.FindIndex(player => player.playerId == message.messageOwnerId)];
 
         player.inTheRoom = false;
         player.avatarImg.sprite = _noPlayerSprite;
@@ -141,8 +147,6 @@ public class RoomUIController : MonoBehaviour
     {
         foreach (var player in _players)
         {
-            Debug.Log(player.name);
-
             player.inTheRoom = false;
             player.avatarImg.sprite = _noPlayerSprite;
             player.name.text = "";

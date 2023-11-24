@@ -101,8 +101,9 @@ public class PanelManager : MonoBehaviour
             ChangeScene(Panels.RoomPanel);
     }
 
-    private void OnLeaveRoom()
+    private void OnLeaveRoom(LeaveRoom message, bool closeRoom)
     {
-        ChangeScene(Panels.RoomListPanel);
+        if (closeRoom)
+            ChangeScene(Panels.RoomListPanel);
     }
 }

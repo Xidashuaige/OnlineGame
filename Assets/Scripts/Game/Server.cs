@@ -501,6 +501,8 @@ public class Server : MonoBehaviour
             _roomManager.LeaveRoomFromServer(_clients[message.messageOwnerId]);
         }
 
+        message.succesful = true;
+
         SendMessageToClients(message);
     }
 

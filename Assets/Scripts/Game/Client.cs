@@ -52,7 +52,7 @@ public class Client : MonoBehaviour
     public Action onJoinServer = null;
     public Action onLeaveServer = null;
     public Action<JoinRoom> onJoinRoom = null;
-    public Action onLeaveRoom = null;
+    public Action<LeaveRoom, bool> onLeaveRoom = null;
 
     #endregion
 
@@ -416,19 +416,29 @@ public class Client : MonoBehaviour
             return;
         }
 
-        _roomManager.LeaveRoomFromClient(message.messageOwnerId, message.roomId);
-
-        if (!message.isRoomMaster && message.messageOwnerId != ID)
-        {
-            Debug.Log("Client(" + Name + "): someone leave the room!");
-            return;
-        }
-
-        if (message.isRoomMaster || message.messageOwnerId == ID)
+        if (message.isRoomMaster)
         {
             _roomManager.CloseRoomFromClient(message.roomId);
+            Debug.Log("Client(" + Name + "): room master leave the room(" + message.roomId.ToString("D4") + ")!");
 
-            onLeaveRoom.Invoke();
+            if (_roomId == message.roomId)
+            {
+                onLeaveRoom.Invoke(message, true); // Close the room
+            }
+        }
+        else
+        {
+            _roomManager.LeaveRoomFromClient(message.messageOwnerId, message.roomId);
+            Debug.Log("Client(" + Name + "): someone leave the room(" + message.roomId.ToString("D4") + ")!");
+
+            if (_id == message.messageOwnerId)
+            {
+                onLeaveRoom.Invoke(message, true); // Close the room
+            }
+            else if (_roomId == message.roomId)
+            {
+                onLeaveRoom.Invoke(message, false); // some leave the room 
+            }
         }
     }
 
