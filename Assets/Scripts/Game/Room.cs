@@ -110,7 +110,7 @@ public class Room : MonoBehaviour // For Client
         _roomId = 0;
         _limitUsers = 4;
         _state = RoomState.NotFull;
-        gameObject.SetActive(true);
+        gameObject.SetActive(false);
     }
 
     public RoomState State { get => _state; }

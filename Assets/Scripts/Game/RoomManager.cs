@@ -137,8 +137,10 @@ public class RoomManager : MonoBehaviour
         var room = _roomPoolForServer[roomIdex];
 
         user.isRoomMaster = false;
-
         user.roomId = 0;
+
+        foreach (var client in room.clients)
+            client.roomId = 0;
 
         room.clients.Remove(user);
 
@@ -151,6 +153,14 @@ public class RoomManager : MonoBehaviour
 
         if (roomIdex == -1)
             return;
+
+        var clients = _roomPoolForServer[roomIdex].clients;
+
+        foreach (var client in clients)
+        {
+            client.isRoomMaster = false;
+            client.roomId = 0;
+        }
 
         _roomPoolForServer.Remove(_roomPoolForServer[roomIdex]);
     }

@@ -194,7 +194,7 @@ public class Server : MonoBehaviour
 
     private void ListenMessages()
     {
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[2048];
         int bytesRead;
 
         EndPoint _lastEndPoint = new IPEndPoint(IPAddress.Any, 0);
@@ -500,6 +500,8 @@ public class Server : MonoBehaviour
         {
             _roomManager.LeaveRoomFromServer(_clients[message.messageOwnerId]);
         }
+
+        sender.roomId = 0;
 
         message.succesful = true;
 

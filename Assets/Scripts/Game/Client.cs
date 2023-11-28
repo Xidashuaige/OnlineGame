@@ -37,6 +37,7 @@ public class Client : MonoBehaviour
     // Room paramaters
     private uint _roomId = 0;
     private bool _ImRoomMaster = false;
+    public bool RoomMaster { get => _ImRoomMaster; }
 
     // Callbacks
     private Dictionary<NetworkMessageType, Action<NetworkMessage>> _actionHandlers = new();
@@ -135,6 +136,9 @@ public class Client : MonoBehaviour
             // Create socket and and serverEndPoint
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
+            //Debug.Log("SendBuffer: " + _socket.SendBufferSize);
+            //Debug.Log("ReceiveBuffer: " + _socket.ReceiveBufferSize);
+
             _serverEndPoint = new(IPAddress.Parse(_ipInput.Value), SERVER_PORT);
         }
         catch (Exception e)
@@ -205,7 +209,7 @@ public class Client : MonoBehaviour
 
     private void ListenMessages()
     {
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[2048];
         int bytesRead = 0;
 
         Debug.Log("Client (" + _nameInput.Value + "): start receive message");
@@ -236,10 +240,11 @@ public class Client : MonoBehaviour
             }
             catch (SocketException ex)
             {
+                Debug.LogWarning(ex.Message);
+
                 // I DON'T KNOW WHY HAVE I THIS ERROR!!!!
                 if (ex.ErrorCode == (int)SocketError.InvalidArgument)
                 {
-                    Debug.LogWarning(ex.Message);
                     continue;
                 }
 
@@ -425,6 +430,9 @@ public class Client : MonoBehaviour
             {
                 onLeaveRoom.Invoke(message, true); // Close the room
             }
+
+            _roomId = 0;
+            _ImRoomMaster = false;
         }
         else
         {

@@ -14,7 +14,7 @@ class PlayerInTheRoomPanel
 
     public bool roomMaster = false;
     public TMP_Text name = null;
-    public uint playerId = 0;
+    public uint playerId = 999999;
 }
 
 
@@ -23,6 +23,8 @@ public class RoomUIController : MonoBehaviour
     [SerializeField] List<Sprite> _avatarSprites = new();
     [SerializeField] Sprite _noPlayerSprite;
     [SerializeField] Client _client;
+    [SerializeField] GameObject _startBtn;
+    [SerializeField] TMP_Text _roomIdLabel;
 
     private List<PlayerInTheRoomPanel> _players = new();
 
@@ -97,11 +99,17 @@ public class RoomUIController : MonoBehaviour
         // Add current player
         var player = _players[_players.FindIndex(p => p.inTheRoom == false)];
         player.inTheRoom = true;
+        player.playerId = message.client.id;
         player.avatarImg.sprite = _avatarSprites[Random.Range(0, _avatarSprites.Count)];
         player.name.text = message.client.name;
         player.roomMaster = message.client.isRoomMaster;
         if (player.roomMaster)
             player.roomMasterImg.gameObject.SetActive(true);
+
+        _roomIdLabel.text = "Room ID: " + message.roomId;
+
+        if (_client.RoomMaster)
+            _startBtn.SetActive(true);
 
         // Add other players
         for (int i = 0; message.messageOwnerId == _client.ID && message.clientsInTheRoom != null && i < message.clientsInTheRoom.Count; i++)
@@ -113,6 +121,7 @@ public class RoomUIController : MonoBehaviour
 
             player = _players[_players.FindIndex(p => p.inTheRoom == false)];
             player.inTheRoom = true;
+            player.playerId = message.clientsInTheRoom[i].id;
             player.avatarImg.sprite = _avatarSprites[Random.Range(0, _avatarSprites.Count)];
             player.name.text = message.clientsInTheRoom[i].name;
             player.roomMaster = message.clientsInTheRoom[i].isRoomMaster;
@@ -129,6 +138,8 @@ public class RoomUIController : MonoBehaviour
 
     private void LeaveTheRoom(LeaveRoom message, bool closeRoom)
     {
+        _startBtn.SetActive(false);
+
         if (closeRoom)
         {
             CloseRoom();
@@ -137,9 +148,11 @@ public class RoomUIController : MonoBehaviour
 
         var player = _players[_players.FindIndex(player => player.playerId == message.messageOwnerId)];
 
+        player.playerId = 999999;
         player.inTheRoom = false;
         player.avatarImg.sprite = _noPlayerSprite;
         player.name.text = "";
+        player.roomMaster = false;
         player.roomMasterImg.gameObject.SetActive(false);
     }
 
