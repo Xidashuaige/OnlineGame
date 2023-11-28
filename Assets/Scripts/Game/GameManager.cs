@@ -1,19 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
-
 public class GameManager : MonoBehaviour
 {
-    private List<GameObject> _players;
+    [SerializeField] private Server _server;
+    private List<ClientInfo> _clientsInTheGame = null;
 
-    // Start is called before the first frame update
-    void Start()
+    public void InitGame(List<ClientInfo> clients)
     {
-       // _players = new List<Player>();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        _clientsInTheGame = clients;
     }
 }

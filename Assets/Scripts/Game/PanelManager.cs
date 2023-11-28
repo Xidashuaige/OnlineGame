@@ -90,12 +90,10 @@ public class PanelManager : MonoBehaviour
             _avatarText.text = "C";
         }
     }
-
     private void OnLeaveServer()
     {
         ChangeScene(Panels.StartPanel);
     }
-
     private void OnJoinRoom(JoinRoom message)
     {
         if (_currentPanel != Panels.RoomPanel)
@@ -108,7 +106,7 @@ public class PanelManager : MonoBehaviour
             ChangeScene(Panels.RoomListPanel);
     }
 
-    private void OnGameStart()
+    private void OnGameStart(StartGame message)
     {
         if (_currentPanel != Panels.GamePanel)
             ChangeScene(Panels.GamePanel);

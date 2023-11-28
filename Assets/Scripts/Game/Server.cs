@@ -51,11 +51,13 @@ public class Server : MonoBehaviour
     [Space, Header("Global parameters")]
     [SerializeField] private PanelManager _panelManager;
     [SerializeField] private RoomManager _roomManager;
+    [SerializeField] private GameManager _gameManager;
     [SerializeField] private InputController _nameInput;
 
     // Server parameters
     private Dictionary<uint, ClientInfo> _clients = new();
     private uint _idGen = 0;
+    private uint _netIdGen = 0;
     private Dictionary<NetworkMessageType, Action<NetworkMessage>> _actionHandlers = new();
     [SerializeField] private Client _myClient;
     private ConcurrentQueue<MessageHandler> _tasks = new();
@@ -311,6 +313,10 @@ public class Server : MonoBehaviour
         return ++_idGen;
     }
 
+    private uint GetNextNetID()
+    {
+        return ++_netIdGen;
+    }
     public string GetIPAdress()
     {
         IPHostEntry ipEntry = Dns.GetHostEntry(Dns.GetHostName());
@@ -531,6 +537,18 @@ public class Server : MonoBehaviour
         _roomManager.StartGameFromServer(message.roomId);
 
         message.succesful = true;
+
+        var clients = _roomManager.GetClientsInfoByRoomId(message.roomId);
+
+        _gameManager.InitGame(clients);
+
+        // Create Net Ids for players
+        message.playerIdsAndNetIds = new();
+
+        foreach (var c in clients)
+        {
+            message.playerIdsAndNetIds.Add(c.id, GetNextNetID());
+        }
 
         SendMessageToClients(message);
     }

@@ -16,6 +16,7 @@ public class Client : MonoBehaviour
     // General
     [SerializeField] private Server _server;
     [SerializeField] private RoomManager _roomManager;
+    [SerializeField] private GameManager _gameManager;
 
     // Clients paramaters
     private const int SERVER_PORT = 8888;
@@ -54,13 +55,16 @@ public class Client : MonoBehaviour
     public Action onLeaveServer = null;
     public Action<JoinRoom> onJoinRoom = null;
     public Action<LeaveRoom, bool> onLeaveRoom = null;
-    public Action onStartGame = null;
+    public Action<StartGame> onStartGame = null;
 
     #endregion
 
     #region Unity events
     private void Start()
     {
+        if (_gameManager == null)
+            _gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
+
         #region Init Handle events actions
 
         _actionHandlers[NetworkMessageType.Heartbeat] = HandleHeartBeatMessage;
@@ -479,7 +483,7 @@ public class Client : MonoBehaviour
 
         if(_roomId == message.roomId)
         {
-            onStartGame.Invoke();
+            onStartGame.Invoke(message);
         }
     }
 

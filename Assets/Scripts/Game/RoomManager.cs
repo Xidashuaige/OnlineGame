@@ -177,6 +177,20 @@ public class RoomManager : MonoBehaviour
         room.state = RoomState.InGame;
     }
 
+    public List<ClientInfo> GetClientsInfoByRoomId(uint roomId)
+    {
+        var roomIdex = _roomPoolForServer.FindIndex(room => room.id == roomId);
+
+        if (roomIdex == -1)
+            return null;
+
+        var room = _roomPoolForServer[roomIdex];
+
+        var clients = room.clients;
+
+        return clients;
+    }
+
     // -----------------------------------------------
     // -----------------------------------------------
     // ------------- CLIENT FUNCTIONS-----------------

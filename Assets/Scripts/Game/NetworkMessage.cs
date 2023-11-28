@@ -269,7 +269,7 @@ public class ReadyInTheRoom : NetworkMessage
 [Serializable]
 public class StartGame : NetworkMessage
 {
-    public StartGame(uint userId,uint roomId) : base(NetworkMessageType.StartGame, userId) 
+    public StartGame(uint userId, uint roomId) : base(NetworkMessageType.StartGame, userId)
     {
         this.roomId = roomId;
     }
@@ -279,7 +279,11 @@ public class StartGame : NetworkMessage
         return JsonUtility.FromJson<StartGame>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
 
+    // 3 server & client
     public uint roomId = 0;
+
+    // 4 client
+    public Dictionary<uint, uint> playerIdsAndNetIds;
 }
 
 // Just for Room Master
@@ -306,3 +310,21 @@ public class KickOutRoom : NetworkMessage
 // -----------------------------------------------
 // -----------------------------------------------
 
+[SerializeField]
+public class UpdatePlayerMovement : NetworkMessage
+{
+    public UpdatePlayerMovement(uint userId, uint netId, Vector2 position) : base(NetworkMessageType.KickOutRoom, userId)
+    {
+        this.netId = netId;
+        this.position = position;
+    }
+
+    static public UpdatePlayerMovement GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<UpdatePlayerMovement>(Encoding.ASCII.GetString(data, 0, data.Length));
+    }
+
+    // 4 server & clients
+    uint netId;
+    Vector2 position;
+}

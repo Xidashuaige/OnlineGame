@@ -7,6 +7,10 @@ public class PlayerManager : MonoBehaviour
 
     [SerializeField] private Dictionary<uint, PlayerController> _players = new();
 
+    private void Start()
+    {
+        
+    }
     public void UpdatePlayerPosition(uint id, Vector2 newPos)
     {
         _players[id].transform.position = newPos;
@@ -14,7 +18,12 @@ public class PlayerManager : MonoBehaviour
 
     public void AddPlayer(PlayerController player)
     {
-        _players.Add(player.ID, player);
+        _players.Add(player.NetId, player);
+    }
+
+    public void OnStartGame(StartGame message)
+    {
+
     }
 
     public void CreatePlayer(uint id)
@@ -23,7 +32,7 @@ public class PlayerManager : MonoBehaviour
 
         PlayerController playerController = player.GetComponent<PlayerController>();
 
-        playerController.ID = id;
+        playerController.NetId = id;
 
         _players.Add(id, playerController);
     }
