@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    //private List<Player> _players;
+    private List<GameObject> _players;
 
     // Start is called before the first frame update
     void Start()

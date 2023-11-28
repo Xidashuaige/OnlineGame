@@ -54,6 +54,7 @@ public class Client : MonoBehaviour
     public Action onLeaveServer = null;
     public Action<JoinRoom> onJoinRoom = null;
     public Action<LeaveRoom, bool> onLeaveRoom = null;
+    public Action onStartGame = null;
 
     #endregion
 
@@ -199,6 +200,16 @@ public class Client : MonoBehaviour
             return;
 
         var message = new LeaveRoom(_id, _roomId);
+
+        SendMessageToServer(message);
+    }
+
+    public void RequestStartGame()
+    {
+        if (!_connecting || !RoomMaster)
+            return;
+
+        var message = new StartGame(_id, _roomId);
 
         SendMessageToServer(message);
     }
@@ -458,6 +469,18 @@ public class Client : MonoBehaviour
     private void HandleStartGameMessage(NetworkMessage data)
     {
         var message = data as StartGame;
+
+        if (!message.succesful)
+        {
+            Debug.Log("Start Game fail");
+        }
+
+        _roomManager.StartGameFromClient(message.roomId);
+
+        if(_roomId == message.roomId)
+        {
+            onStartGame.Invoke();
+        }
     }
 
     private void HandleKickOutRoomMessage(NetworkMessage data)

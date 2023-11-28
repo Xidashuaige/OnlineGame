@@ -308,7 +308,7 @@ public class Server : MonoBehaviour
     // -----------------------------------------------
     private uint GetNextID()
     {
-        return _idGen++;
+        return ++_idGen;
     }
 
     public string GetIPAdress()
@@ -516,6 +516,23 @@ public class Server : MonoBehaviour
     private void HandleStartGameMessage(NetworkMessage data)
     {
         var message = data as StartGame;
+
+        var client = _clients[message.messageOwnerId];
+
+        if (!client.isRoomMaster)
+        {
+            message.succesful = false;
+
+            SendMessageToClient(client, message);
+
+            return;
+        }
+
+        _roomManager.StartGameFromServer(message.roomId);
+
+        message.succesful = true;
+
+        SendMessageToClients(message);
     }
 
     private void HandleKickOutRoomMessage(NetworkMessage data)

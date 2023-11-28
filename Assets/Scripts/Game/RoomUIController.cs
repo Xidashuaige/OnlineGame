@@ -14,7 +14,7 @@ class PlayerInTheRoomPanel
 
     public bool roomMaster = false;
     public TMP_Text name = null;
-    public uint playerId = 999999;
+    public uint playerId = 0;
 }
 
 
@@ -148,7 +148,7 @@ public class RoomUIController : MonoBehaviour
 
         var player = _players[_players.FindIndex(player => player.playerId == message.messageOwnerId)];
 
-        player.playerId = 999999;
+        player.playerId = 0;
         player.inTheRoom = false;
         player.avatarImg.sprite = _noPlayerSprite;
         player.name.text = "";

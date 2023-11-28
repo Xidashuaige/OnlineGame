@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+
 [Serializable]
 public class RoomInfo // For Server
 {
@@ -37,7 +38,7 @@ public enum RoomState
 {
     NotFull,
     Full,
-    Playing,
+    InGame,
 }
 
 public class Room : MonoBehaviour // For Client
@@ -94,7 +95,17 @@ public class Room : MonoBehaviour // For Client
 
         _roomPlayers.text = _playerCount + "/" + _limitUsers;
 
+        if (_playerCount >= _limitUsers)
+            _state = RoomState.Full;
+
         return true;
+    }
+
+    public void StartGame()
+    {
+        _state = RoomState.InGame;
+
+        _stateImage.color = Color.red;
     }
 
     public void LeaveRoom()
@@ -102,6 +113,8 @@ public class Room : MonoBehaviour // For Client
         _playerCount--;
 
         _roomPlayers.text = _playerCount + "/" + _limitUsers;
+
+        _state = RoomState.NotFull;
     }
 
     public void CloseRoom()

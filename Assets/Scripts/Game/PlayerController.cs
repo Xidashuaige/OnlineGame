@@ -4,6 +4,7 @@ public class PlayerController : MonoBehaviour
 {
     public uint ID { get => _id; set => _id = value; }
     private uint _id = 0;
+    private uint _netId = 0;
     private PlayerMovement _movement;
 
     public bool Owner { get => _owner; set => _owner = value; }

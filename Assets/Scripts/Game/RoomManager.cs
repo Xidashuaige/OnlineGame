@@ -165,6 +165,18 @@ public class RoomManager : MonoBehaviour
         _roomPoolForServer.Remove(_roomPoolForServer[roomIdex]);
     }
 
+    public void StartGameFromServer(uint roomId)
+    {
+        var roomIdex = _roomPoolForServer.FindIndex(room => room.id == roomId);
+
+        if (roomIdex == -1)
+            return;
+
+        var room = _roomPoolForServer[roomIdex];
+
+        room.state = RoomState.InGame;
+    }
+
     // -----------------------------------------------
     // -----------------------------------------------
     // ------------- CLIENT FUNCTIONS-----------------
@@ -254,6 +266,20 @@ public class RoomManager : MonoBehaviour
 
         return true;
     }
+
+    public void StartGameFromClient(uint roomId)
+    {
+        var roomIndex = _roomPoolForClient.FindIndex(room => room.ID == roomId);
+
+        if (roomIndex < 0)
+            return;
+
+        var room = _roomPoolForClient[roomIndex];
+
+        
+    }
+
+
     private Room GetNextRoom()
     {
         for (int i = 0; i < _roomPoolForClient.Count; i++)

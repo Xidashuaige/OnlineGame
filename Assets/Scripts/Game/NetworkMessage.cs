@@ -269,12 +269,17 @@ public class ReadyInTheRoom : NetworkMessage
 [Serializable]
 public class StartGame : NetworkMessage
 {
-    public StartGame(uint userId) : base(NetworkMessageType.StartGame, userId) { }
+    public StartGame(uint userId,uint roomId) : base(NetworkMessageType.StartGame, userId) 
+    {
+        this.roomId = roomId;
+    }
 
     static public StartGame GetData(byte[] data)
     {
         return JsonUtility.FromJson<StartGame>(Encoding.ASCII.GetString(data, 0, data.Length));
     }
+
+    public uint roomId = 0;
 }
 
 // Just for Room Master
