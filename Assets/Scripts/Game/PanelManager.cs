@@ -28,10 +28,6 @@ public class PanelManager : MonoBehaviour
     [SerializeField] private TMP_Text _avatarText;
     [SerializeField] private GameObject _btnCopyIp;
 
-    [Space, Header("Socket Related")]
-    [SerializeField] private Server _server;
-    [SerializeField] private Client _client;
-
     private readonly List<GameObject> _panels = new();
 
     private Panels _currentPanel;
@@ -39,14 +35,14 @@ public class PanelManager : MonoBehaviour
     private void Start()
     {
         // server callbacks
-        _server.onIpUpdate += OnIpUpdate;
+        Server.Instance.onIpUpdate += OnIpUpdate;
 
         // client callbacks
-        _client.onJoinServer += OnJoinServer;
-        _client.onLeaveServer += OnLeaveServer;
-        _client.onJoinRoom += OnJoinRoom;
-        _client.onLeaveRoom += OnLeaveRoom;
-        _client.onStartGame += OnGameStart;
+        Client.Instante.onActionHandlered[NetworkMessageType.JoinServer] += OnJoinServer;
+        Client.Instante.onActionHandlered[NetworkMessageType.LeaveServer] += OnLeaveServer;
+        Client.Instante.onActionHandlered[NetworkMessageType.JoinRoom] += OnJoinRoom;
+        Client.Instante.onActionHandlered[NetworkMessageType.LeaveRoom] += OnLeaveRoom;
+        Client.Instante.onActionHandlered[NetworkMessageType.StartGame] += OnGameStart;
 
         // Init Panels
         _panels.Add(_startPanel);
@@ -73,13 +69,13 @@ public class PanelManager : MonoBehaviour
         _ipInput.text = newIp;
     }
 
-    private void OnJoinServer()
+    private void OnJoinServer(NetworkMessage message)
     {
         ChangeScene(Panels.RoomListPanel);
 
         _nameTextInRoomList.text = _nameInput.text;
 
-        if (_client.host) // If we're server host
+        if (Client.Instante.host) // If we're server host
         {
             _btnCopyIp.SetActive(true);
             _avatarText.text = "S";
@@ -90,23 +86,29 @@ public class PanelManager : MonoBehaviour
             _avatarText.text = "C";
         }
     }
-    private void OnLeaveServer()
+    private void OnLeaveServer(NetworkMessage message)
     {
         ChangeScene(Panels.StartPanel);
     }
-    private void OnJoinRoom(JoinRoom message)
+    private void OnJoinRoom(NetworkMessage data)
     {
-        if (_currentPanel != Panels.RoomPanel)
-            ChangeScene(Panels.RoomPanel);
+        var message = data as JoinRoom;
+
+        if (Client.Instante.RoomID != message.roomId || _currentPanel == Panels.RoomPanel)
+            return;
+
+        ChangeScene(Panels.RoomPanel);
     }
 
-    private void OnLeaveRoom(LeaveRoom message, bool closeRoom)
+    private void OnLeaveRoom(NetworkMessage data)
     {
-        if (closeRoom)
+        var message = data as LeaveRoom;
+
+        if (Client.Instante.ID == message.messageOwnerId || message.isRoomMaster)
             ChangeScene(Panels.RoomListPanel);
     }
 
-    private void OnGameStart(StartGame message)
+    private void OnGameStart(NetworkMessage message)
     {
         if (_currentPanel != Panels.GamePanel)
             ChangeScene(Panels.GamePanel);

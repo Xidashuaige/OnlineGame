@@ -47,10 +47,10 @@ public class MessageHandler
 
 public class Server : MonoBehaviour
 {
+    public static Server Instance = null;
+
     // Unity Objects
-    [Space, Header("Global parameters")]
-    [SerializeField] private PanelManager _panelManager;
-    [SerializeField] private RoomManager _roomManager;
+    [Header("Global parameters")]
     [SerializeField] private GameManager _gameManager;
     [SerializeField] private InputController _nameInput;
 
@@ -59,7 +59,6 @@ public class Server : MonoBehaviour
     private uint _idGen = 0;
     private uint _netIdGen = 0;
     private Dictionary<NetworkMessageType, Action<NetworkMessage>> _actionHandlers = new();
-    [SerializeField] private Client _myClient;
     private ConcurrentQueue<MessageHandler> _tasks = new();
 
     // Socket parameters
@@ -82,6 +81,15 @@ public class Server : MonoBehaviour
     // -----------------UNITY EVENTS------------------
     // -----------------------------------------------
     // -----------------------------------------------
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject.transform.parent);
+        }
+    }
+
     void Start()
     {
         // Init Handle events actions
@@ -100,7 +108,7 @@ public class Server : MonoBehaviour
     {
         if (_connecting)
         {
-            SendMessageToClients(new LeaveServer(_myClient.ID));
+            SendMessageToClients(new LeaveServer(Client.Instante.ID));
 
             while (_messageHandleFlag > 0)
             {
@@ -136,7 +144,7 @@ public class Server : MonoBehaviour
             onServerStart?.Invoke();
 
             // Change my client to server host
-            _myClient.host = true;
+            Client.Instante.host = true;
 
             _handleStartServer = false;
         }
@@ -372,7 +380,7 @@ public class Server : MonoBehaviour
 
         message.messageOwnerId = client.id;
 
-        message.AddRooms(_roomManager.GetActiveRooms());
+        message.AddRooms(RoomManager.Instance.GetActiveRooms());
 
         message.succesful = true;
 
@@ -385,7 +393,7 @@ public class Server : MonoBehaviour
 
         message.succesful = true;
 
-        if (message.messageOwnerId == _myClient.ID)
+        if (message.messageOwnerId == Client.Instante.ID)
         {
             SendMessageToClients(message);
 
@@ -419,7 +427,7 @@ public class Server : MonoBehaviour
 
         Debug.Log("Server: some player request for create a room");
 
-        var newRoom = _roomManager.CreateRoomFromServer(message);
+        var newRoom = RoomManager.Instance.CreateRoomFromServer(message);
 
         if (newRoom == null)
         {
@@ -435,30 +443,6 @@ public class Server : MonoBehaviour
         message.roomId = newRoom.id;
 
         SendMessageToClients(message);
-
-        /*
-        message.roomId = _clients[message.messageOwnerId].roomId = _roomManager.CreateRoomFromServer();
-
-        if (message.roomId != 0)
-        {
-            _clients[message.messageOwnerId].roomMaster = true;
-
-            message.succesful = true;
-
-            message.roomMaster = _clients[message.messageOwnerId];
-
-            Debug.Log("Server: Room create successful!");
-
-            SendMessageToClients(message);
-        }
-        else
-        {
-            message.succesful = false;
-
-            Debug.Log("Server: Room create faild!");
-
-            SendMessageToClient(_clients[message.messageOwnerId], message);
-        }*/
     }
 
     private void HandleJoinRoomMessage(NetworkMessage data)
@@ -468,7 +452,7 @@ public class Server : MonoBehaviour
         var sender = _clients[message.messageOwnerId];
 
         // if client already have room or room is not avaliable for moment
-        if (sender.roomId != 0 || !_roomManager.CheckIfRoomAvaliable(message.roomId))
+        if (sender.roomId != 0 || !RoomManager.Instance.CheckIfRoomAvaliable(message.roomId))
         {
             message.succesful = false;
 
@@ -478,7 +462,7 @@ public class Server : MonoBehaviour
         {
             message.client = sender;
 
-            message.succesful = _roomManager.JoinRoomFromServer(message);
+            message.succesful = RoomManager.Instance.JoinRoomFromServer(message);
 
             SendMessageToClient(sender, message);
 
@@ -500,11 +484,11 @@ public class Server : MonoBehaviour
 
         if (message.isRoomMaster)
         {
-            _roomManager.CloseRoomFromServer(message.roomId);
+            RoomManager.Instance.CloseRoomFromServer(message.roomId);
         }
         else
         {
-            _roomManager.LeaveRoomFromServer(_clients[message.messageOwnerId]);
+            RoomManager.Instance.LeaveRoomFromServer(_clients[message.messageOwnerId]);
         }
 
         sender.roomId = 0;
@@ -534,11 +518,11 @@ public class Server : MonoBehaviour
             return;
         }
 
-        _roomManager.StartGameFromServer(message.roomId);
+        RoomManager.Instance.StartGameFromServer(message.roomId);
 
         message.succesful = true;
 
-        var clients = _roomManager.GetClientsInfoByRoomId(message.roomId);
+        var clients = RoomManager.Instance.GetClientsInfoByRoomId(message.roomId);
 
         _gameManager.InitGame(clients);
 

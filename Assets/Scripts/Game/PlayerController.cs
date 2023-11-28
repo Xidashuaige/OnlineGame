@@ -8,11 +8,7 @@ public class PlayerController : MonoBehaviour
 
     public bool Owner { get => _owner; set => _owner = value; }
     [SerializeField] private bool _owner = false;
-    private Client _client;
-    private void Start()
-    {
-        _client = FindObjectOfType<Client>().GetComponent<Client>();
-    }
+
     private void OnEnable()
     {
         if (_movement != null)

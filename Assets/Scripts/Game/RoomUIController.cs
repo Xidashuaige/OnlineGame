@@ -10,7 +10,6 @@ class PlayerInTheRoomPanel
     public Image roomMasterImg = null;
     public Button button = null;
     public TMP_Text ready = null;
-    public bool inTheRoom = false;
 
     public bool roomMaster = false;
     public TMP_Text name = null;
@@ -22,7 +21,6 @@ public class RoomUIController : MonoBehaviour
 {
     [SerializeField] List<Sprite> _avatarSprites = new();
     [SerializeField] Sprite _noPlayerSprite;
-    [SerializeField] Client _client;
     [SerializeField] GameObject _startBtn;
     [SerializeField] TMP_Text _roomIdLabel;
 
@@ -87,18 +85,20 @@ public class RoomUIController : MonoBehaviour
             _players[i].button = buttons[i];
         }
 
-        if (_client == null)
-            _client = GameObject.FindWithTag("Client").GetComponent<Client>();
-
-        _client.onJoinRoom += JoinRoom;
-        _client.onLeaveRoom += LeaveTheRoom;
+        Client.Instante.onActionHandlered[NetworkMessageType.JoinRoom] += JoinRoom;
+        Client.Instante.onActionHandlered[NetworkMessageType.LeaveRoom] += OnLeaveTheRoom;
     }
 
-    private void JoinRoom(JoinRoom message)
+    private void JoinRoom(NetworkMessage data)
     {
+        var message = data as JoinRoom;
+
+        if (Client.Instante.RoomID != message.roomId)
+            return;
+
         // Add current player
-        var player = _players[_players.FindIndex(p => p.inTheRoom == false)];
-        player.inTheRoom = true;
+        var player = _players[_players.FindIndex(p => p.playerId == 0)];
+
         player.playerId = message.client.id;
         player.avatarImg.sprite = _avatarSprites[Random.Range(0, _avatarSprites.Count)];
         player.name.text = message.client.name;
@@ -108,19 +108,18 @@ public class RoomUIController : MonoBehaviour
 
         _roomIdLabel.text = "Room ID: " + message.roomId;
 
-        if (_client.RoomMaster)
+        if (Client.Instante.RoomMaster)
             _startBtn.SetActive(true);
 
         // Add other players
-        for (int i = 0; message.messageOwnerId == _client.ID && message.clientsInTheRoom != null && i < message.clientsInTheRoom.Count; i++)
+        for (int i = 0; message.messageOwnerId == Client.Instante.ID && message.clientsInTheRoom != null && i < message.clientsInTheRoom.Count; i++)
         {
-            if (message.clientsInTheRoom[i].id == _client.ID)
+            if (message.clientsInTheRoom[i].id == Client.Instante.ID)
                 continue;
 
             // Debug.Log("(" + _client.Name + ") Add client" + i + " in the room");
 
-            player = _players[_players.FindIndex(p => p.inTheRoom == false)];
-            player.inTheRoom = true;
+            player = _players[_players.FindIndex(p => p.playerId == 0)];
             player.playerId = message.clientsInTheRoom[i].id;
             player.avatarImg.sprite = _avatarSprites[Random.Range(0, _avatarSprites.Count)];
             player.name.text = message.clientsInTheRoom[i].name;
@@ -136,20 +135,24 @@ public class RoomUIController : MonoBehaviour
 
     }
 
-    private void LeaveTheRoom(LeaveRoom message, bool closeRoom)
+    private void OnLeaveTheRoom(NetworkMessage data)
     {
-        _startBtn.SetActive(false);
+        var message = data as LeaveRoom;
 
-        if (closeRoom)
+        if (Client.Instante.RoomID != message.roomId)
+            return;
+
+        // If leaver is room master or me, then, close the room (UI)
+        if (message.isRoomMaster || message.messageOwnerId == Client.Instante.ID)
         {
             CloseRoom();
             return;
         }
 
+        // If not, remove the correspond player in the room
         var player = _players[_players.FindIndex(player => player.playerId == message.messageOwnerId)];
 
         player.playerId = 0;
-        player.inTheRoom = false;
         player.avatarImg.sprite = _noPlayerSprite;
         player.name.text = "";
         player.roomMaster = false;
@@ -160,10 +163,12 @@ public class RoomUIController : MonoBehaviour
     {
         foreach (var player in _players)
         {
-            player.inTheRoom = false;
+            player.playerId = 0;
             player.avatarImg.sprite = _noPlayerSprite;
             player.name.text = "";
             player.roomMasterImg.gameObject.SetActive(false);
         }
+
+        _startBtn.SetActive(false);
     }
 }

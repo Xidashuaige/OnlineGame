@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class RoomManager : MonoBehaviour
 {
+    public static RoomManager Instance = null;
+
     [Header("Server")]
     [SerializeField] private int _maxRooms = 20;
     private readonly List<RoomInfo> _roomPoolForServer = new();
@@ -15,13 +17,17 @@ public class RoomManager : MonoBehaviour
     [SerializeField] private GameObject _roomParent;
     private readonly List<Room> _roomPoolForClient = new();
 
-    [Space, Header("Server & Client")]
-    [SerializeField] private Client _myClient;
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject.transform.parent);
+        }
+    }
+
     private void Start()
     {
-        if (_myClient == null)
-            _myClient = GameObject.FindWithTag("Client").GetComponent<Client>();
-
         // Init for client
         if (_roomUIController == null)
             _roomUIController = GameObject.FindWithTag("RoomController").GetComponent<RoomUIController>();
@@ -36,6 +42,12 @@ public class RoomManager : MonoBehaviour
             room.transform.localScale = Vector3.one;
             _roomPoolForClient.Add(room.GetComponent<Room>());
         }
+
+        Client.Instante.onActionHandlered[NetworkMessageType.JoinServer] += OnJoinServerFromClient;
+        Client.Instante.onActionHandlered[NetworkMessageType.CreateRoom] += OnCreateRoomFromClient;
+       Client.Instante.onActionHandlered[NetworkMessageType.JoinRoom] += OnJoinRoomFromClient;
+        Client.Instante.onActionHandlered[NetworkMessageType.LeaveRoom] += OnLeaveRoomFromClient;
+        Client.Instante.onActionHandlered[NetworkMessageType.StartGame] += OnStartGameFromClient;
     }
 
     private void OnApplicationQuit()
@@ -49,6 +61,9 @@ public class RoomManager : MonoBehaviour
     // ---------------SERVER FUNCTIONS----------------
     // -----------------------------------------------
     // -----------------------------------------------
+
+    #region Server Functions
+
     public RoomInfo CreateRoomFromServer(CreateRoom message)
     {
         if (CanCreateMore)
@@ -128,7 +143,7 @@ public class RoomManager : MonoBehaviour
     }
 
     public void LeaveRoomFromServer(ClientInfo user)
-    { 
+    {
         var roomIdex = _roomPoolForServer.FindIndex(room => room.id == user.roomId);
 
         if (roomIdex == -1)
@@ -144,7 +159,7 @@ public class RoomManager : MonoBehaviour
 
         room.clients.Remove(user);
 
-       // _roomPoolForServer[roomIdex]   
+        // _roomPoolForServer[roomIdex]   
     }
 
     public void CloseRoomFromServer(uint roomId)
@@ -191,17 +206,21 @@ public class RoomManager : MonoBehaviour
         return clients;
     }
 
+    #endregion
     // -----------------------------------------------
     // -----------------------------------------------
     // ------------- CLIENT FUNCTIONS-----------------
     // -----------------------------------------------
     // -----------------------------------------------
 
-    public void CreateRoomWhenJoinServer(JoinServer message)
+    #region Client Functions
+
+    public void OnJoinServerFromClient(NetworkMessage data)
     {
+        var message = data as JoinServer;
+
         if (message.currentPlayers == null)
             return;
-
 
         for (int i = 0; i < message.currentPlayers.Count; i++)
         {
@@ -210,23 +229,23 @@ public class RoomManager : MonoBehaviour
             if (room == null)
                 return;
 
-            room.RoomInit(message.roomsId[i], message.maxPlayers[i], _myClient.RequestJoinRoom, message.currentPlayers[i], message.roomState[i]);
+            room.RoomInit(message.roomsId[i], message.maxPlayers[i], Client.Instante.RequestJoinRoom, message.currentPlayers[i], message.roomState[i]);
         }
     }
 
-    public Room CreateRoomFromClient(CreateRoom message)
+    public void OnCreateRoomFromClient(NetworkMessage data)
     {
+        var message = data as CreateRoom;
+
         Room room = GetNextRoom();
 
         if (room == null)
-            return null;
+            return;
 
-        room.RoomInit(message.roomId, message.maxUser, _myClient.RequestJoinRoom);
-
-        return room;
+        room.RoomInit(message.roomId, message.maxUser, Client.Instante.RequestJoinRoom);
     }
 
-    public void CloseRoomFromClient(uint roomId)
+    private void CloseRoomFromClient(uint roomId)
     {
         var roomIndex = _roomPoolForClient.FindIndex(room => room.ID == roomId);
 
@@ -236,7 +255,7 @@ public class RoomManager : MonoBehaviour
         _roomPoolForClient[roomIndex].CloseRoom();
     }
 
-    public void LeaveRoomFromClient(uint userId, uint roomId)
+    private void LeaveRoomFromClient(uint roomId)
     {
         var roomIndex = _roomPoolForClient.FindIndex(room => room.ID == roomId);
 
@@ -246,14 +265,16 @@ public class RoomManager : MonoBehaviour
         _roomPoolForClient[roomIndex].LeaveRoom();
     }
 
-    public bool JoinRoomFromClient(JoinRoom message)
+    public void OnJoinRoomFromClient(NetworkMessage data)
     {
+        var message = data as JoinRoom;
+
         var roomIndex = _roomPoolForClient.FindIndex(room => room.ID == message.roomId);
 
         if (roomIndex < 0)
         {
-            Debug.Log("Client: doesn't find room " + message.roomId + " in the client (" + _myClient.Name + ")");
-            return false;
+            Debug.Log("Client: doesn't find room " + message.roomId + " in the client (" + Client.Instante.Name + ")");
+            return;
         }
 
         var room = _roomPoolForClient[roomIndex];
@@ -261,38 +282,23 @@ public class RoomManager : MonoBehaviour
         if (!room.JoinRoom())
         {
             Debug.Log("Client: room " + message.roomId + " is full in the client");
-            return false;
+            return;
         }
-
-        /*
-        for (int i = 0; message.messageOwnerId == _myClient.ID && message.clientsInTheRoom != null && i < message.clientsInTheRoom.Count; i++)
-        {
-            if (message.clientsInTheRoom[i].id == _myClient.ID)
-                continue;
-
-            if (!room.JoinRoom(message.clientsInTheRoom[i]))
-            {
-                Debug.Log("Room " + message.roomId + " is full in the client");
-                return false;
-            }
-        }
-        */
-
-        return true;
     }
 
-    public void StartGameFromClient(uint roomId)
+    public void OnStartGameFromClient(NetworkMessage data)
     {
-        var roomIndex = _roomPoolForClient.FindIndex(room => room.ID == roomId);
+        var message = data as StartGame;
+
+        var roomIndex = _roomPoolForClient.FindIndex(room => room.ID == message.roomId);
 
         if (roomIndex < 0)
             return;
 
         var room = _roomPoolForClient[roomIndex];
 
-        
-    }
 
+    }
 
     private Room GetNextRoom()
     {
@@ -303,4 +309,16 @@ public class RoomManager : MonoBehaviour
         }
         return null;
     }
+
+    private void OnLeaveRoomFromClient(NetworkMessage data)
+    {
+        var message = data as LeaveRoom;
+
+        if (message.isRoomMaster)
+            CloseRoomFromClient(message.roomId);
+        else
+            LeaveRoomFromClient(message.roomId);
+    }
+
+    #endregion
 }

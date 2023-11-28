@@ -9,14 +9,11 @@ using UnityEngine;
 public class Client : MonoBehaviour
 {
     #region Paramaters
+    public static Client Instante = null;
+
     // Unity paramaters
     [SerializeField] private InputController _ipInput;
     [SerializeField] private InputController _nameInput;
-
-    // General
-    [SerializeField] private Server _server;
-    [SerializeField] private RoomManager _roomManager;
-    [SerializeField] private GameManager _gameManager;
 
     // Clients paramaters
     private const int SERVER_PORT = 8888;
@@ -29,14 +26,15 @@ public class Client : MonoBehaviour
 
     public bool host = false;
 
-    public uint ID { get => _id; }
-
     public string Name { get => _nameInput.Value; }
 
     private uint _id = 0;
+    public uint ID { get => _id; }
 
     // Room paramaters
     private uint _roomId = 0;
+    public uint RoomID { get => _roomId; }
+
     private bool _ImRoomMaster = false;
     public bool RoomMaster { get => _ImRoomMaster; }
 
@@ -51,19 +49,19 @@ public class Client : MonoBehaviour
     private ConcurrentQueue<MessageHandler> _tasks = new();
 
     // Events
-    public Action onJoinServer = null;
-    public Action onLeaveServer = null;
-    public Action<JoinRoom> onJoinRoom = null;
-    public Action<LeaveRoom, bool> onLeaveRoom = null;
-    public Action<StartGame> onStartGame = null;
+    public Dictionary<NetworkMessageType, Action<NetworkMessage>> onActionHandlered = new();
 
     #endregion
 
     #region Unity events
-    private void Start()
+
+    private void Awake()
     {
-        if (_gameManager == null)
-            _gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
+        if (Instante == null)
+        {
+            Instante = this;
+            DontDestroyOnLoad(gameObject.transform.parent);
+        }
 
         #region Init Handle events actions
 
@@ -93,7 +91,16 @@ public class Client : MonoBehaviour
 
         #endregion
 
-        _server.onServerStart += RequestJoinToServer;
+        // Init callback events actions
+        for (int i = 0; i < (int)NetworkMessageType.MaxCount; i++)
+        {
+            onActionHandlered.Add((NetworkMessageType)i, null);
+        }
+    }
+
+    private void Start()
+    {
+        Server.Instance.onServerStart += RequestJoinToServer;
     }
 
     private void Update()
@@ -108,8 +115,8 @@ public class Client : MonoBehaviour
 
     private void OnApplicationQuit()
     {
-        onJoinServer = null;
-        onLeaveServer = null;
+        onActionHandlered?.Clear();
+        onActionHandlered = null;
 
         _actionHandlers?.Clear();
         _actionHandlers = null;
@@ -340,9 +347,7 @@ public class Client : MonoBehaviour
         {
             _id = message.messageOwnerId;
 
-            onJoinServer.Invoke();
-
-            _roomManager.CreateRoomWhenJoinServer(message);
+            onActionHandlered[NetworkMessageType.JoinServer]?.Invoke(message);
 
             Debug.Log("Client(" + Name + "): join server successful");
 
@@ -363,7 +368,7 @@ public class Client : MonoBehaviour
             lock (_lock)
                 _connecting = false;
 
-            onLeaveServer.Invoke();
+            onActionHandlered[NetworkMessageType.LeaveServer]?.Invoke(message);
 
             Debug.Log("Client(" + Name + "): leave server successful");
         }
@@ -379,7 +384,7 @@ public class Client : MonoBehaviour
             return;
         }
 
-        _roomManager.CreateRoomFromClient(message);
+        onActionHandlered[NetworkMessageType.CreateRoom]?.Invoke(message);
 
         if (message.messageOwnerId == _id)
         {
@@ -389,9 +394,7 @@ public class Client : MonoBehaviour
 
             Debug.Log("Client (" + Name + "): try to enter room " + _roomId);
 
-            var joinRoomMessage = new JoinRoom(_id, _roomId, _nameInput.Value, true);
-
-            SendMessageToServer(joinRoomMessage);
+            SendMessageToServer(new JoinRoom(_id, _roomId, _nameInput.Value, true));
         }
         else
         {
@@ -406,18 +409,16 @@ public class Client : MonoBehaviour
         if (message.succesful == false)
             return;
 
-        _roomManager.JoinRoomFromClient(message);
-
         if (message.messageOwnerId == ID)
         {
             _ImRoomMaster = message.client.isRoomMaster;
             _roomId = message.roomId;
         }
 
+        onActionHandlered[NetworkMessageType.JoinRoom]?.Invoke(message);
+
         if (_roomId == message.roomId)
         {
-            onJoinRoom.Invoke(message);
-
             Debug.Log("Client(" + Name + "): join the room successful!");
         }
         else
@@ -436,32 +437,18 @@ public class Client : MonoBehaviour
             return;
         }
 
+        onActionHandlered[NetworkMessageType.LeaveRoom]?.Invoke(message);
+
         if (message.isRoomMaster)
         {
-            _roomManager.CloseRoomFromClient(message.roomId);
             Debug.Log("Client(" + Name + "): room master leave the room(" + message.roomId.ToString("D4") + ")!");
-
-            if (_roomId == message.roomId)
-            {
-                onLeaveRoom.Invoke(message, true); // Close the room
-            }
 
             _roomId = 0;
             _ImRoomMaster = false;
         }
         else
         {
-            _roomManager.LeaveRoomFromClient(message.messageOwnerId, message.roomId);
             Debug.Log("Client(" + Name + "): someone leave the room(" + message.roomId.ToString("D4") + ")!");
-
-            if (_id == message.messageOwnerId)
-            {
-                onLeaveRoom.Invoke(message, true); // Close the room
-            }
-            else if (_roomId == message.roomId)
-            {
-                onLeaveRoom.Invoke(message, false); // some leave the room 
-            }
         }
     }
 
@@ -476,15 +463,14 @@ public class Client : MonoBehaviour
 
         if (!message.succesful)
         {
-            Debug.Log("Start Game fail");
+            Debug.Log("Client(" + Name + "): Start Game fail");
+            return;
         }
 
-        _roomManager.StartGameFromClient(message.roomId);
+        onActionHandlered[NetworkMessageType.StartGame]?.Invoke(message);
 
-        if(_roomId == message.roomId)
-        {
-            onStartGame.Invoke(message);
-        }
+        Debug.Log("Client(" + Name + "): Start Game successful");
+        return;
     }
 
     private void HandleKickOutRoomMessage(NetworkMessage data)

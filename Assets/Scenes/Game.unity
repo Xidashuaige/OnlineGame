@@ -177,8 +177,6 @@ MonoBehaviour:
   _nameTextInRoomList: {fileID: 1406347082}
   _avatarText: {fileID: 672336657}
   _btnCopyIp: {fileID: 1421029435}
-  _server: {fileID: 732073139}
-  _client: {fileID: 1334899241}
 --- !u!1 &49766890
 GameObject:
   m_ObjectHideFlags: 0
@@ -3916,10 +3914,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 203572a582fef7e4ebb0d5e97c761080, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _panelManager: {fileID: 28050810}
-  _roomManager: {fileID: 880644431}
+  _gameManager: {fileID: 0}
   _nameInput: {fileID: 746061644}
-  _myClient: {fileID: 1334899241}
 --- !u!4 &732073140
 Transform:
   m_ObjectHideFlags: 0
@@ -5087,7 +5083,6 @@ MonoBehaviour:
   _roomUIController: {fileID: 1425583832}
   _roomPrefab: {fileID: 8325717549004073296, guid: e1459e0b9045ca643bcc2d77b9911c06, type: 3}
   _roomParent: {fileID: 7962004159466712770}
-  _myClient: {fileID: 1334899241}
 --- !u!1 &896601327
 GameObject:
   m_ObjectHideFlags: 0
@@ -7896,8 +7891,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _ipInput: {fileID: 1285123756}
   _nameInput: {fileID: 746061644}
-  _server: {fileID: 732073139}
-  _roomManager: {fileID: 880644431}
   host: 0
 --- !u!4 &1334899242
 Transform:
@@ -8616,7 +8609,6 @@ MonoBehaviour:
   - {fileID: 21300000, guid: cb37e471d4254de4090e632e417bfa08, type: 3}
   - {fileID: 21300000, guid: c46ae1cfd6feec94c9cae31d73169b99, type: 3}
   _noPlayerSprite: {fileID: 21300000, guid: 575b5e374afed264fa15ba7dde26288d, type: 3}
-  _client: {fileID: 1334899241}
   _startBtn: {fileID: 1203693924}
   _roomIdLabel: {fileID: 1909464467}
 --- !u!1 &1436181219

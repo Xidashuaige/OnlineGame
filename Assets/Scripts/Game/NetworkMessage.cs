@@ -6,6 +6,7 @@ using UnityEngine;
 
 public enum NetworkMessageType
 {
+    Null,
     JoinServer,
     LeaveServer,
     JoinRoom,
@@ -16,7 +17,8 @@ public enum NetworkMessageType
     KickOutRoom,
     Heartbeat,
     CloseServer,
-    Null
+
+    MaxCount,
 }
 
 [Serializable]
