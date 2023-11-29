@@ -17,15 +17,17 @@ public class PlayerController : MonoBehaviour
         _movement = GetComponent<PlayerMovement>();
 
         if (Owner)
-        {
-            try
-            {
-                GameObject.FindGameObjectWithTag("PlayerManager").GetComponent<PlayerManager>().AddPlayer(this);
-            }
-            catch
-            {
-                Debug.Log("Add GameObject with error");
-            }
-        }
+            _movement.onPlayerMove += OnPlayerMove;
+    }
+
+    private void OnDestroy()
+    {
+        if (_movement != null)
+            _movement.onPlayerMove -= OnPlayerMove;
+    }
+
+    private void OnPlayerMove(Vector2 position)
+    {
+        Client.Instante.RequestMovePlayer(NetId, position);
     }
 }

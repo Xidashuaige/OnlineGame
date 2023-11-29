@@ -18,6 +18,10 @@ public enum NetworkMessageType
     Heartbeat,
     CloseServer,
 
+    // Game actions
+    UpdatePlayerPosition,
+
+
     MaxCount,
 }
 
@@ -315,7 +319,7 @@ public class KickOutRoom : NetworkMessage
 [SerializeField]
 public class UpdatePlayerMovement : NetworkMessage
 {
-    public UpdatePlayerMovement(uint userId, uint netId, Vector2 position) : base(NetworkMessageType.KickOutRoom, userId)
+    public UpdatePlayerMovement(uint userId, uint netId, Vector2 position) : base(NetworkMessageType.UpdatePlayerPosition, userId)
     {
         this.netId = netId;
         this.position = position;
@@ -327,6 +331,6 @@ public class UpdatePlayerMovement : NetworkMessage
     }
 
     // 4 server & clients
-    uint netId;
-    Vector2 position;
+    public uint netId;
+    public Vector2 position;
 }

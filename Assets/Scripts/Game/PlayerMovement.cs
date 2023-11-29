@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -9,6 +10,8 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 _moveInput = new();
 
     private Rigidbody2D _rb;
+
+    public Action<Vector2> onPlayerMove = null;
 
     // Start is called before the first frame update
     void Start()
@@ -39,6 +42,9 @@ public class PlayerMovement : MonoBehaviour
     private void FixedUpdate()
     {
         if (_playerController.Owner)
+        {
             _rb.velocity = new Vector2(_moveInput.x * _moveSpeed, _rb.velocity.y);
+            onPlayerMove?.Invoke(transform.position);
+        }
     }
 }

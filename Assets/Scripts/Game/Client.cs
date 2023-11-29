@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using UnityEditor.VersionControl;
 using UnityEngine;
 
 public class Client : MonoBehaviour
@@ -130,6 +131,10 @@ public class Client : MonoBehaviour
 
     #endregion
 
+
+    // -----------------------------------------------
+    // --------------REQEUST TP SERVER----------------
+    // -----------------------------------------------
     #region Requests to Server
 
     public void RequestJoinToServer()
@@ -225,7 +230,21 @@ public class Client : MonoBehaviour
         SendMessageToServer(message);
     }
 
+    public void RequestMovePlayer(uint netID,Vector2 newPosition)
+    {
+        if (!_connecting || !RoomMaster)
+            return;
+
+        var message = new UpdatePlayerMovement(_id,netID,newPosition);
+
+        SendMessageToServer(message);
+    }
+
     #endregion
+
+    // -----------------------------------------------
+    // -----------SOCKET RELATED FUNCIONS-------------
+    // -----------------------------------------------
 
     #region Socket related functions
 
@@ -476,6 +495,16 @@ public class Client : MonoBehaviour
     private void HandleKickOutRoomMessage(NetworkMessage data)
     {
         var message = data as KickOutRoom;
+    }
+
+    private void HandleUpdatePlayerPosition(NetworkMessage data)
+    {
+        var message = data as UpdatePlayerMovement;
+
+        if (!message.succesful)
+            return;
+
+        onActionHandlered[message.type]?.Invoke(message);
     }
 
     #endregion
