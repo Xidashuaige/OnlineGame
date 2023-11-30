@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class PlayerManager : MonoBehaviour
 {
@@ -15,7 +16,7 @@ public class PlayerManager : MonoBehaviour
         Client.Instante.onActionHandlered[NetworkMessageType.UpdatePlayerPosition] += OnUpdatePlayerPosition;
     }
 
-    private void CreatePlayer(uint netId, bool owner)
+    private void CreatePlayer(uint netId, bool owner, string name)
     {
         // Create player and init his position
         GameObject player = Instantiate(_playerPrefab, transform);
@@ -29,7 +30,7 @@ public class PlayerManager : MonoBehaviour
 
         playerController.NetId = netId;
 
-        playerController.InitPlayerController();
+        playerController.InitPlayerController(name);
 
         // Add playerController to the list
         _players.Add(netId, playerController);
@@ -49,7 +50,7 @@ public class PlayerManager : MonoBehaviour
 
         for (int i = 0; i < message.playerIds.Count; i++)
         {
-            CreatePlayer(message.netIds[i], message.playerIds[i] == Client.Instante.ID);
+            CreatePlayer(message.netIds[i], message.playerIds[i] == Client.Instante.ID, message.names[i]);
         }
 
         _gameStarted = true;
@@ -62,6 +63,6 @@ public class PlayerManager : MonoBehaviour
 
         var message = data as UpdatePlayerMovement;
 
-        _players[message.netId].transform.position = message.position;
+        _players[message.netId].SetPosition(message.position, message.flipX);
     }
 }

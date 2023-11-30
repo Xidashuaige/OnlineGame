@@ -235,12 +235,12 @@ public class Client : MonoBehaviour
         SendMessageToServer(message);
     }
 
-    public void RequestMovePlayer(uint netID, Vector2 newPosition)
+    public void RequestMovePlayer(uint netID, Vector2 newPosition,bool flipX)
     {
         if (!_connecting)
             return;
 
-        var message = new UpdatePlayerMovement(_id, netID, newPosition);
+        var message = new UpdatePlayerMovement(_id, netID, newPosition, flipX);
 
         SendMessageToServer(message);
     }

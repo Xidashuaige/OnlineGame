@@ -11,12 +11,16 @@ public class PlayerMovement : MonoBehaviour
 
     private Rigidbody2D _rb;
 
-    public Action<Vector2> onPlayerMove = null;
+    public Action<Vector2, bool> onPlayerMove = null;
+
+    private SpriteRenderer _spriteRenderer;
 
     // Start is called before the first frame update
     void Start()
     {
         _playerController = GetComponent<PlayerController>();
+
+        _spriteRenderer = GetComponent<SpriteRenderer>();
 
         if (_playerController.Owner)
         {
@@ -32,21 +36,27 @@ public class PlayerMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (_playerController.Owner)
-        {
-            _moveInput.x = Input.GetAxisRaw("Horizontal");
-            //_moveInput.y = Input.GetAxis("Vertical");
-        }
+        if (!_playerController.Owner)
+            return;
+
+        _moveInput.x = Input.GetAxisRaw("Horizontal");
+
+        _spriteRenderer.flipX = _moveInput.x > 0 ? true : _moveInput.x < 0 ? false : _spriteRenderer.flipX;
     }
 
     private void FixedUpdate()
     {
-        if (_playerController.Owner)
-        {
-            _rb.velocity = new Vector2(_moveInput.x * _moveSpeed, _rb.velocity.y);
+        if (!_playerController.Owner)
+            return;
 
-            if (_rb.velocity != Vector2.zero)
-                onPlayerMove?.Invoke(transform.position);
-        }
+        _rb.velocity = new Vector2(_moveInput.x * _moveSpeed, _rb.velocity.y);
+
+        if (_rb.velocity != Vector2.zero)
+            onPlayerMove?.Invoke(transform.position, _spriteRenderer.flipX);
+    }
+
+    public void SetFlip(bool flipX)
+    {
+        _spriteRenderer.flipX = flipX;
     }
 }

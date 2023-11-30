@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -9,15 +10,26 @@ public class PlayerController : MonoBehaviour
     public bool Owner { get => _owner; set => _owner = value; }
     [SerializeField] private bool _owner = false;
 
-    public void InitPlayerController()
+    [SerializeField] private Animator _animator;
+    [SerializeField] private GameObject _child;
+    public void InitPlayerController(string name = "Unknown")
     {
         if (_movement != null)
             return;
 
         _movement = GetComponent<PlayerMovement>();
+        _animator = GetComponent<Animator>();
+        _child = transform.GetChild(0).gameObject;
+
+        GetComponentInChildren<TMP_Text>().text = name;
+
+        _animator.SetInteger("Player", Random.Range(1, 6));
 
         if (Owner)
+        {
             _movement.onPlayerMove += OnPlayerMove;
+            _child.SetActive(true);
+        }
     }
 
 
@@ -27,10 +39,14 @@ public class PlayerController : MonoBehaviour
             _movement.onPlayerMove -= OnPlayerMove;
     }
 
-    private void OnPlayerMove(Vector2 position)
+    private void OnPlayerMove(Vector2 position, bool flipX)
     {
-        Debug.Log("move");
+        Client.Instante.RequestMovePlayer(NetId, position, flipX);
+    }
 
-        Client.Instante.RequestMovePlayer(NetId, position);
+    public void SetPosition(Vector2 position, bool flipX)
+    {
+        transform.position = position;
+        _movement.SetFlip(flipX);
     }
 }
