@@ -42,7 +42,7 @@ public class PanelManager : MonoBehaviour
         Client.Instante.onActionHandlered[NetworkMessageType.LeaveServer] += OnLeaveServer;
         Client.Instante.onActionHandlered[NetworkMessageType.JoinRoom] += OnJoinRoom;
         Client.Instante.onActionHandlered[NetworkMessageType.LeaveRoom] += OnLeaveRoom;
-        Client.Instante.onActionHandlered[NetworkMessageType.StartGame] += OnGameStart;
+        Client.Instante.onActionHandlered[NetworkMessageType.StartGame] += OnStartGame;
 
         // Init Panels
         _panels.Add(_startPanel);
@@ -108,7 +108,7 @@ public class PanelManager : MonoBehaviour
             ChangeScene(Panels.RoomListPanel);
     }
 
-    private void OnGameStart(NetworkMessage message)
+    private void OnStartGame(NetworkMessage message)
     {
         if (_currentPanel != Panels.GamePanel)
             ChangeScene(Panels.GamePanel);

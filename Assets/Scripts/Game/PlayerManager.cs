@@ -9,7 +9,7 @@ public class PlayerManager : MonoBehaviour
 
     private bool _gameStarted = false;
 
-    private void Start()
+    public void InitPlayerManager()
     {
         Client.Instante.onActionHandlered[NetworkMessageType.StartGame] += OnStartGame;
         Client.Instante.onActionHandlered[NetworkMessageType.UpdatePlayerPosition] += OnUpdatePlayerPosition;
@@ -29,6 +29,8 @@ public class PlayerManager : MonoBehaviour
 
         playerController.NetId = netId;
 
+        playerController.InitPlayerController();
+
         // Add playerController to the list
         _players.Add(netId, playerController);
     }
@@ -45,9 +47,9 @@ public class PlayerManager : MonoBehaviour
         if (Client.Instante.RoomID != message.roomId)
             return;
 
-        foreach (var item in message.playerIdsAndNetIds)
+        for (int i = 0; i < message.playerIds.Count; i++)
         {
-            CreatePlayer(item.Value, item.Key == Client.Instante.ID);
+            CreatePlayer(message.netIds[i], message.playerIds[i] == Client.Instante.ID);
         }
 
         _gameStarted = true;

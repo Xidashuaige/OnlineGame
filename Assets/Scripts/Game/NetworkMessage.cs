@@ -74,6 +74,8 @@ public class NetworkPackage
         { NetworkMessageType.ReadyInTheRoom, ReadyInTheRoom.GetData },
         { NetworkMessageType.StartGame, StartGame.GetData },
         { NetworkMessageType.KickOutRoom, KickOutRoom.GetData },
+
+        { NetworkMessageType.UpdatePlayerPosition, UpdatePlayerMovement.GetData },
     };
 }
 
@@ -288,8 +290,9 @@ public class StartGame : NetworkMessage
     // 3 server & client
     public uint roomId = 0;
 
-    // 4 client
-    public Dictionary<uint, uint> playerIdsAndNetIds;
+    // 4 client]
+    public List<uint> playerIds;
+    public List<uint> netIds;
 }
 
 // Just for Room Master

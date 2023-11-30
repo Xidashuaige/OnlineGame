@@ -44,7 +44,9 @@ public class PlayerMovement : MonoBehaviour
         if (_playerController.Owner)
         {
             _rb.velocity = new Vector2(_moveInput.x * _moveSpeed, _rb.velocity.y);
-            onPlayerMove?.Invoke(transform.position);
+
+            if (_rb.velocity != Vector2.zero)
+                onPlayerMove?.Invoke(transform.position);
         }
     }
 }

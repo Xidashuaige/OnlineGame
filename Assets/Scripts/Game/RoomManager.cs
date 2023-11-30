@@ -45,7 +45,7 @@ public class RoomManager : MonoBehaviour
 
         Client.Instante.onActionHandlered[NetworkMessageType.JoinServer] += OnJoinServerFromClient;
         Client.Instante.onActionHandlered[NetworkMessageType.CreateRoom] += OnCreateRoomFromClient;
-       Client.Instante.onActionHandlered[NetworkMessageType.JoinRoom] += OnJoinRoomFromClient;
+        Client.Instante.onActionHandlered[NetworkMessageType.JoinRoom] += OnJoinRoomFromClient;
         Client.Instante.onActionHandlered[NetworkMessageType.LeaveRoom] += OnLeaveRoomFromClient;
         Client.Instante.onActionHandlered[NetworkMessageType.StartGame] += OnStartGameFromClient;
     }

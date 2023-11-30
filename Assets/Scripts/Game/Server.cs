@@ -88,6 +88,10 @@ public class Server : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject.transform.parent);
         }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     void Start()
@@ -102,6 +106,10 @@ public class Server : MonoBehaviour
         _actionHandlers[NetworkMessageType.JoinServer] = HandleJoinServerMessage;
         _actionHandlers[NetworkMessageType.LeaveRoom] = HandleLeaveRoomMessage;
         _actionHandlers[NetworkMessageType.LeaveServer] = HandleLeaveServerMessage;
+
+        _actionHandlers[NetworkMessageType.UpdatePlayerPosition] = HandleUpdatePlayerMovement;
+
+        _gameManager = FindAnyObjectByType<GameManager>();
     }
 
     private void OnApplicationQuit()
@@ -527,11 +535,13 @@ public class Server : MonoBehaviour
         _gameManager.InitGame(clients);
 
         // Create Net Ids for players
-        message.playerIdsAndNetIds = new();
+        message.playerIds = new();
+        message.netIds = new();
 
         foreach (var c in clients)
         {
-            message.playerIdsAndNetIds.Add(c.id, GetNextNetID());
+            message.playerIds.Add(c.id);
+            message.netIds.Add(GetNextNetID());
         }
 
         SendMessageToClients(message);
@@ -540,5 +550,14 @@ public class Server : MonoBehaviour
     private void HandleKickOutRoomMessage(NetworkMessage data)
     {
         var message = data as KickOutRoom;
+    }
+
+    public void HandleUpdatePlayerMovement(NetworkMessage data)
+    {
+        var message = data as UpdatePlayerMovement;
+
+        message.succesful = true;
+
+        SendMessageToClients(message);
     }
 }

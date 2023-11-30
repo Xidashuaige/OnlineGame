@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using UnityEditor.VersionControl;
 using UnityEngine;
 
 public class Client : MonoBehaviour
@@ -63,6 +62,10 @@ public class Client : MonoBehaviour
             Instante = this;
             DontDestroyOnLoad(gameObject.transform.parent);
         }
+        else
+        {
+            Destroy(gameObject);
+        }
 
         #region Init Handle events actions
 
@@ -75,6 +78,8 @@ public class Client : MonoBehaviour
         _actionHandlers[NetworkMessageType.JoinServer] = HandleJoinServerMessage;
         _actionHandlers[NetworkMessageType.LeaveRoom] = HandleLeaveRoomMessage;
         _actionHandlers[NetworkMessageType.LeaveServer] = HandleLeaveServerMessage;
+
+        _actionHandlers[NetworkMessageType.UpdatePlayerPosition] = HandleUpdatePlayerPosition;
 
         #endregion
 
@@ -230,12 +235,12 @@ public class Client : MonoBehaviour
         SendMessageToServer(message);
     }
 
-    public void RequestMovePlayer(uint netID,Vector2 newPosition)
+    public void RequestMovePlayer(uint netID, Vector2 newPosition)
     {
-        if (!_connecting || !RoomMaster)
+        if (!_connecting)
             return;
 
-        var message = new UpdatePlayerMovement(_id,netID,newPosition);
+        var message = new UpdatePlayerMovement(_id, netID, newPosition);
 
         SendMessageToServer(message);
     }
@@ -285,9 +290,9 @@ public class Client : MonoBehaviour
 
                 // I DON'T KNOW WHY HAVE I THIS ERROR!!!!
                 if (ex.ErrorCode == (int)SocketError.InvalidArgument)
-                {
                     continue;
-                }
+
+                _connecting = false;
 
                 LeaveServer leaveServer = new(_id, true);
 
@@ -298,6 +303,8 @@ public class Client : MonoBehaviour
             catch (Exception ex)
             {
                 Debug.LogWarning(ex.Message);
+
+                _connecting = false;
 
                 LeaveServer leaveServer = new(_id, true);
 
@@ -325,14 +332,14 @@ public class Client : MonoBehaviour
             int bytesSent = _socket.EndSend(ar);
             //Debug.Log("Client " + _nameInput.Value + " " + (NetworkMessageType)ar.AsyncState + " send with successful!");
 
-            _actionSuccessful[(NetworkMessageType)ar.AsyncState]?.Invoke(true);
+            //_actionSuccessful[(NetworkMessageType)ar.AsyncState]?.Invoke(true);
 
         }
         catch (Exception e)
         {
             Console.WriteLine(e.ToString());
 
-            _actionSuccessful[(NetworkMessageType)ar.AsyncState]?.Invoke(false);
+            //_actionSuccessful[(NetworkMessageType)ar.AsyncState]?.Invoke(false);
         }
     }
 
@@ -501,7 +508,7 @@ public class Client : MonoBehaviour
     {
         var message = data as UpdatePlayerMovement;
 
-        if (!message.succesful)
+        if (!message.succesful || message.messageOwnerId == ID)
             return;
 
         onActionHandlered[message.type]?.Invoke(message);

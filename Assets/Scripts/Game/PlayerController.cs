@@ -9,7 +9,7 @@ public class PlayerController : MonoBehaviour
     public bool Owner { get => _owner; set => _owner = value; }
     [SerializeField] private bool _owner = false;
 
-    private void OnEnable()
+    public void InitPlayerController()
     {
         if (_movement != null)
             return;
@@ -20,6 +20,7 @@ public class PlayerController : MonoBehaviour
             _movement.onPlayerMove += OnPlayerMove;
     }
 
+
     private void OnDestroy()
     {
         if (_movement != null)
@@ -28,6 +29,8 @@ public class PlayerController : MonoBehaviour
 
     private void OnPlayerMove(Vector2 position)
     {
+        Debug.Log("move");
+
         Client.Instante.RequestMovePlayer(NetId, position);
     }
 }
