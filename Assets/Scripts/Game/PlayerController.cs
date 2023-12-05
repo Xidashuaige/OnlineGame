@@ -21,8 +21,14 @@ public class PlayerController : MonoBehaviour
         _animator = GetComponent<Animator>();
         _child = transform.GetChild(0).gameObject;
 
-        GetComponentInChildren<TMP_Text>().text = name;
+        // Set user name
+        var texts = GetComponentsInChildren<TMP_Text>();
+        for (int i = 0; i < texts.Length; i++)
+        {
+            texts[i].text = name;
+        }
 
+        // Get random avatar for player
         _animator.SetInteger("Player", Random.Range(1, 6));
 
         if (Owner)

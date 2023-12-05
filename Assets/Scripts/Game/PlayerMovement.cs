@@ -34,11 +34,9 @@ public class PlayerMovement : MonoBehaviour
             _rb = gameObject.AddComponent<Rigidbody2D>();
             _rb.freezeRotation = true;
 
-            //InvokeRepeating(nameof(MessageSender), 0, 0.05f);
-            // Init speed
-            /*
+            // Start to move        
             _moveInput.x = UnityEngine.Random.value > 0.5 ? 1 : -1;
-            _spriteRenderer.flipX = _moveInput.x > 0 ? true : _moveInput.x < 0 ? false : _spriteRenderer.flipX;*/
+            _spriteRenderer.flipX = _moveInput.x > 0 ? true : _moveInput.x < 0 ? false : _spriteRenderer.flipX;
         }
         else
         {
@@ -80,7 +78,7 @@ public class PlayerMovement : MonoBehaviour
 
             // Send position to another player every 0.1s
             if ((frameCount += Time.deltaTime) >= 0.1f)
-            {          
+            {
                 onPlayerMove?.Invoke(transform.position, _spriteRenderer.flipX, frameCount);
                 frameCount = 0;
             }
@@ -102,7 +100,7 @@ public class PlayerMovement : MonoBehaviour
         _rb.velocity = new Vector2(_moveInput.x * _moveSpeed, _rb.velocity.y);
     }
 
-    public void SetFuturePos(Vector2 pos,float timeUsed)
+    public void SetFuturePos(Vector2 pos, float timeUsed)
     {
         futurePos = pos;
         this.timeUsed = timeUsed;
