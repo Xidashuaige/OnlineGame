@@ -39,14 +39,14 @@ public class PlayerController : MonoBehaviour
             _movement.onPlayerMove -= OnPlayerMove;
     }
 
-    private void OnPlayerMove(Vector2 position, bool flipX)
+    private void OnPlayerMove(Vector2 position, bool flipX, float timeUsed)
     {
-        Client.Instante.RequestMovePlayer(NetId, position, flipX);
+        Client.Instante.RequestMovePlayer(NetId, position, flipX, timeUsed);
     }
 
-    public void SetPosition(Vector2 position, bool flipX)
+    public void SetPosition(Vector2 position, bool flipX,float timeUsed)
     {
-        transform.position = position;
+        _movement.SetFuturePos(position, timeUsed);
         _movement.SetFlip(flipX);
     }
 }

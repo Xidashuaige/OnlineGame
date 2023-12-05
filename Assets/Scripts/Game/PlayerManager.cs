@@ -63,6 +63,6 @@ public class PlayerManager : MonoBehaviour
 
         var message = data as UpdatePlayerMovement;
 
-        _players[message.netId].SetPosition(message.position, message.flipX);
+        _players[message.netId].SetPosition(message.position, message.flipX, message.timeUsed);
     }
 }

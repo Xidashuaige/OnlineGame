@@ -323,11 +323,12 @@ public class KickOutRoom : NetworkMessage
 [SerializeField]
 public class UpdatePlayerMovement : NetworkMessage
 {
-    public UpdatePlayerMovement(uint userId, uint netId, Vector2 position, bool flipX) : base(NetworkMessageType.UpdatePlayerPosition, userId)
+    public UpdatePlayerMovement(uint userId, uint netId, Vector2 position, bool flipX,float timeUsed) : base(NetworkMessageType.UpdatePlayerPosition, userId)
     {
         this.netId = netId;
         this.position = position;
         this.flipX = flipX;
+        this.timeUsed = timeUsed;
     }
 
     static public UpdatePlayerMovement GetData(byte[] data)
@@ -337,6 +338,7 @@ public class UpdatePlayerMovement : NetworkMessage
 
     // 4 server & clients
     public bool flipX;
+    public float timeUsed;
     public uint netId;
     public Vector2 position;
 }

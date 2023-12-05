@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [SerializeField] private float _moveSpeed = 1;
+    [SerializeField] private float _moveSpeed = 1.0f;
 
     private PlayerController _playerController;
 
@@ -11,9 +11,16 @@ public class PlayerMovement : MonoBehaviour
 
     private Rigidbody2D _rb;
 
-    public Action<Vector2, bool> onPlayerMove = null;
+    public Action<Vector2, bool, float> onPlayerMove = null;
 
     private SpriteRenderer _spriteRenderer;
+
+    // for another players
+    private float frameCount = 0;
+
+    // for me
+    private Vector2 futurePos;
+    private float timeUsed;
 
     // Start is called before the first frame update
     void Start()
@@ -26,6 +33,12 @@ public class PlayerMovement : MonoBehaviour
         {
             _rb = gameObject.AddComponent<Rigidbody2D>();
             _rb.freezeRotation = true;
+
+            //InvokeRepeating(nameof(MessageSender), 0, 0.05f);
+            // Init speed
+            /*
+            _moveInput.x = UnityEngine.Random.value > 0.5 ? 1 : -1;
+            _spriteRenderer.flipX = _moveInput.x > 0 ? true : _moveInput.x < 0 ? false : _spriteRenderer.flipX;*/
         }
         else
         {
@@ -37,11 +50,48 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         if (!_playerController.Owner)
-            return;
+        {
+            if (futurePos != null)
+            {
+                transform.position = Vector2.Lerp(transform.position, futurePos, Time.deltaTime / timeUsed);
 
-        _moveInput.x = Input.GetAxisRaw("Horizontal");
+                timeUsed -= Time.deltaTime;
+            }
+        }
+        else
+        {
+            if (Input.GetKey(KeyCode.RightArrow))
+            {
+                PlayerMove(Vector2.right, true, 2);
+            }
+            else if (Input.GetKey(KeyCode.LeftArrow))
+            {
+                PlayerMove(Vector2.left, false, 2);
+            }
 
-        _spriteRenderer.flipX = _moveInput.x > 0 ? true : _moveInput.x < 0 ? false : _spriteRenderer.flipX;
+            if (Input.GetKeyUp(KeyCode.RightArrow))
+            {
+                PlayerMove(Vector2.right, true, 1);
+            }
+            else if (Input.GetKeyUp(KeyCode.LeftArrow))
+            {
+                PlayerMove(Vector2.left, false, 1);
+            }
+
+            // Send position to another player every 0.1s
+            if ((frameCount += Time.deltaTime) >= 0.1f)
+            {          
+                onPlayerMove?.Invoke(transform.position, _spriteRenderer.flipX, frameCount);
+                frameCount = 0;
+            }
+        }
+    }
+
+    private void PlayerMove(Vector2 dir, bool flip, float speed)
+    {
+        _moveInput = dir;
+        _spriteRenderer.flipX = flip;
+        _moveSpeed = speed;
     }
 
     private void FixedUpdate()
@@ -50,9 +100,12 @@ public class PlayerMovement : MonoBehaviour
             return;
 
         _rb.velocity = new Vector2(_moveInput.x * _moveSpeed, _rb.velocity.y);
+    }
 
-        if (_rb.velocity != Vector2.zero)
-            onPlayerMove?.Invoke(transform.position, _spriteRenderer.flipX);
+    public void SetFuturePos(Vector2 pos,float timeUsed)
+    {
+        futurePos = pos;
+        this.timeUsed = timeUsed;
     }
 
     public void SetFlip(bool flipX)
