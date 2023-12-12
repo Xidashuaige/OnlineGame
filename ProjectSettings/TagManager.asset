@@ -8,6 +8,7 @@ TagManager:
   - Client
   - RoomController
   - Server
+  - WallLimit
   layers:
   - Default
   - TransparentFX

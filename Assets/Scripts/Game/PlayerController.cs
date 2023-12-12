@@ -21,6 +21,8 @@ public class PlayerController : MonoBehaviour
         _animator = GetComponent<Animator>();
         _child = transform.GetChild(0).gameObject;
 
+        _movement.InitMovement();
+
         // Set user name
         var texts = GetComponentsInChildren<TMP_Text>();
         for (int i = 0; i < texts.Length; i++)
@@ -37,7 +39,6 @@ public class PlayerController : MonoBehaviour
             _child.SetActive(true);
         }
     }
-
 
     private void OnDestroy()
     {
