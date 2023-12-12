@@ -405,7 +405,7 @@ GameObject:
   - component: {fileID: 73246028}
   - component: {fileID: 73246030}
   - component: {fileID: 73246029}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Limit_L
   m_TagString: WallLimit
   m_Icon: {fileID: 0}
@@ -744,7 +744,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e66232820465ec44bbfccbd24f120d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _playerPrefab: {fileID: 5618912745991211749, guid: a29b48ea89e88d047b03bc1c4e8bec80, type: 3}
+  _playerPrefab: {fileID: 7792865105973020869, guid: a29b48ea89e88d047b03bc1c4e8bec80, type: 3}
 --- !u!1 &127491213
 GameObject:
   m_ObjectHideFlags: 0
@@ -13297,7 +13297,7 @@ GameObject:
   - component: {fileID: 1747118155}
   - component: {fileID: 1747118157}
   - component: {fileID: 1747118156}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Limit_R
   m_TagString: WallLimit
   m_Icon: {fileID: 0}

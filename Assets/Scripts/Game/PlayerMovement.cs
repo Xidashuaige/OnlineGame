@@ -50,9 +50,14 @@ public class PlayerMovement : MonoBehaviour
         {
             if (futurePos != null)
             {
-                transform.position = Vector2.Lerp(transform.position, futurePos, Time.deltaTime / timeUsed);
+                float t = Time.deltaTime / timeUsed;
 
-                timeUsed -= Time.deltaTime;
+                if (t < 1.0f)
+                {
+                    transform.position = Vector2.Lerp(transform.position, futurePos, t);
+
+                    timeUsed -= (Time.deltaTime * 1.5f);
+                }                       
             }
         }
         else
@@ -67,8 +72,8 @@ public class PlayerMovement : MonoBehaviour
             else if (Input.GetKeyUp(KeyCode.LeftArrow))
                 PlayerMove(Vector2.left, false, 1);
 
-            // Send position to another player every 0.1s
-            if ((frameCount += Time.deltaTime) >= 0.1f)
+            // Send position to another player every 0.075s
+            if ((frameCount += Time.deltaTime) >= 0.075f)
             {
                 onPlayerMove?.Invoke(transform.position, _spriteRenderer.flipX, frameCount);
                 frameCount = 0;
@@ -77,7 +82,9 @@ public class PlayerMovement : MonoBehaviour
 
         float rayLen = 0.05f;
 
-        RaycastHit2D hit = Physics2D.Raycast((Vector2)transform.position + _moveInput * 0.4f, _moveInput, rayLen);
+        int checkLayer = LayerMask.GetMask("Wall");
+
+        RaycastHit2D hit = Physics2D.Raycast((Vector2)transform.position + _moveInput * 0.4f, _moveInput, rayLen, checkLayer);
 
         //Debug.DrawRay((Vector2)transform.position + _moveInput * 0.4f, _moveInput * rayLen, Color.red);
 
