@@ -20,7 +20,8 @@ public enum NetworkMessageType
 
     // Game actions
     UpdatePlayerPosition,
-
+    UpdateBirdPosition,
+    UpdateGameWorld,
 
     MaxCount,
 }
@@ -76,6 +77,8 @@ public class NetworkPackage
         { NetworkMessageType.KickOutRoom, KickOutRoom.GetData },
 
         { NetworkMessageType.UpdatePlayerPosition, UpdatePlayerMovement.GetData },
+        { NetworkMessageType.UpdateBirdPosition, UpdateBirdMovement.GetData },
+        { NetworkMessageType.UpdateGameWorld, UpdateGameWorld.GetData},
     };
 }
 
@@ -292,7 +295,8 @@ public class StartGame : NetworkMessage
 
     // 4 client]
     public List<uint> playerIds;
-    public List<uint> netIds;
+    public List<uint> playerNetIds;
+    public List<uint> birdNetIds;
     public List<string> names;
 }
 
@@ -323,7 +327,7 @@ public class KickOutRoom : NetworkMessage
 [SerializeField]
 public class UpdatePlayerMovement : NetworkMessage
 {
-    public UpdatePlayerMovement(uint userId, uint netId, Vector2 position, bool flipX,float timeUsed) : base(NetworkMessageType.UpdatePlayerPosition, userId)
+    public UpdatePlayerMovement(uint userId, uint netId, Vector2 position, bool flipX, float timeUsed) : base(NetworkMessageType.UpdatePlayerPosition, userId)
     {
         this.netId = netId;
         this.position = position;
@@ -341,4 +345,41 @@ public class UpdatePlayerMovement : NetworkMessage
     public float timeUsed;
     public uint netId;
     public Vector2 position;
+}
+
+[SerializeField]
+public class UpdateBirdMovement : NetworkMessage
+{
+    public UpdateBirdMovement(uint userId, uint netId, Vector2 position, bool flipX, float timeUsed) : base(NetworkMessageType.UpdatePlayerPosition, userId)
+    {
+        this.netId = netId;
+        this.position = position;
+        this.flipX = flipX;
+        this.timeUsed = timeUsed;
+    }
+
+    static public UpdateBirdMovement GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<UpdateBirdMovement>(Encoding.ASCII.GetString(data, 0, data.Length));
+    }
+
+    // 4 server & clients
+    public bool flipX;
+    public float timeUsed;
+    public uint netId;
+    public Vector2 position;
+}
+
+[SerializeField]
+public class UpdateGameWorld : NetworkMessage
+{
+    UpdateGameWorld(uint userId) : base(NetworkMessageType.Null, userId)
+    {
+
+    }
+
+    static public UpdateGameWorld GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<UpdateGameWorld>(Encoding.ASCII.GetString(data, 0, data.Length));
+    }
 }

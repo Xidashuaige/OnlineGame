@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class PlayerManager : MonoBehaviour
 {
     [SerializeField] private GameObject _playerPrefab;
+    [SerializeField] private GameObject _birdPrefab;
 
     [SerializeField] private Dictionary<uint, PlayerController> _players = new();
+    [SerializeField] private Dictionary<uint, BirdController> _birds = new();
 
     private bool _gameStarted = false;
 
@@ -14,23 +15,32 @@ public class PlayerManager : MonoBehaviour
     {
         Client.Instante.onActionHandlered[NetworkMessageType.StartGame] += OnStartGame;
         Client.Instante.onActionHandlered[NetworkMessageType.UpdatePlayerPosition] += OnUpdatePlayerPosition;
+        Client.Instante.onActionHandlered[NetworkMessageType.UpdateBirdPosition] += OnUpdateBirdPosition;  
     }
 
     private void CreatePlayer(uint netId, bool owner, string name)
     {
         // Create player and init his position
-        GameObject player = Instantiate(_playerPrefab, transform);
+        var player = Instantiate(_playerPrefab, transform);
 
         player.transform.position += (Vector3)(Vector2.left * Random.value);
 
         // Init player controller
         PlayerController playerController = player.GetComponent<PlayerController>();
 
-        playerController.Owner = owner;
+        playerController.InitPlayerController(netId, owner, name);
 
-        playerController.NetId = netId;
+        // Create bird and init his position
+        var bird = Instantiate(_birdPrefab, transform);
 
-        playerController.InitPlayerController(name);
+        bird.transform.position += (Vector3)(Vector2.left * Random.value);
+
+        // Init player controller
+        BirdController birdController = bird.GetComponent<BirdController>();
+
+        //birdController.InitBirdController(netId2, owner)
+        //there will have another netid
+
 
         // Add playerController to the list
         _players.Add(netId, playerController);
@@ -50,7 +60,7 @@ public class PlayerManager : MonoBehaviour
 
         for (int i = 0; i < message.playerIds.Count; i++)
         {
-            CreatePlayer(message.netIds[i], message.playerIds[i] == Client.Instante.ID, message.names[i]);
+            CreatePlayer(message.playerNetIds[i], message.playerIds[i] == Client.Instante.ID, message.names[i]);
         }
 
         _gameStarted = true;
@@ -64,5 +74,15 @@ public class PlayerManager : MonoBehaviour
         var message = data as UpdatePlayerMovement;
 
         _players[message.netId].SetPosition(message.position, message.flipX, message.timeUsed);
+    }
+
+    private void OnUpdateBirdPosition(NetworkMessage data)
+    {
+        if (!_gameStarted)
+            return;
+
+        var message = data as UpdatePlayerMovement;
+
+        _birds[message.netId].SetPosition(message.position, message.flipX, message.timeUsed);
     }
 }

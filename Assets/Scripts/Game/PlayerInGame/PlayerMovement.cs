@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [SerializeField] private float _moveSpeed = 1.0f;
+    [SerializeField] private float _moveSpeed = .5f;
 
     private PlayerController _playerController;
 
@@ -48,6 +48,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (_playerController == null || !_playerController.Owner)
         {
+            // Update position if isn' owner
             if (futurePos != null)
             {
                 float t = Time.deltaTime / timeUsed;
@@ -57,7 +58,7 @@ public class PlayerMovement : MonoBehaviour
                     transform.position = Vector2.Lerp(transform.position, futurePos, t);
 
                     timeUsed -= (Time.deltaTime * 1.5f);
-                }                       
+                }
             }
         }
         else
@@ -68,9 +69,9 @@ public class PlayerMovement : MonoBehaviour
                 PlayerMove(Vector2.left, false, 2);
 
             if (Input.GetKeyUp(KeyCode.RightArrow))
-                PlayerMove(Vector2.right, true, 1);
+                PlayerMove(Vector2.right, true, .5f);
             else if (Input.GetKeyUp(KeyCode.LeftArrow))
-                PlayerMove(Vector2.left, false, 1);
+                PlayerMove(Vector2.left, false, .5f);
 
             // Send position to another player every 0.075s
             if ((frameCount += Time.deltaTime) >= 0.075f)

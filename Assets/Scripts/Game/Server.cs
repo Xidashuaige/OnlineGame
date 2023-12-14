@@ -536,13 +536,15 @@ public class Server : MonoBehaviour
 
         // Create Net Ids for players
         message.playerIds = new();
-        message.netIds = new();
+        message.playerNetIds = new();
+        message.birdNetIds = new();
         message.names = new();
 
         foreach (var c in clients)
         {
             message.playerIds.Add(c.id);
-            message.netIds.Add(GetNextNetID());
+            message.playerNetIds.Add(GetNextNetID());
+            message.birdNetIds.Add(GetNextNetID());
             message.names.Add(c.name);
         }
 

@@ -12,11 +12,13 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private Animator _animator;
     [SerializeField] private GameObject _child;
-    public void InitPlayerController(string name = "Unknown")
+    public void InitPlayerController(uint netId, bool owner, string name = "Unknown")
     {
         if (_movement != null)
             return;
 
+        NetId = netId;
+        Owner = owner;
         _movement = GetComponent<PlayerMovement>();
         _animator = GetComponent<Animator>();
         _child = transform.GetChild(0).gameObject;
