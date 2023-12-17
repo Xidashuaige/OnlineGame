@@ -350,7 +350,7 @@ public class UpdatePlayerMovement : NetworkMessage
 [SerializeField]
 public class UpdateBirdMovement : NetworkMessage
 {
-    public UpdateBirdMovement(uint userId, uint netId, Vector2 position, bool flipX, float timeUsed) : base(NetworkMessageType.UpdatePlayerPosition, userId)
+    public UpdateBirdMovement(uint userId, uint netId, Vector2 position, bool flipX, float timeUsed) : base(NetworkMessageType.UpdateBirdPosition, userId)
     {
         this.netId = netId;
         this.position = position;

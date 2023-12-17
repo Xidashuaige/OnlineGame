@@ -12,6 +12,7 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private Animator _animator;
     [SerializeField] private GameObject _child;
+
     public void InitPlayerController(uint netId, bool owner, string name = "Unknown")
     {
         if (_movement != null)

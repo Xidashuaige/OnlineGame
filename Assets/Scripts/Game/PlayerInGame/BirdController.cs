@@ -1,4 +1,3 @@
-using TMPro;
 using UnityEngine;
 
 public class BirdController : MonoBehaviour
@@ -10,10 +9,13 @@ public class BirdController : MonoBehaviour
 
     private BirdMovement _movement;
 
-    public void InitBirdController()
+    public void InitBirdController(uint netId, bool owner)
     {
         if (_movement != null)
             return;
+
+        NetId = netId;
+        Owner = owner;
 
         _movement = GetComponent<BirdMovement>();
 
@@ -30,6 +32,11 @@ public class BirdController : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (_movement != null)
+            _movement.onBirdMove -= OnBirdMove;
+    }
 
     private void OnBirdMove(Vector2 position, bool flipX, float timeUsed)
     {
@@ -41,5 +48,4 @@ public class BirdController : MonoBehaviour
         _movement.SetFuturePos(position, timeUsed);
         _movement.SetFlip(flipX);
     }
-
 }

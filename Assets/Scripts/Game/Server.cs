@@ -108,6 +108,8 @@ public class Server : MonoBehaviour
         _actionHandlers[NetworkMessageType.LeaveServer] = HandleLeaveServerMessage;
 
         _actionHandlers[NetworkMessageType.UpdatePlayerPosition] = HandleUpdatePlayerMovement;
+        _actionHandlers[NetworkMessageType.UpdateBirdPosition] = HandleUpdateBirdMovement;
+        _actionHandlers[NetworkMessageType.UpdateGameWorld] = HandleUpdateGameWorld;
 
         _gameManager = FindAnyObjectByType<GameManager>();
     }
@@ -543,8 +545,13 @@ public class Server : MonoBehaviour
         foreach (var c in clients)
         {
             message.playerIds.Add(c.id);
+
             message.playerNetIds.Add(GetNextNetID());
-            message.birdNetIds.Add(GetNextNetID());
+
+            var _ = GetNextNetID();
+
+            message.birdNetIds.Add(_);
+
             message.names.Add(c.name);
         }
 
@@ -558,7 +565,21 @@ public class Server : MonoBehaviour
 
     public void HandleUpdatePlayerMovement(NetworkMessage data)
     {
-        var message = data as UpdatePlayerMovement;
+        data.succesful = true;
+
+        SendMessageToClients(data);
+    }
+
+    public void HandleUpdateBirdMovement(NetworkMessage data)
+    {
+        data.succesful = true;
+
+        SendMessageToClients(data);
+    }
+
+    public void HandleUpdateGameWorld(NetworkMessage data)
+    {
+        var message = data as UpdateGameWorld;
 
         message.succesful = true;
 

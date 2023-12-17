@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class BirdMovement : MonoBehaviour
 {
-    [SerializeField] private float _moveSpeed = .5f;
+    [SerializeField] private float _moveSpeed = 1.0f;
 
     private BirdController _birdController;
 
@@ -31,6 +31,7 @@ public class BirdMovement : MonoBehaviour
         if (_birdController.Owner)
         {
             _rb = gameObject.AddComponent<Rigidbody2D>();
+            _rb.gravityScale = 0;
             _rb.freezeRotation = true;
 
             // Start to move        
@@ -39,7 +40,7 @@ public class BirdMovement : MonoBehaviour
         }
         else
         {
-            GetComponent<CapsuleCollider2D>().isTrigger = true;
+            GetComponent<CircleCollider2D>().isTrigger = true;
         }
     }
 
@@ -64,14 +65,14 @@ public class BirdMovement : MonoBehaviour
         else
         {
             if (Input.GetKey(KeyCode.D))
-                BirdMove(Vector2.right, true, 2);
+                BirdMove(Vector2.right, true, 3.0f);
             else if (Input.GetKey(KeyCode.A))
-                BirdMove(Vector2.left, false, 2);
+                BirdMove(Vector2.left, false, 3.0f);
 
             if (Input.GetKeyUp(KeyCode.D))
-                BirdMove(Vector2.right, true, .5f);
+                BirdMove(Vector2.right, true, 1.0f);
             else if (Input.GetKeyUp(KeyCode.A))
-                BirdMove(Vector2.left, false, .5f);
+                BirdMove(Vector2.left, false, 1.0f);
 
             // Send position to another player every 0.075s
             if ((frameCount += Time.deltaTime) >= 0.075f)

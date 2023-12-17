@@ -15,7 +15,7 @@ public class PlayerManager : MonoBehaviour
     {
         Client.Instante.onActionHandlered[NetworkMessageType.StartGame] += OnStartGame;
         Client.Instante.onActionHandlered[NetworkMessageType.UpdatePlayerPosition] += OnUpdatePlayerPosition;
-        Client.Instante.onActionHandlered[NetworkMessageType.UpdateBirdPosition] += OnUpdateBirdPosition;  
+        Client.Instante.onActionHandlered[NetworkMessageType.UpdateBirdPosition] += OnUpdateBirdPosition;
     }
 
     private void CreatePlayer(uint netId, bool owner, string name)
@@ -30,6 +30,12 @@ public class PlayerManager : MonoBehaviour
 
         playerController.InitPlayerController(netId, owner, name);
 
+        // Add playerController to the list
+        _players.Add(netId, playerController);
+    }
+
+    private void CreateBird(uint netId, bool owner)
+    {
         // Create bird and init his position
         var bird = Instantiate(_birdPrefab, transform);
 
@@ -38,12 +44,10 @@ public class PlayerManager : MonoBehaviour
         // Init player controller
         BirdController birdController = bird.GetComponent<BirdController>();
 
-        //birdController.InitBirdController(netId2, owner)
+        birdController.InitBirdController(netId, owner);
         //there will have another netid
 
-
-        // Add playerController to the list
-        _players.Add(netId, playerController);
+        _birds.Add(netId, birdController);
     }
 
     public void AddPlayer(PlayerController player)
@@ -61,6 +65,13 @@ public class PlayerManager : MonoBehaviour
         for (int i = 0; i < message.playerIds.Count; i++)
         {
             CreatePlayer(message.playerNetIds[i], message.playerIds[i] == Client.Instante.ID, message.names[i]);
+        }
+
+        for (int i = 0; i < message.birdNetIds.Count; i++)
+        {
+            Debug.LogWarning("Player crete birds: " + message.birdNetIds[i]);
+
+            CreateBird(message.birdNetIds[i], message.playerIds[i] == Client.Instante.ID);
         }
 
         _gameStarted = true;
@@ -81,7 +92,7 @@ public class PlayerManager : MonoBehaviour
         if (!_gameStarted)
             return;
 
-        var message = data as UpdatePlayerMovement;
+        var message = data as UpdateBirdMovement;
 
         _birds[message.netId].SetPosition(message.position, message.flipX, message.timeUsed);
     }

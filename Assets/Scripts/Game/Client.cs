@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using UnityEditor.VersionControl;
 using UnityEngine;
 
 public class Client : MonoBehaviour
@@ -81,8 +80,8 @@ public class Client : MonoBehaviour
         _actionHandlers[NetworkMessageType.LeaveServer] = HandleLeaveServerMessage;
 
         _actionHandlers[NetworkMessageType.UpdatePlayerPosition] = HandleUpdatePlayerPosition;
-        _actionHandlers[NetworkMessageType.UpdateBirdPosition] = HandleUpdatePlayerPosition;
-        _actionHandlers[NetworkMessageType.UpdateGameWorld] = HandleUpdatePlayerPosition;
+        _actionHandlers[NetworkMessageType.UpdateBirdPosition] = HandleUpdateBirdPosition;
+        _actionHandlers[NetworkMessageType.UpdateGameWorld] = HandleUpdateGameWorld;
         #endregion
 
         #region Init successful events actions
@@ -523,12 +522,10 @@ public class Client : MonoBehaviour
 
     private void HandleUpdatePlayerPosition(NetworkMessage data)
     {
-        var message = data as UpdatePlayerMovement;
-
-        if (!message.succesful || message.messageOwnerId == ID)
+        if (!data.succesful || data.messageOwnerId == ID)
             return;
 
-        onActionHandlered[message.type]?.Invoke(message);
+        onActionHandlered[data.type]?.Invoke(data);
     }
 
     private void HandleUpdateBirdPosition(NetworkMessage data)
@@ -541,7 +538,10 @@ public class Client : MonoBehaviour
 
     private void HandleUpdateGameWorld(NetworkMessage data)
     {
+        if (!data.succesful || data.messageOwnerId == ID)
+            return;
 
+        onActionHandlered[data.type]?.Invoke(data);
     }
 
     #endregion
