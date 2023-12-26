@@ -1,11 +1,12 @@
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     private List<ClientInfo> _clientsInTheGame = null;
 
     [SerializeField] private PlayerManager _playerManager = null;
+
+    private UpdateGameWorld _gameWorldInfo;
 
     public void InitGame(List<ClientInfo> clients)
     {
@@ -16,5 +17,15 @@ public class GameManager : MonoBehaviour
     {
         if (_playerManager != null)
             _playerManager.InitPlayerManager();
+    }
+
+    private void Update()
+    {
+        
+    }
+
+    public void SetPlayerPos(uint netid, Vector2 pos)
+    {
+
     }
 }

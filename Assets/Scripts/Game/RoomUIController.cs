@@ -85,15 +85,15 @@ public class RoomUIController : MonoBehaviour
             _players[i].button = buttons[i];
         }
 
-        Client.Instante.onActionHandlered[NetworkMessageType.JoinRoom] += JoinRoom;
-        Client.Instante.onActionHandlered[NetworkMessageType.LeaveRoom] += OnLeaveTheRoom;
+        Client.Instance.onActionHandlered[NetworkMessageType.JoinRoom] += JoinRoom;
+        Client.Instance.onActionHandlered[NetworkMessageType.LeaveRoom] += OnLeaveTheRoom;
     }
 
     private void JoinRoom(NetworkMessage data)
     {
         var message = data as JoinRoom;
 
-        if (Client.Instante.RoomID != message.roomId)
+        if (Client.Instance.RoomID != message.roomId)
             return;
 
         // Add current player
@@ -108,13 +108,13 @@ public class RoomUIController : MonoBehaviour
 
         _roomIdLabel.text = "Room ID: " + message.roomId;
 
-        if (Client.Instante.RoomMaster)
+        if (Client.Instance.RoomMaster)
             _startBtn.SetActive(true);
 
         // Add other players
-        for (int i = 0; message.messageOwnerId == Client.Instante.ID && message.clientsInTheRoom != null && i < message.clientsInTheRoom.Count; i++)
+        for (int i = 0; message.messageOwnerId == Client.Instance.ID && message.clientsInTheRoom != null && i < message.clientsInTheRoom.Count; i++)
         {
-            if (message.clientsInTheRoom[i].id == Client.Instante.ID)
+            if (message.clientsInTheRoom[i].id == Client.Instance.ID)
                 continue;
 
             // Debug.Log("(" + _client.Name + ") Add client" + i + " in the room");
@@ -139,11 +139,11 @@ public class RoomUIController : MonoBehaviour
     {
         var message = data as LeaveRoom;
 
-        if (Client.Instante.RoomID != message.roomId)
+        if (Client.Instance.RoomID != message.roomId)
             return;
 
         // If leaver is room master or me, then, close the room (UI)
-        if (message.isRoomMaster || message.messageOwnerId == Client.Instante.ID)
+        if (message.isRoomMaster || message.messageOwnerId == Client.Instance.ID)
         {
             CloseRoom();
             return;

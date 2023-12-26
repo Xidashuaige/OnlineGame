@@ -43,11 +43,11 @@ public class RoomManager : MonoBehaviour
             _roomPoolForClient.Add(room.GetComponent<Room>());
         }
 
-        Client.Instante.onActionHandlered[NetworkMessageType.JoinServer] += OnJoinServerFromClient;
-        Client.Instante.onActionHandlered[NetworkMessageType.CreateRoom] += OnCreateRoomFromClient;
-        Client.Instante.onActionHandlered[NetworkMessageType.JoinRoom] += OnJoinRoomFromClient;
-        Client.Instante.onActionHandlered[NetworkMessageType.LeaveRoom] += OnLeaveRoomFromClient;
-        Client.Instante.onActionHandlered[NetworkMessageType.StartGame] += OnStartGameFromClient;
+        Client.Instance.onActionHandlered[NetworkMessageType.JoinServer] += OnJoinServerFromClient;
+        Client.Instance.onActionHandlered[NetworkMessageType.CreateRoom] += OnCreateRoomFromClient;
+        Client.Instance.onActionHandlered[NetworkMessageType.JoinRoom] += OnJoinRoomFromClient;
+        Client.Instance.onActionHandlered[NetworkMessageType.LeaveRoom] += OnLeaveRoomFromClient;
+        Client.Instance.onActionHandlered[NetworkMessageType.StartGame] += OnStartGameFromClient;
     }
 
     private void OnApplicationQuit()
@@ -229,7 +229,7 @@ public class RoomManager : MonoBehaviour
             if (room == null)
                 return;
 
-            room.RoomInit(message.roomsId[i], message.maxPlayers[i], Client.Instante.RequestJoinRoom, message.currentPlayers[i], message.roomState[i]);
+            room.RoomInit(message.roomsId[i], message.maxPlayers[i], Client.Instance.RequestJoinRoom, message.currentPlayers[i], message.roomState[i]);
         }
     }
 
@@ -242,7 +242,7 @@ public class RoomManager : MonoBehaviour
         if (room == null)
             return;
 
-        room.RoomInit(message.roomId, message.maxUser, Client.Instante.RequestJoinRoom);
+        room.RoomInit(message.roomId, message.maxUser, Client.Instance.RequestJoinRoom);
     }
 
     private void CloseRoomFromClient(uint roomId)
@@ -273,7 +273,7 @@ public class RoomManager : MonoBehaviour
 
         if (roomIndex < 0)
         {
-            Debug.Log("Client: doesn't find room " + message.roomId + " in the client (" + Client.Instante.Name + ")");
+            Debug.Log("Client: doesn't find room " + message.roomId + " in the client (" + Client.Instance.Name + ")");
             return;
         }
 

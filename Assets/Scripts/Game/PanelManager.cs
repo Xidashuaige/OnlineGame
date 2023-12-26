@@ -38,11 +38,11 @@ public class PanelManager : MonoBehaviour
         Server.Instance.onIpUpdate += OnIpUpdate;
 
         // client callbacks
-        Client.Instante.onActionHandlered[NetworkMessageType.JoinServer] += OnJoinServer;
-        Client.Instante.onActionHandlered[NetworkMessageType.LeaveServer] += OnLeaveServer;
-        Client.Instante.onActionHandlered[NetworkMessageType.JoinRoom] += OnJoinRoom;
-        Client.Instante.onActionHandlered[NetworkMessageType.LeaveRoom] += OnLeaveRoom;
-        Client.Instante.onActionHandlered[NetworkMessageType.StartGame] += OnStartGame;
+        Client.Instance.onActionHandlered[NetworkMessageType.JoinServer] += OnJoinServer;
+        Client.Instance.onActionHandlered[NetworkMessageType.LeaveServer] += OnLeaveServer;
+        Client.Instance.onActionHandlered[NetworkMessageType.JoinRoom] += OnJoinRoom;
+        Client.Instance.onActionHandlered[NetworkMessageType.LeaveRoom] += OnLeaveRoom;
+        Client.Instance.onActionHandlered[NetworkMessageType.StartGame] += OnStartGame;
 
         // Init Panels
         _panels.Add(_startPanel);
@@ -75,7 +75,7 @@ public class PanelManager : MonoBehaviour
 
         _nameTextInRoomList.text = _nameInput.text;
 
-        if (Client.Instante.host) // If we're server host
+        if (Client.Instance.host) // If we're server host
         {
             _btnCopyIp.SetActive(true);
             _avatarText.text = "S";
@@ -94,7 +94,7 @@ public class PanelManager : MonoBehaviour
     {
         var message = data as JoinRoom;
 
-        if (Client.Instante.RoomID != message.roomId || _currentPanel == Panels.RoomPanel)
+        if (Client.Instance.RoomID != message.roomId || _currentPanel == Panels.RoomPanel)
             return;
 
         ChangeScene(Panels.RoomPanel);
@@ -104,7 +104,7 @@ public class PanelManager : MonoBehaviour
     {
         var message = data as LeaveRoom;
 
-        if (Client.Instante.ID == message.messageOwnerId || message.isRoomMaster)
+        if (Client.Instance.ID == message.messageOwnerId || message.isRoomMaster)
             ChangeScene(Panels.RoomListPanel);
     }
 

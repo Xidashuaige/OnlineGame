@@ -21,6 +21,9 @@ public enum NetworkMessageType
     // Game actions
     UpdatePlayerPosition,
     UpdateBirdPosition,
+    UpdateBombPosition,
+    Explotion,
+
     UpdateGameWorld,
 
     MaxCount,
@@ -78,6 +81,8 @@ public class NetworkPackage
 
         { NetworkMessageType.UpdatePlayerPosition, UpdatePlayerMovement.GetData },
         { NetworkMessageType.UpdateBirdPosition, UpdateBirdMovement.GetData },
+        { NetworkMessageType.UpdateBombPosition, UpdateBombMovement.GetData },
+        { NetworkMessageType.Explotion, ExplotionMessage.GetData },
         { NetworkMessageType.UpdateGameWorld, UpdateGameWorld.GetData},
     };
 }
@@ -366,6 +371,46 @@ public class UpdateBirdMovement : NetworkMessage
     // 4 server & clients
     public bool flipX;
     public float timeUsed;
+    public uint netId;
+    public Vector2 position;
+}
+
+[SerializeField]
+public class UpdateBombMovement : NetworkMessage
+{
+    public UpdateBombMovement(uint userId, uint netId, Vector2 position, float timeUsed) : base(NetworkMessageType.UpdateBombPosition, userId)
+    {
+        this.netId = netId;
+        this.position = position;
+        this.timeUsed = timeUsed;
+    }
+
+    static public UpdateBombMovement GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<UpdateBombMovement>(Encoding.ASCII.GetString(data, 0, data.Length));
+    }
+
+    // 4 server & clients
+    public float timeUsed;
+    public uint netId;
+    public Vector2 position;
+}
+
+[SerializeField]
+public class ExplotionMessage : NetworkMessage
+{
+    public ExplotionMessage(uint userId, uint netId, Vector2 position) : base(NetworkMessageType.Explotion, userId)
+    {
+        this.netId = netId;
+        this.position = position;
+    }
+
+    static public ExplotionMessage GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<ExplotionMessage>(Encoding.ASCII.GetString(data, 0, data.Length));
+    }
+
+    // 4 server & clients
     public uint netId;
     public Vector2 position;
 }

@@ -109,6 +109,8 @@ public class Server : MonoBehaviour
 
         _actionHandlers[NetworkMessageType.UpdatePlayerPosition] = HandleUpdatePlayerMovement;
         _actionHandlers[NetworkMessageType.UpdateBirdPosition] = HandleUpdateBirdMovement;
+        _actionHandlers[NetworkMessageType.UpdateBombPosition] = HandleUpdateBombMovement;
+        _actionHandlers[NetworkMessageType.Explotion] = HandleExplotion;
         _actionHandlers[NetworkMessageType.UpdateGameWorld] = HandleUpdateGameWorld;
 
         _gameManager = FindAnyObjectByType<GameManager>();
@@ -118,7 +120,7 @@ public class Server : MonoBehaviour
     {
         if (_connecting)
         {
-            SendMessageToClients(new LeaveServer(Client.Instante.ID));
+            SendMessageToClients(new LeaveServer(Client.Instance.ID));
 
             while (_messageHandleFlag > 0)
             {
@@ -154,7 +156,7 @@ public class Server : MonoBehaviour
             onServerStart?.Invoke();
 
             // Change my client to server host
-            Client.Instante.host = true;
+            Client.Instance.host = true;
 
             _handleStartServer = false;
         }
@@ -403,7 +405,7 @@ public class Server : MonoBehaviour
 
         message.succesful = true;
 
-        if (message.messageOwnerId == Client.Instante.ID)
+        if (message.messageOwnerId == Client.Instance.ID)
         {
             SendMessageToClients(message);
 
@@ -575,6 +577,27 @@ public class Server : MonoBehaviour
         data.succesful = true;
 
         SendMessageToClients(data);
+    }
+
+    public void HandleUpdateBombMovement(NetworkMessage data)
+    {
+        var message = data as UpdateBombMovement;
+
+        if (message.netId == 0)
+            message.netId = GetNextNetID();
+
+        message.succesful = true;
+
+        SendMessageToClients(message);
+    }
+
+    public void HandleExplotion(NetworkMessage data)
+    {
+        var message = data as ExplotionMessage;
+
+        message.succesful = true;
+
+        SendMessageToClients(message);
     }
 
     public void HandleUpdateGameWorld(NetworkMessage data)

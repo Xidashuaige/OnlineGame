@@ -51,7 +51,7 @@ public class PlayerController : MonoBehaviour
 
     private void OnPlayerMove(Vector2 position, bool flipX, float timeUsed)
     {
-        Client.Instante.RequestMovePlayer(NetId, position, flipX, timeUsed);
+        Client.Instance.RequestMovePlayer(NetId, position, flipX, timeUsed);
     }
 
     public void SetPosition(Vector2 position, bool flipX,float timeUsed)

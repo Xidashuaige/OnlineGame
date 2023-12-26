@@ -6,6 +6,8 @@ public class BirdController : MonoBehaviour
     public uint NetId { get => _netId; set => _netId = value; }
     public bool Owner { get => _owner; set => _owner = value; }
     [SerializeField] private bool _owner = false;
+    [SerializeField] private GameObject _bombPrefab;
+    [SerializeField] private BombManager _bombManager;
 
     private BirdMovement _movement;
 
@@ -23,13 +25,31 @@ public class BirdController : MonoBehaviour
 
         if (Owner)
         {
-            _movement.onBirdMove += OnBirdMove;       
+            _movement.onBirdMove += OnBirdMove;
+
+            _bombManager = FindObjectOfType<BombManager>();
+
+            Debug.Log("Init BombManager : " + _bombManager);
         }
         else
         {
             var _ = GetComponent<SpriteRenderer>();
             _.color = new(1, 1, 1, 0.5f);
         }
+    }
+
+    private void Update()
+    {
+        if (!Owner)
+            return;
+
+        if (Input.GetKeyDown(KeyCode.Space))
+            CreateBomb();
+    }
+
+    private void CreateBomb()
+    {
+        _bombManager.CreateBomb(transform.position);
     }
 
     private void OnDestroy()
@@ -40,7 +60,7 @@ public class BirdController : MonoBehaviour
 
     private void OnBirdMove(Vector2 position, bool flipX, float timeUsed)
     {
-        Client.Instante.RequestMoveBird(NetId, position, flipX, timeUsed);
+        Client.Instance.RequestMoveBird(NetId, position, flipX, timeUsed);
     }
 
     public void SetPosition(Vector2 position, bool flipX, float timeUsed)

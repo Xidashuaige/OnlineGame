@@ -13,9 +13,9 @@ public class PlayerManager : MonoBehaviour
 
     public void InitPlayerManager()
     {
-        Client.Instante.onActionHandlered[NetworkMessageType.StartGame] += OnStartGame;
-        Client.Instante.onActionHandlered[NetworkMessageType.UpdatePlayerPosition] += OnUpdatePlayerPosition;
-        Client.Instante.onActionHandlered[NetworkMessageType.UpdateBirdPosition] += OnUpdateBirdPosition;
+        Client.Instance.onActionHandlered[NetworkMessageType.StartGame] += OnStartGame;
+        Client.Instance.onActionHandlered[NetworkMessageType.UpdatePlayerPosition] += OnUpdatePlayerPosition;
+        Client.Instance.onActionHandlered[NetworkMessageType.UpdateBirdPosition] += OnUpdateBirdPosition;
     }
 
     private void CreatePlayer(uint netId, bool owner, string name)
@@ -59,19 +59,17 @@ public class PlayerManager : MonoBehaviour
     {
         var message = data as StartGame;
 
-        if (Client.Instante.RoomID != message.roomId)
+        if (Client.Instance.RoomID != message.roomId)
             return;
 
         for (int i = 0; i < message.playerIds.Count; i++)
         {
-            CreatePlayer(message.playerNetIds[i], message.playerIds[i] == Client.Instante.ID, message.names[i]);
+            CreatePlayer(message.playerNetIds[i], message.playerIds[i] == Client.Instance.ID, message.names[i]);
         }
 
         for (int i = 0; i < message.birdNetIds.Count; i++)
         {
-            Debug.LogWarning("Player crete birds: " + message.birdNetIds[i]);
-
-            CreateBird(message.birdNetIds[i], message.playerIds[i] == Client.Instante.ID);
+            CreateBird(message.birdNetIds[i], message.playerIds[i] == Client.Instance.ID);
         }
 
         _gameStarted = true;

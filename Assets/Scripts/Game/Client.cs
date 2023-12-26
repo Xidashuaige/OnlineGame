@@ -9,7 +9,7 @@ using UnityEngine;
 public class Client : MonoBehaviour
 {
     #region Paramaters
-    public static Client Instante = null;
+    public static Client Instance = null;
 
     // Unity paramaters
     [SerializeField] private InputController _ipInput;
@@ -40,7 +40,7 @@ public class Client : MonoBehaviour
 
     // Callbacks
     private Dictionary<NetworkMessageType, Action<NetworkMessage>> _actionHandlers = new();
-    private Dictionary<NetworkMessageType, Action<bool>> _actionSuccessful = new();
+    private Dictionary<NetworkMessageType, Action<bool>> _onActionSuccessful = new();
 
     // locker
     private readonly object _lock = new();
@@ -57,9 +57,9 @@ public class Client : MonoBehaviour
 
     private void Awake()
     {
-        if (Instante == null)
+        if (Instance == null)
         {
-            Instante = this;
+            Instance = this;
             DontDestroyOnLoad(gameObject.transform.parent);
         }
         else
@@ -81,20 +81,22 @@ public class Client : MonoBehaviour
 
         _actionHandlers[NetworkMessageType.UpdatePlayerPosition] = HandleUpdatePlayerPosition;
         _actionHandlers[NetworkMessageType.UpdateBirdPosition] = HandleUpdateBirdPosition;
+        _actionHandlers[NetworkMessageType.UpdateBombPosition] = HandleUpdateBombPosition;
+        _actionHandlers[NetworkMessageType.Explotion] = HandleExplotion;
         _actionHandlers[NetworkMessageType.UpdateGameWorld] = HandleUpdateGameWorld;
         #endregion
 
         #region Init successful events actions
 
-        _actionSuccessful[NetworkMessageType.Heartbeat] = WhenHeartBeatHasSent;
-        _actionSuccessful[NetworkMessageType.StartGame] = WhenStartGameHasSent;
-        _actionSuccessful[NetworkMessageType.ReadyInTheRoom] = WhenReadyInTheRoomHasSent;
-        _actionSuccessful[NetworkMessageType.KickOutRoom] = WhenKickOutRoomHasSent;
-        _actionSuccessful[NetworkMessageType.CreateRoom] = WhenCreateRoomHasSent;
-        _actionSuccessful[NetworkMessageType.JoinRoom] = WhenJoinRoomHasSent;
-        _actionSuccessful[NetworkMessageType.JoinServer] = WhenJoinServerHasSent;
-        _actionSuccessful[NetworkMessageType.LeaveRoom] = WhenLeaveRoomHasSent;
-        _actionSuccessful[NetworkMessageType.LeaveServer] = WhenLeaveServerHasSent;
+        _onActionSuccessful[NetworkMessageType.Heartbeat] = WhenHeartBeatHasSent;
+        _onActionSuccessful[NetworkMessageType.StartGame] = WhenStartGameHasSent;
+        _onActionSuccessful[NetworkMessageType.ReadyInTheRoom] = WhenReadyInTheRoomHasSent;
+        _onActionSuccessful[NetworkMessageType.KickOutRoom] = WhenKickOutRoomHasSent;
+        _onActionSuccessful[NetworkMessageType.CreateRoom] = WhenCreateRoomHasSent;
+        _onActionSuccessful[NetworkMessageType.JoinRoom] = WhenJoinRoomHasSent;
+        _onActionSuccessful[NetworkMessageType.JoinServer] = WhenJoinServerHasSent;
+        _onActionSuccessful[NetworkMessageType.LeaveRoom] = WhenLeaveRoomHasSent;
+        _onActionSuccessful[NetworkMessageType.LeaveServer] = WhenLeaveServerHasSent;
 
         #endregion
 
@@ -128,8 +130,8 @@ public class Client : MonoBehaviour
         _actionHandlers?.Clear();
         _actionHandlers = null;
 
-        _actionSuccessful?.Clear();
-        _actionSuccessful = null;
+        _onActionSuccessful?.Clear();
+        _onActionSuccessful = null;
 
         _socket?.Dispose();
         _socket = null;
@@ -252,6 +254,26 @@ public class Client : MonoBehaviour
             return;
 
         var message = new UpdateBirdMovement(_id, netID, newPosition, flipX, timeUsed);
+
+        SendMessageToServer(message);
+    }
+
+    public void RequestMoveBomb(uint netID,Vector2 newPosition, float timeUsed)
+    {
+        if (!_connecting)
+            return;
+
+        var message = new UpdateBombMovement(_id, netID, newPosition, timeUsed);
+
+        SendMessageToServer(message);
+    }
+
+    public void RequestExplotion(uint netID, Vector2 position)
+    {
+        if (!_connecting)
+            return;
+
+        var message = new ExplotionMessage(_id, netID, position);
 
         SendMessageToServer(message);
     }
@@ -529,6 +551,22 @@ public class Client : MonoBehaviour
     }
 
     private void HandleUpdateBirdPosition(NetworkMessage data)
+    {
+        if (!data.succesful || data.messageOwnerId == ID)
+            return;
+
+        onActionHandlered[data.type]?.Invoke(data);
+    }
+
+    private void HandleUpdateBombPosition(NetworkMessage data)
+    {
+        if (!data.succesful)
+            return;
+
+        onActionHandlered[data.type]?.Invoke(data);
+    }
+
+    private void HandleExplotion(NetworkMessage data)
     {
         if (!data.succesful || data.messageOwnerId == ID)
             return;
