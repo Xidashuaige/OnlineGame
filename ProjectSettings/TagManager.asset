@@ -10,6 +10,7 @@ TagManager:
   - Server
   - WallLimit
   - Ground
+  - Explotion
   layers:
   - Default
   - TransparentFX

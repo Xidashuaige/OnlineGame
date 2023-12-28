@@ -13,6 +13,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Animator _animator;
     [SerializeField] private GameObject _child;
 
+    public bool Alive { get => _alive; }
+    private bool _alive = true;
+
     public void InitPlayerController(uint netId, bool owner, string name = "Unknown")
     {
         if (_movement != null)
@@ -43,6 +46,16 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Explotion"))
+        {
+            _alive = false;
+            _animator.SetBool("Dead", true);
+            _movement.Death();
+        }
+    }
+
     private void OnDestroy()
     {
         if (_movement != null)
@@ -54,7 +67,7 @@ public class PlayerController : MonoBehaviour
         Client.Instance.RequestMovePlayer(NetId, position, flipX, timeUsed);
     }
 
-    public void SetPosition(Vector2 position, bool flipX,float timeUsed)
+    public void SetPosition(Vector2 position, bool flipX, float timeUsed)
     {
         _movement.SetFuturePos(position, timeUsed);
         _movement.SetFlip(flipX);

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class BirdController : MonoBehaviour
@@ -8,6 +9,9 @@ public class BirdController : MonoBehaviour
     [SerializeField] private bool _owner = false;
     [SerializeField] private GameObject _bombPrefab;
     [SerializeField] private BombManager _bombManager;
+
+    private bool _canAttack = true;
+    private SpriteRenderer _spr;
 
     private BirdMovement _movement;
 
@@ -23,6 +27,8 @@ public class BirdController : MonoBehaviour
 
         _movement.InitMovement();
 
+        _spr = GetComponent<SpriteRenderer>();
+
         if (Owner)
         {
             _movement.onBirdMove += OnBirdMove;
@@ -33,8 +39,7 @@ public class BirdController : MonoBehaviour
         }
         else
         {
-            var _ = GetComponent<SpriteRenderer>();
-            _.color = new(1, 1, 1, 0.5f);
+            _spr.color = new(1, 1, 1, 0.5f);
         }
     }
 
@@ -43,8 +48,25 @@ public class BirdController : MonoBehaviour
         if (!Owner)
             return;
 
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space) && _canAttack)
+        {
+            _canAttack = false;
+            StartCoroutine(BombCoolDown());
             CreateBomb();
+        }
+    }
+
+    private IEnumerator BombCoolDown()
+    {
+        _spr.color = Color.red;
+
+        for (float t = 0; t <= 1.0f; t += 0.05f)
+        {
+            _spr.color = Color.Lerp(Color.red, Color.white, t);
+            yield return new WaitForSeconds(0.1f);
+        }
+
+        _canAttack = true;
     }
 
     private void CreateBomb()

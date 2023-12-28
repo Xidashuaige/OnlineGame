@@ -60,9 +60,14 @@ public class PlayerMovement : MonoBehaviour
                     timeUsed -= (Time.deltaTime * 1.5f);
                 }
             }
+
+            return;
         }
         else
         {
+            if (!_playerController.Alive)
+                return;
+
             if (Input.GetKey(KeyCode.RightArrow))
                 PlayerMove(Vector2.right, true, 2);
             else if (Input.GetKey(KeyCode.LeftArrow))
@@ -108,10 +113,15 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (_playerController == null || !_playerController.Owner)
+        if (_playerController == null || !_playerController.Owner || !_playerController.Alive)
             return;
-
         _rb.velocity = new Vector2(_moveInput.x * _moveSpeed, _rb.velocity.y);
+    }
+
+
+    public void Death()
+    {
+        _rb.velocity = Vector2.zero;
     }
 
     public void SetFuturePos(Vector2 pos, float timeUsed)

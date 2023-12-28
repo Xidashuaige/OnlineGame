@@ -18,14 +18,4 @@ public class GameManager : MonoBehaviour
         if (_playerManager != null)
             _playerManager.InitPlayerManager();
     }
-
-    private void Update()
-    {
-        
-    }
-
-    public void SetPlayerPos(uint netid, Vector2 pos)
-    {
-
-    }
 }

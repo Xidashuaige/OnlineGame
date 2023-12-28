@@ -43,11 +43,14 @@ public class BombManager : MonoBehaviour
             // If is our bomb
             if (message.messageOwnerId == Client.Instance.ID)
             {
-                var _ = _bombsWithoutId.Pop();
+                if (_bombsWithoutId.Count > 0)
+                {
+                    var _ = _bombsWithoutId.Pop();
 
-                _.NetId = message.netId;
+                    _.NetId = message.netId;
 
-                _bombs.Add(_.NetId, _);
+                    _bombs.Add(_.NetId, _);
+                }
             }
             // If is bomb by another player 
             else

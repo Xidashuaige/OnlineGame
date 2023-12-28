@@ -13,9 +13,10 @@ GameObject:
   - component: {fileID: 3888537070347343084}
   - component: {fileID: 6035355367879379266}
   - component: {fileID: 1470376484341746429}
+  - component: {fileID: -5910539771062164589}
   m_Layer: 0
   m_Name: Explotion
-  m_TagString: Untagged
+  m_TagString: Explotion
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -155,3 +156,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51ca8be9a67a9be4981fbef7dd33bc35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!50 &-5910539771062164589
+Rigidbody2D:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1049410596260824251}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDrag: 0
+  m_AngularDrag: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
