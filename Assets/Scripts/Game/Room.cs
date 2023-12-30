@@ -25,9 +25,11 @@ public class RoomInfo // For Server
         clients = null;
     }
 
+    public List<uint> deadPlayers = new();
+
     public uint id = 0;
     public int limitUsers = 4;
-    // BUG, only run is ClientInfo is array
+    // BUG, only run if ClientInfo is array
     public List<ClientInfo> clients = null;
     public RoomState state = RoomState.NotFull;
     public bool IsFull { get => clients != null && limitUsers <= clients.Count; }

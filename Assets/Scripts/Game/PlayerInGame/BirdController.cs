@@ -45,7 +45,7 @@ public class BirdController : MonoBehaviour
 
     private void Update()
     {
-        if (!Owner)
+        if (!Owner || !GameManager.Instance.InGame)
             return;
 
         if (Input.GetKeyDown(KeyCode.Space) && _canAttack)

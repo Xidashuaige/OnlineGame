@@ -192,6 +192,30 @@ public class RoomManager : MonoBehaviour
         room.state = RoomState.InGame;
     }
 
+    public bool KillPlayerFromServer(uint roomId, uint netId)
+    {
+        var roomIdex = _roomPoolForServer.FindIndex(room => room.id == roomId);
+
+        if (roomIdex == -1)
+            return false;
+
+        var room = _roomPoolForServer[roomIdex];
+
+        if (room.deadPlayers.Contains(netId) || room.state != RoomState.InGame)
+            return false;
+
+        room.deadPlayers.Add(netId);
+
+        if (room.deadPlayers.Count >= room.clients.Count - 1)
+        {
+            room.deadPlayers.Clear();
+            room.state = room.IsFull ? RoomState.Full : RoomState.NotFull;
+            return true;
+        }
+
+        return false;
+    }
+
     public List<ClientInfo> GetClientsInfoByRoomId(uint roomId)
     {
         var roomIdex = _roomPoolForServer.FindIndex(room => room.id == roomId);

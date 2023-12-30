@@ -47,6 +47,9 @@ public class BirdMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!GameManager.Instance.InGame)
+            return;
+
         if (_birdController == null || !_birdController.Owner)
         {
             // Update position if isn' owner

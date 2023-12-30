@@ -18,6 +18,8 @@ public class PanelManager : MonoBehaviour
     [SerializeField] private GameObject _roomPanel;
     [SerializeField] private GameObject _gamePanel;
 
+    [SerializeField] private GameObject _gameOverPanel;
+
     [Space, Header("Start Panel UI")]
     [SerializeField] private TMP_InputField _ipInput;
     [SerializeField] private TMP_InputField _nameInput;
@@ -43,6 +45,7 @@ public class PanelManager : MonoBehaviour
         Client.Instance.onActionHandlered[NetworkMessageType.JoinRoom] += OnJoinRoom;
         Client.Instance.onActionHandlered[NetworkMessageType.LeaveRoom] += OnLeaveRoom;
         Client.Instance.onActionHandlered[NetworkMessageType.StartGame] += OnStartGame;
+        Client.Instance.onActionHandlered[NetworkMessageType.PlayerDead] += OnGameOver;
 
         // Init Panels
         _panels.Add(_startPanel);
@@ -53,8 +56,10 @@ public class PanelManager : MonoBehaviour
         _currentPanel = Panels.StartPanel;
     }
 
-    private void ChangeScene(Panels panel)
+    public void ChangeScene(Panels panel)
     {
+        _gameOverPanel.SetActive(false);
+
         _panels[(int)_currentPanel].SetActive(false);
 
         _currentPanel = panel;
@@ -110,7 +115,12 @@ public class PanelManager : MonoBehaviour
 
     private void OnStartGame(NetworkMessage message)
     {
-        if (_currentPanel != Panels.GamePanel)
-            ChangeScene(Panels.GamePanel);
+        ChangeScene(Panels.GamePanel);
+    }
+
+    private void OnGameOver(NetworkMessage message)
+    {
+        if (message.succesful)
+            _gameOverPanel.SetActive(true);
     }
 }

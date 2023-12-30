@@ -83,6 +83,7 @@ public class Client : MonoBehaviour
         _actionHandlers[NetworkMessageType.UpdateBirdPosition] = HandleUpdateBirdPosition;
         _actionHandlers[NetworkMessageType.UpdateBombPosition] = HandleUpdateBombPosition;
         _actionHandlers[NetworkMessageType.Explotion] = HandleExplotion;
+        _actionHandlers[NetworkMessageType.PlayerDead] = HandlePlayerDead;
         _actionHandlers[NetworkMessageType.UpdateGameWorld] = HandleUpdateGameWorld;
         #endregion
 
@@ -258,7 +259,7 @@ public class Client : MonoBehaviour
         SendMessageToServer(message);
     }
 
-    public void RequestMoveBomb(uint netID,Vector2 newPosition, float timeUsed)
+    public void RequestMoveBomb(uint netID, Vector2 newPosition, float timeUsed)
     {
         if (!_connecting)
             return;
@@ -274,6 +275,16 @@ public class Client : MonoBehaviour
             return;
 
         var message = new ExplotionMessage(_id, netID, position);
+
+        SendMessageToServer(message);
+    }
+
+    public void RequestPlayerDead(uint netID)
+    {
+        if (!_connecting)
+            return;
+
+        var message = new PlayerDead(_id, netID, RoomID);
 
         SendMessageToServer(message);
     }
@@ -572,6 +583,14 @@ public class Client : MonoBehaviour
             return;
 
         onActionHandlered[data.type]?.Invoke(data);
+    }
+
+    private void HandlePlayerDead(NetworkMessage data)
+    {
+        var message = data as PlayerDead;
+
+        if (message.succesful && RoomID == message.roomId)
+            onActionHandlered[data.type]?.Invoke(data);
     }
 
     private void HandleUpdateGameWorld(NetworkMessage data)

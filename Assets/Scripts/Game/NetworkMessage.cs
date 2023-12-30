@@ -23,6 +23,7 @@ public enum NetworkMessageType
     UpdateBirdPosition,
     UpdateBombPosition,
     Explotion,
+    PlayerDead,
 
     UpdateGameWorld,
 
@@ -83,7 +84,8 @@ public class NetworkPackage
         { NetworkMessageType.UpdateBirdPosition, UpdateBirdMovement.GetData },
         { NetworkMessageType.UpdateBombPosition, UpdateBombMovement.GetData },
         { NetworkMessageType.Explotion, ExplotionMessage.GetData },
-        { NetworkMessageType.UpdateGameWorld, UpdateGameWorld.GetData},
+        { NetworkMessageType.PlayerDead, PlayerDead.GetData },
+        { NetworkMessageType.UpdateGameWorld, UpdateGameWorld.GetData },
     };
 }
 
@@ -413,6 +415,25 @@ public class ExplotionMessage : NetworkMessage
     // 4 server & clients
     public uint netId;
     public Vector2 position;
+}
+
+[SerializeField]
+public class PlayerDead : NetworkMessage
+{
+    public PlayerDead(uint userId, uint netId, uint roomId) : base(NetworkMessageType.PlayerDead, userId)
+    {
+        this.netId = netId;
+        this.roomId = roomId;
+    }
+
+    static public PlayerDead GetData(byte[] data)
+    {
+        return JsonUtility.FromJson<PlayerDead>(Encoding.ASCII.GetString(data, 0, data.Length));
+    }
+
+    // 4 server & clients
+    public uint netId;
+    public uint roomId;
 }
 
 [SerializeField]

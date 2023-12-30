@@ -46,6 +46,9 @@ public class PlayerMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!GameManager.Instance.InGame)
+            return;
+
         if (_playerController == null || !_playerController.Owner)
         {
             // Update position if isn' owner
@@ -121,7 +124,8 @@ public class PlayerMovement : MonoBehaviour
 
     public void Death()
     {
-        _rb.velocity = Vector2.zero;
+        if (_rb != null)
+            _rb.velocity = Vector2.zero;
     }
 
     public void SetFuturePos(Vector2 pos, float timeUsed)

@@ -50,9 +50,11 @@ public class PlayerController : MonoBehaviour
     {
         if (collision.CompareTag("Explotion"))
         {
+            Client.Instance.RequestPlayerDead(NetId);
             _alive = false;
             _animator.SetBool("Dead", true);
-            _movement.Death();
+            if (_movement != null)
+                _movement.Death();
         }
     }
 

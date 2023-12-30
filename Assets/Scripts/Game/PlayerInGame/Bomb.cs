@@ -25,7 +25,7 @@ public class Bomb : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!Owner)
+        if (!Owner || !GameManager.Instance.InGame)
             return;
 
         _moveInterval += Time.deltaTime;

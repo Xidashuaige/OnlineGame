@@ -9,13 +9,28 @@ public class PlayerManager : MonoBehaviour
     [SerializeField] private Dictionary<uint, PlayerController> _players = new();
     [SerializeField] private Dictionary<uint, BirdController> _birds = new();
 
-    private bool _gameStarted = false;
-
     public void InitPlayerManager()
     {
         Client.Instance.onActionHandlered[NetworkMessageType.StartGame] += OnStartGame;
         Client.Instance.onActionHandlered[NetworkMessageType.UpdatePlayerPosition] += OnUpdatePlayerPosition;
         Client.Instance.onActionHandlered[NetworkMessageType.UpdateBirdPosition] += OnUpdateBirdPosition;
+    }
+
+    public void ReturnToWaitingRoom()
+    {
+        foreach (var item in _players)
+        {
+            Destroy(item.Value.gameObject);
+        }
+
+        _players.Clear();
+
+        foreach (var item in _birds)
+        {
+            Destroy(item.Value.gameObject);
+        }
+
+        _birds.Clear();
     }
 
     private void CreatePlayer(uint netId, bool owner, string name)
@@ -62,6 +77,8 @@ public class PlayerManager : MonoBehaviour
         if (Client.Instance.RoomID != message.roomId)
             return;
 
+        ReturnToWaitingRoom();
+
         for (int i = 0; i < message.playerIds.Count; i++)
         {
             CreatePlayer(message.playerNetIds[i], message.playerIds[i] == Client.Instance.ID, message.names[i]);
@@ -71,13 +88,11 @@ public class PlayerManager : MonoBehaviour
         {
             CreateBird(message.birdNetIds[i], message.playerIds[i] == Client.Instance.ID);
         }
-
-        _gameStarted = true;
     }
 
     private void OnUpdatePlayerPosition(NetworkMessage data)
     {
-        if (!_gameStarted)
+        if (!GameManager.Instance.InGame)
             return;
 
         var message = data as UpdatePlayerMovement;
@@ -87,7 +102,7 @@ public class PlayerManager : MonoBehaviour
 
     private void OnUpdateBirdPosition(NetworkMessage data)
     {
-        if (!_gameStarted)
+        if (!GameManager.Instance.InGame)
             return;
 
         var message = data as UpdateBirdMovement;

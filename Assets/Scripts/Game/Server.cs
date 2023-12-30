@@ -111,6 +111,7 @@ public class Server : MonoBehaviour
         _actionHandlers[NetworkMessageType.UpdateBirdPosition] = HandleUpdateBirdMovement;
         _actionHandlers[NetworkMessageType.UpdateBombPosition] = HandleUpdateBombMovement;
         _actionHandlers[NetworkMessageType.Explotion] = HandleExplotion;
+        _actionHandlers[NetworkMessageType.PlayerDead] = HandlePlayerDead;
         _actionHandlers[NetworkMessageType.UpdateGameWorld] = HandleUpdateGameWorld;
 
         _gameManager = FindAnyObjectByType<GameManager>();
@@ -596,6 +597,17 @@ public class Server : MonoBehaviour
         var message = data as ExplotionMessage;
 
         message.succesful = true;
+
+        SendMessageToClients(message);
+    }
+
+    public void HandlePlayerDead(NetworkMessage data)
+    {
+        var message = data as PlayerDead;
+
+        Debug.LogWarning("Message from : " + message.messageOwnerId);
+
+        message.succesful = RoomManager.Instance.KillPlayerFromServer(message.roomId, message.netId);
 
         SendMessageToClients(message);
     }
