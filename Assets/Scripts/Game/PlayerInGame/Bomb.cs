@@ -6,6 +6,7 @@ public class Bomb : MonoBehaviour
     public uint NetId { get; set; }
 
     [SerializeField] private GameObject _explotionPrefab;
+    [SerializeField] private AudioSource _explotionAudio;
 
     private float _moveInterval = 0;
 
@@ -46,6 +47,7 @@ public class Bomb : MonoBehaviour
 
     public void Explotion()
     {
+        _explotionAudio.Play();
         Instantiate(_explotionPrefab, transform.position, Quaternion.identity);
         Destroy(gameObject);
     }
