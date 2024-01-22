@@ -11,6 +11,7 @@ public enum NetworkMessageType
     LeaveServer,
     JoinRoom,
     LeaveRoom,
+    CloseRoom,
     CreateRoom,
     ReadyInTheRoom,
     StartGame,

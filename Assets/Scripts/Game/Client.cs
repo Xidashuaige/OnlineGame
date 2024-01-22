@@ -36,7 +36,18 @@ public class Client : MonoBehaviour
     public uint RoomID { get => _roomId; }
 
     private bool _ImRoomMaster = false;
-    public bool RoomMaster { get => _ImRoomMaster; }
+    public bool RoomMaster
+    {
+        get => _ImRoomMaster;
+
+        set
+        {
+            _ImRoomMaster = value;
+
+            if (!_ImRoomMaster)
+                _roomId = 0;
+        }
+    }
 
     // Callbacks
     private Dictionary<NetworkMessageType, Action<NetworkMessage>> _actionHandlers = new();
@@ -236,6 +247,9 @@ public class Client : MonoBehaviour
 
         var message = new StartGame(_id, _roomId);
 
+
+        // 服务器的代码可能有问题,点start所有人都会进入游戏,包括不在房间的
+        // 有可能是leave room那边逻辑没做好
         SendMessageToServer(message);
     }
 
@@ -482,7 +496,12 @@ public class Client : MonoBehaviour
         var message = data as JoinRoom;
 
         if (message.succesful == false)
+        {
+            if (message.roomId == 0)
+                onActionHandlered[NetworkMessageType.CloseRoom]?.Invoke(message);
+
             return;
+        }
 
         if (message.messageOwnerId == ID)
         {
@@ -517,9 +536,6 @@ public class Client : MonoBehaviour
         if (message.isRoomMaster)
         {
             Debug.Log("Client(" + Name + "): room master leave the room(" + message.roomId.ToString("D4") + ")!");
-
-            _roomId = 0;
-            _ImRoomMaster = false;
         }
         else
         {

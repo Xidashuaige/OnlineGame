@@ -61,7 +61,7 @@ public class BirdMovement : MonoBehaviour
                 {
                     transform.position = Vector2.Lerp(transform.position, futurePos, t);
 
-                    timeUsed -= (Time.deltaTime * 1.5f);
+                    timeUsed -= (Time.deltaTime * 1.8f);
                 }
             }
         }
@@ -78,7 +78,7 @@ public class BirdMovement : MonoBehaviour
                 BirdMove(Vector2.left, false, 1.0f);
 
             // Send position to another player every 0.075s
-            if ((frameCount += Time.deltaTime) >= 0.075f)
+            if ((frameCount += Time.deltaTime) >= 0.05f)
             {
                 onBirdMove?.Invoke(transform.position, _spriteRenderer.flipX, frameCount);
                 frameCount = 0;

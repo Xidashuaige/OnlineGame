@@ -495,18 +495,14 @@ public class Server : MonoBehaviour
 
         message.isRoomMaster = sender.isRoomMaster;
 
-        if (message.isRoomMaster)
-        {
-            RoomManager.Instance.CloseRoomFromServer(message.roomId);
-        }
-        else
-        {
-            RoomManager.Instance.LeaveRoomFromServer(_clients[message.messageOwnerId]);
-        }
+        RoomManager.Instance.LeaveRoomFromServer(_clients[message.messageOwnerId]);
 
-        sender.roomId = 0;
+        //sender.roomId = 0;
 
         message.succesful = true;
+
+        if (sender.isRoomMaster)
+            sender.isRoomMaster = false;
 
         SendMessageToClients(message);
     }
@@ -558,7 +554,7 @@ public class Server : MonoBehaviour
             message.names.Add(c.name);
         }
 
-        SendMessageToClients(message);
+        SendMessageToClients(clients.ToArray(), message);
     }
 
     private void HandleKickOutRoomMessage(NetworkMessage data)

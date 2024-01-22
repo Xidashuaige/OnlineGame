@@ -109,7 +109,7 @@ public class PanelManager : MonoBehaviour
     {
         var message = data as LeaveRoom;
 
-        if (Client.Instance.ID == message.messageOwnerId || message.isRoomMaster)
+        if (Client.Instance.ID == message.messageOwnerId || (message.isRoomMaster && Client.Instance.RoomID == message.roomId))
             ChangeScene(Panels.RoomListPanel);
     }
 

@@ -161,6 +161,8 @@ public class RoomUIController : MonoBehaviour
 
     private void CloseRoom()
     {
+        Client.Instance.RoomMaster = false;
+
         foreach (var player in _players)
         {
             player.playerId = 0;

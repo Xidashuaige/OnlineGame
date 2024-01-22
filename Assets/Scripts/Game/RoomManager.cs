@@ -48,6 +48,7 @@ public class RoomManager : MonoBehaviour
         Client.Instance.onActionHandlered[NetworkMessageType.JoinRoom] += OnJoinRoomFromClient;
         Client.Instance.onActionHandlered[NetworkMessageType.LeaveRoom] += OnLeaveRoomFromClient;
         Client.Instance.onActionHandlered[NetworkMessageType.StartGame] += OnStartGameFromClient;
+        Client.Instance.onActionHandlered[NetworkMessageType.CloseRoom] += OnCloseRoomFromClient;
     }
 
     private void OnApplicationQuit()
@@ -98,6 +99,7 @@ public class RoomManager : MonoBehaviour
         if (roomIndex < 0)
         {
             Debug.Log("Server: room " + message.roomId + " is not found");
+            message.roomId = 0;
             return false;
         }
 
@@ -151,15 +153,19 @@ public class RoomManager : MonoBehaviour
 
         var room = _roomPoolForServer[roomIdex];
 
-        user.isRoomMaster = false;
         user.roomId = 0;
-
-        foreach (var client in room.clients)
-            client.roomId = 0;
 
         room.clients.Remove(user);
 
-        // _roomPoolForServer[roomIdex]   
+        if (user.isRoomMaster)
+        {
+            foreach (var client in room.clients)
+                client.roomId = 0;       
+
+            room.clients.Clear();
+
+            _roomPoolForServer.Remove(room);
+        }
     }
 
     public void CloseRoomFromServer(uint roomId)
@@ -169,9 +175,7 @@ public class RoomManager : MonoBehaviour
         if (roomIdex == -1)
             return;
 
-        var clients = _roomPoolForServer[roomIdex].clients;
-
-        foreach (var client in clients)
+        foreach (var client in _roomPoolForServer[roomIdex].clients)
         {
             client.isRoomMaster = false;
             client.roomId = 0;
@@ -283,6 +287,8 @@ public class RoomManager : MonoBehaviour
     {
         var roomIndex = _roomPoolForClient.FindIndex(room => room.ID == roomId);
 
+        Debug.LogWarning("Leave Room!");
+
         if (roomIndex < 0)
             return;
 
@@ -320,8 +326,13 @@ public class RoomManager : MonoBehaviour
             return;
 
         var room = _roomPoolForClient[roomIndex];
+    }
 
+    public void OnCloseRoomFromClient(NetworkMessage data)
+    {
+        var message = data as JoinRoom;
 
+        CloseRoomFromClient(message.roomId);
     }
 
     private Room GetNextRoom()
